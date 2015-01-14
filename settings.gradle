@@ -1,1 +1,2 @@
-include ':app', ':libsuperuser'
+include ':libsuperuser'
+project(':libsuperuser').projectDir = new File(settingsDir, '../libsuperuser/libsuperuser')
