@@ -12,6 +12,7 @@ import android.graphics.Point;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -57,7 +58,7 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
     int deviceWidth;
     int deviceHeight;
     Point videoResolution = new Point();
-    private SharedPreferences prefs;
+    private SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,8 +67,8 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
         getWindowManager().getDefaultDisplay().getMetrics(dm);
         deviceWidth = dm.widthPixels;
         deviceHeight = dm.heightPixels;
-        prefs = getSharedPreferences("MAIN_PREFS", Context.MODE_PRIVATE);
-        address = prefs.getString("server", "192.168.0.104:8021/tp");
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        address = preferences.getString("server", "192.168.0.104:8021/tp");
         remoteUID = getIntent().getStringExtra(AddressInputDialog.KEY_UID_EXTRA);
         hideSystemUI();
         setContentView(R.layout.activity_client);
@@ -86,7 +87,7 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
                 return;
             }
             ClientActivity.this.webSocket = webSocket;
-            String uid = prefs.getString("uid", "111");
+            String uid = preferences.getString("uid", "111");
             webSocket.send(TelepathyAPI.MESSAGE_LOGIN + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + uid);
             webSocket.send(TelepathyAPI.MESSAGE_CONNECT + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + remoteUID);
             setTimer();
