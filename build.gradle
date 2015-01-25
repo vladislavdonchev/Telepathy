@@ -10,9 +10,10 @@ buildscript {
 }
 
 android {
+    signingConfigs {
+    }
     compileSdkVersion 21
     buildToolsVersion "21.1.1"
-
     defaultConfig {
         applicationId "net.hardcodes.telepathy"
         minSdkVersion 19
@@ -32,4 +33,5 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:21.0.2'
     compile project(':libsuperuser')
+    compile project(':AndroidAsync')
 }

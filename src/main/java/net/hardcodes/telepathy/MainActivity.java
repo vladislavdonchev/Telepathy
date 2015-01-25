@@ -36,7 +36,7 @@ public class MainActivity extends Activity {
     }
 
     public void startClient(View v) {
-        new AddressInputDialog().show(getFragmentManager(), "Address Dialog");
+        new AddressInputDialog().show(getFragmentManager(), "Remote Control");
     }
 
     public void startServer(View v) {

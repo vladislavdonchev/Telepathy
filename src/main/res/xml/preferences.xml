@@ -4,9 +4,11 @@
 
     <PreferenceCategory android:title="Network" android:key="pref_network">
 
-        <EditTextPreference android:title="Port Number" android:key="port"
-            android:defaultValue="6000" android:inputType="number" />
+        <EditTextPreference android:title="User ID" android:key="uid"
+            android:defaultValue="111" android:inputType="text" android:summary="Preferred user ID."/>
 
+        <EditTextPreference android:title="Server Address" android:key="server"
+            android:defaultValue="192.168.0.104:8021/tp" android:inputType="text" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Video Streaming" android:key="pref_video">

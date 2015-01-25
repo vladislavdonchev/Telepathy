@@ -14,7 +14,7 @@ public class SettingsActivity extends PreferenceActivity implements
     private ListPreference bitratePref;
     private ListPreference resolutionPref;
 
-    public static final String KEY_PORT_PREF = "port";
+    public static final String KEY_SERVER_PREF = "server";
     public static final String KEY_BITRATE_PREF = "bitrate";
     public static final String KEY_RESOLUTION_PREF = "resolution";
 
@@ -26,8 +26,8 @@ public class SettingsActivity extends PreferenceActivity implements
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.preferences);
 
-        portNumberPref = (EditTextPreference) findPreference(KEY_PORT_PREF);
-        portNumberPref.setSummary("The port on which the stream will be casted (default : 6000)");
+        portNumberPref = (EditTextPreference) findPreference(KEY_SERVER_PREF);
+        portNumberPref.setSummary("Telepathy server address.");
 
         bitratePref = (ListPreference) findPreference(KEY_BITRATE_PREF);
         bitratePref.setEntries(bitrateOptions);

@@ -14,8 +14,8 @@ import android.widget.LinearLayout;
 
 public class AddressInputDialog extends DialogFragment {
 
-    public static final String KEY_ADDRESS_EXTRA = "address";
-    public static final String KEY_LAST_ADDRESS_PREF = "last_address";
+    public static final String KEY_UID_EXTRA = "remoteUID";
+    public static final String KEY_LAST_UID_PREF = "last_uid";
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -24,27 +24,27 @@ public class AddressInputDialog extends DialogFragment {
         LayoutInflater inflater = getActivity().getLayoutInflater();
 
         final SharedPreferences prefs = getActivity().getSharedPreferences("MAIN_PREFS", Context.MODE_PRIVATE);
-        String lastAddress = prefs.getString(KEY_LAST_ADDRESS_PREF, "");
+        String lastUID = prefs.getString(KEY_LAST_UID_PREF, "");
 
         final LinearLayout dialogLayout = (LinearLayout) inflater.inflate(R.layout.dialog_address_input, null);
-        final EditText addressInput = (EditText) dialogLayout.findViewById(R.id.address_input);
-        addressInput.setText(lastAddress);
+        final EditText uidInput = (EditText) dialogLayout.findViewById(R.id.uid_input);
+        uidInput.setText(lastUID);
 
         // Inflate and set the layout for the dialog
         // Pass null as the parent view because its going in the dialog layout
-        builder.setTitle("Enter server address");
+        builder.setTitle("Remote Control");
         builder.setView(dialogLayout)
                 // Add action buttons
                 .setPositiveButton("Connect", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
 
-                        String address = addressInput.getText().toString();
+                        String address = uidInput.getText().toString();
                         if (!address.equals("")) {
                             Intent startIntent = new Intent(getActivity(), ClientActivity.class);
-                            startIntent.putExtra(KEY_ADDRESS_EXTRA, address);
+                            startIntent.putExtra(KEY_UID_EXTRA, address);
                             SharedPreferences.Editor editor = prefs.edit();
-                            editor.putString(KEY_LAST_ADDRESS_PREF, address);
+                            editor.putString(KEY_LAST_UID_PREF, address);
                             editor.commit();
                             startActivity(startIntent);
                         }

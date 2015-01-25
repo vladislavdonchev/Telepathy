@@ -1,2 +1,3 @@
-include ':libsuperuser'
-project(':libsuperuser').projectDir = new File(settingsDir, '../libsuperuser/libsuperuser')
+include ':libsuperuser', ':AndroidAsync'
+project(':libsuperuser').projectDir = new File(settingsDir, '../libsuperuser')
+project(':AndroidAsync').projectDir = new File(settingsDir, '../AndroidAsync/AndroidAsync')

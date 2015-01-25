@@ -5,7 +5,9 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -50,10 +52,12 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
     private WebSocket webSocket;
 
     String address;
+    String remoteUID;
 
     int deviceWidth;
     int deviceHeight;
     Point videoResolution = new Point();
+    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +66,9 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
         getWindowManager().getDefaultDisplay().getMetrics(dm);
         deviceWidth = dm.widthPixels;
         deviceHeight = dm.heightPixels;
-        address = getIntent().getStringExtra(AddressInputDialog.KEY_ADDRESS_EXTRA);
+        prefs = getSharedPreferences("MAIN_PREFS", Context.MODE_PRIVATE);
+        address = prefs.getString("server", "192.168.0.104:8021/tp");
+        remoteUID = getIntent().getStringExtra(AddressInputDialog.KEY_UID_EXTRA);
         hideSystemUI();
         setContentView(R.layout.activity_client);
         surfaceView = (SurfaceView) findViewById(R.id.main_surface_view);
@@ -73,42 +79,49 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
     private AsyncHttpClient.WebSocketConnectCallback websocketCallback = new AsyncHttpClient
             .WebSocketConnectCallback() {
         @Override
-        public void onCompleted(final Exception ex, WebSocket webSocket) {
+        public void onCompleted(final Exception ex, final WebSocket webSocket) {
 
             if (ex != null) {
                 ex.printStackTrace();
                 return;
             }
             ClientActivity.this.webSocket = webSocket;
-            showToast("Connection Completed");
+            String uid = prefs.getString("uid", "111");
+            webSocket.send(TelepathyAPI.MESSAGE_LOGIN + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + uid);
+            webSocket.send(TelepathyAPI.MESSAGE_CONNECT + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + remoteUID);
             setTimer();
             webSocket.setClosedCallback(new CompletedCallback() {
                 @Override
                 public void onCompleted(Exception e) {
                     ClientActivity.this.webSocket = null;
-                    showToast("Closed");
-                    new ReconnectDialog().show(getFragmentManager(), "RECONNECT_DIALOG");
+                    finish();
                 }
             });
             webSocket.setStringCallback(new WebSocket.StringCallback() {
                 public void onStringAvailable(String s) {
-                    String[] parts = s.split(",");
-                    try {
-                        info.set(Integer.parseInt(parts[0]),
-                                Integer.parseInt(parts[1]),
-                                Long.parseLong(parts[2]),
-                                Integer.parseInt(parts[3]));
-                        if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-                            videoResolution.x = Integer.parseInt(parts[4]);
-                            videoResolution.y = Integer.parseInt(parts[5]);
+                    if (s.startsWith(TelepathyAPI.MESSAGE_CONNECT_ACCEPTED)) {
+                        showToast("Remote controlling user " + remoteUID);
+                    } else if (s.startsWith(TelepathyAPI.MESSAGE_CONNECT_FAILED)) {
+                        showToast("User " + remoteUID + " not logged in.");
+                        webSocket.close();
+                    } else {
+                        String[] parts = s.split(",");
+                        try {
+                            info.set(Integer.parseInt(parts[0]),
+                                    Integer.parseInt(parts[1]),
+                                    Long.parseLong(parts[2]),
+                                    Integer.parseInt(parts[3]));
+                            if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                                videoResolution.x = Integer.parseInt(parts[4]);
+                                videoResolution.y = Integer.parseInt(parts[5]);
+                            }
+                        } catch (NumberFormatException e) {
+                            e.printStackTrace();
+                            Log.d(TAG, e.toString(), e);
+                            //TODO: Need to stop the decoder or to skip the current decoder loop
+                            showToast(e.getMessage());
                         }
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                        Log.d(TAG, e.toString(), e);
-                        //TODO: Need to stop the decoder or to skip the current decoder loop
-                        showToast(e.getMessage());
                     }
-
                 }
             });
             webSocket.setDataCallback(new DataCallback() {
@@ -239,31 +252,9 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
             @Override
             public void run() {
                 if (webSocket != null) {
-                    webSocket.send("random,");
+                    webSocket.send(TelepathyAPI.MESSAGE_HEARTBEAT);
                 }
             }
         }, 2000, 3000);
-    }
-
-    @SuppressLint("ValidFragment")
-    private class ReconnectDialog extends DialogFragment {
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setTitle("Disconnected");
-            builder.setPositiveButton("Reconnect ?", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    AsyncHttpClient.getDefaultInstance().websocket("ws://" + address, null, websocketCallback);
-                }
-            });
-            builder.setNegativeButton("Close", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    finish();
-                }
-            });
-            return builder.create();
-        }
     }
 }
