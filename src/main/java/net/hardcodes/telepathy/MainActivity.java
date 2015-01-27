@@ -40,7 +40,7 @@ public class MainActivity extends Activity {
     }
 
     public void startServer(View v) {
-        Intent startServerIntent = new Intent(MainActivity.this, ServerService.class);
+        Intent startServerIntent = new Intent(MainActivity.this, RemoteControlService.class);
         startServerIntent.setAction("START");
         startService(startServerIntent);
         finish();

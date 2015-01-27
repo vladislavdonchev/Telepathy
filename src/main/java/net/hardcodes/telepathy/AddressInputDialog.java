@@ -41,7 +41,7 @@ public class AddressInputDialog extends DialogFragment {
 
                         String address = uidInput.getText().toString();
                         if (!address.equals("")) {
-                            Intent startIntent = new Intent(getActivity(), ClientActivity.class);
+                            Intent startIntent = new Intent(getActivity(), RemoteControlActivity.class);
                             startIntent.putExtra(KEY_UID_EXTRA, address);
                             SharedPreferences.Editor editor = prefs.edit();
                             editor.putString(KEY_LAST_UID_PREF, address);

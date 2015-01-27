@@ -6,7 +6,7 @@ package net.hardcodes.telepathy;
 public final class TelepathyAPI {
 
     public static final String MESSAGE_UID_DELIMITER = ":";
-    public static final String MESSAGE_PAYLOAD_DELIMITER = "$";
+    public static final String MESSAGE_PAYLOAD_DELIMITER = ">";
 
     public static final String MESSAGE_LOGIN = "login" + MESSAGE_UID_DELIMITER;
     public static final String MESSAGE_CONNECT = "connect" + MESSAGE_UID_DELIMITER;
@@ -14,7 +14,8 @@ public final class TelepathyAPI {
     public static final String MESSAGE_CONNECT_REJECTED = "connectRejected" + MESSAGE_UID_DELIMITER;
     public static final String MESSAGE_CONNECT_FAILED = "connectFailed" + MESSAGE_UID_DELIMITER;
     public static final String MESSAGE_CHAT = "chat" + MESSAGE_UID_DELIMITER;
-    public static final String MESSAGE_INPUT = "input" + MESSAGE_UID_DELIMITER;
+    public static final String MESSAGE_VIDEO_METADATA = "videoMetadata" + MESSAGE_PAYLOAD_DELIMITER;
+    public static final String MESSAGE_INPUT = "input" + MESSAGE_PAYLOAD_DELIMITER;
     public static final String MESSAGE_HEARTBEAT = "heartbeat" + MESSAGE_UID_DELIMITER;
     public static final String MESSAGE_DISCONNECT = "disconnect" + MESSAGE_UID_DELIMITER;
     public static final String MESSAGE_BROADCAST = "broadcast" + MESSAGE_PAYLOAD_DELIMITER;

@@ -16,13 +16,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="net.hardcodes.telepathy.ClientActivity"
+        <activity android:name=".RemoteControlActivity"
             android:label="@string/title_activity_client">
             <meta-data android:name="android.support.PARENT_ACTIVITY"
                 android:value="MainActivity" />
         </activity>
 
-        <service android:name="net.hardcodes.telepathy.ServerService" android:exported="true"
+        <service android:name=".RemoteControlService" android:exported="true"
             android:label="@string/title_activity_server"></service>
         <activity android:name="net.hardcodes.telepathy.SettingsActivity" android:label="Settings"
             android:parentActivityName="net.hardcodes.telepathy.MainActivity">

@@ -2,6 +2,7 @@ package net.hardcodes.telepathy;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.graphics.Point;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -13,6 +14,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.koushikdutta.async.ByteBufferList;
@@ -31,9 +33,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 
-public class ClientActivity extends Activity implements SurfaceHolder.Callback, View.OnTouchListener {
+public class RemoteControlActivity extends Activity implements SurfaceHolder.Callback, View.OnTouchListener {
 
-    private static final String TAG = "ClientActivity";
+    private static final String TAG = "RemoteControlActivity";
 
     SurfaceView surfaceView;
 
@@ -57,18 +59,32 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_client);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+        initDisplayMetrics();
+
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        serverAddress = preferences.getString("server", "192.168.0.104:8021/tp");
+        remoteUID = getIntent().getStringExtra(AddressInputDialog.KEY_UID_EXTRA);
+        
+        surfaceView = (SurfaceView) findViewById(R.id.main_surface_view);
+        surfaceView.getHolder().addCallback(this);
+        surfaceView.setOnTouchListener(this);
+    }
+
+    @Override
+    protected void onResume() {
+        hideSystemUI();
+        super.onResume();
+    }
+
+    private void initDisplayMetrics() {
         DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
         deviceWidth = dm.widthPixels;
         deviceHeight = dm.heightPixels;
-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        serverAddress = preferences.getString("server", "192.168.0.104:8021/tp");
-        remoteUID = getIntent().getStringExtra(AddressInputDialog.KEY_UID_EXTRA);
-        hideSystemUI();
-        setContentView(R.layout.activity_client);
-        surfaceView = (SurfaceView) findViewById(R.id.main_surface_view);
-        surfaceView.getHolder().addCallback(this);
-        surfaceView.setOnTouchListener(this);
     }
 
 
@@ -92,7 +108,7 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
                 return;
             }
 
-            ClientActivity.this.webSocket = webSocket;
+            RemoteControlActivity.this.webSocket = webSocket;
 
             String uid = preferences.getString("uid", "111");
             webSocket.send(TelepathyAPI.MESSAGE_LOGIN + uid);
@@ -108,6 +124,8 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
 
             webSocket.setStringCallback(new WebSocket.StringCallback() {
                 public void onStringAvailable(String s) {
+                    Log.d("API", s);
+
                     if (s.startsWith(TelepathyAPI.MESSAGE_CONNECT_ACCEPTED)) {
                         showToast("Remote controlling user " + remoteUID);
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_CONNECT_FAILED)) {
@@ -116,8 +134,10 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
                         showToast("Server: " + s);
                         finish();
-                    } else {
-                        String[] parts = s.split(",");
+                    } else if (s.startsWith(TelepathyAPI.MESSAGE_VIDEO_METADATA)) {
+                        String messagePayload = s.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
+                        String[] parts = messagePayload.split(",");
+
                         try {
                             info.set(Integer.parseInt(parts[0]),
                                     Integer.parseInt(parts[1]),
@@ -224,10 +244,10 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
     }
 
     private void showToast(final String message) {
-        ClientActivity.this.runOnUiThread(new Runnable() {
+        RemoteControlActivity.this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(ClientActivity.this, message, Toast.LENGTH_SHORT).show();
+                Toast.makeText(RemoteControlActivity.this, message, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -252,8 +272,9 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
 
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
+        // TODO: Support the whole range of motion events.
         if (webSocket != null) {
-            webSocket.send(motionEvent.getX() / deviceWidth + "," + motionEvent.getY() / deviceHeight);
+            webSocket.send(TelepathyAPI.MESSAGE_INPUT + motionEvent.getX() / deviceWidth + "," + motionEvent.getY() / deviceHeight);
         }
         return false;
     }

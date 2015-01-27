@@ -37,7 +37,7 @@ import java.nio.ByteBuffer;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class ServerService extends Service {
+public class RemoteControlService extends Service {
 
     private static final String TAG = "StreamingServer";
 
@@ -116,14 +116,14 @@ public class ServerService extends Service {
         @Override
         public void onCompleted(Exception ex, final WebSocket webSocket) {
             if (webSocket == null || ex != null) {
-                showToast("Server not available.");
+                showToast("Support server not available. Attempting to reconnect...");
                 connect();
                 return;
             } else {
                 showToast("Connected to support server.");
             }
 
-            ServerService.this.webSocket = webSocket;
+            RemoteControlService.this.webSocket = webSocket;
 
             String uid = preferences.getString("uid", "111");
             webSocket.send(TelepathyAPI.MESSAGE_LOGIN + uid);
@@ -132,6 +132,7 @@ public class ServerService extends Service {
             webSocket.setClosedCallback(new CompletedCallback() {
                 @Override
                 public void onCompleted(Exception ex) {
+                    // TODO: Why does the socket disconnect when the remote control session is interrupted from the other end?
                     showToast("Disconnected from server. Reconnecting...");
                     connect();
                 }
@@ -140,6 +141,8 @@ public class ServerService extends Service {
             webSocket.setStringCallback(new WebSocket.StringCallback() {
                 @Override
                 public void onStringAvailable(String s) {
+                    Log.d("API", s);
+
                     if (s.startsWith(TelepathyAPI.MESSAGE_CONNECT)) {
                         String remoteUID = s.split(TelepathyAPI.MESSAGE_UID_DELIMITER)[1];
                         webSocket.send(TelepathyAPI.MESSAGE_CONNECT_ACCEPTED + remoteUID);
@@ -157,8 +160,10 @@ public class ServerService extends Service {
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
                         showToast("Server: " + s);
 
-                    } else {
-                        String[] parts = s.split(",");
+                    } else if (s.startsWith(TelepathyAPI.MESSAGE_INPUT)) {
+                        String messagePayload = s.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
+                        String[] parts = messagePayload.split(",");
+
                         if (parts.length < 2) {
                             return;
                         }
@@ -249,11 +254,11 @@ public class ServerService extends Service {
                     }
 
                     if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-                        webSocket.send(info.offset + "," + info.size + "," +
+                        webSocket.send(TelepathyAPI.MESSAGE_VIDEO_METADATA + info.offset + "," + info.size + "," +
                                 info.presentationTimeUs + "," + info.flags + "," +
                                 resolution.x + "," + resolution.y);
                     } else {
-                        webSocket.send(info.offset + "," + info.size + "," +
+                        webSocket.send(TelepathyAPI.MESSAGE_VIDEO_METADATA + info.offset + "," + info.size + "," +
                                 info.presentationTimeUs + "," + info.flags);
                     }
 
@@ -287,6 +292,7 @@ public class ServerService extends Service {
     @Override
     public void onDestroy() {
         stopEncoder();
+        webSocket.send(TelepathyAPI.MESSAGE_DISCONNECT);
         webSocket.send(TelepathyAPI.MESSAGE_LOGOUT);
         super.onDestroy();
     }
@@ -312,7 +318,7 @@ public class ServerService extends Service {
     }
 
     private void updateNotification(String message) {
-        Intent intent = new Intent(this, ServerService.class);
+        Intent intent = new Intent(this, RemoteControlService.class);
         intent.setAction("STOP");
         PendingIntent stopServiceIntent = PendingIntent.getService(this, 0, intent, 0);
         Notification.Builder mBuilder =
