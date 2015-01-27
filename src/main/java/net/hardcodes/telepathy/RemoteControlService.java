@@ -159,6 +159,7 @@ public class RemoteControlService extends Service {
 
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
                         showToast("Server: " + s);
+                        stopEncoder();
 
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_INPUT)) {
                         String messagePayload = s.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
