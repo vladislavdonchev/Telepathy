@@ -1,12 +1,6 @@
 package net.hardcodes.telepathy;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.media.MediaCodec;
@@ -52,7 +46,7 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
 
     private WebSocket webSocket;
 
-    String address;
+    String serverAddress;
     String remoteUID;
 
     int deviceWidth;
@@ -68,7 +62,7 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
         deviceWidth = dm.widthPixels;
         deviceHeight = dm.heightPixels;
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        address = preferences.getString("server", "192.168.0.104:8021/tp");
+        serverAddress = preferences.getString("server", "192.168.0.104:8021/tp");
         remoteUID = getIntent().getStringExtra(AddressInputDialog.KEY_UID_EXTRA);
         hideSystemUI();
         setContentView(R.layout.activity_client);
@@ -77,34 +71,51 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
         surfaceView.setOnTouchListener(this);
     }
 
+
+    @Override
+    protected void onDestroy() {
+        if (webSocket != null) {
+            webSocket.send(TelepathyAPI.MESSAGE_DISCONNECT);
+            webSocket.send(TelepathyAPI.MESSAGE_LOGOUT);
+            webSocket.close();
+            webSocket = null;
+        }
+        super.onDestroy();
+    }
+
     private AsyncHttpClient.WebSocketConnectCallback websocketCallback = new AsyncHttpClient
             .WebSocketConnectCallback() {
         @Override
-        public void onCompleted(final Exception ex, final WebSocket webSocket) {
-
-            if (ex != null) {
-                ex.printStackTrace();
+        public void onCompleted(Exception ex, final WebSocket webSocket) {
+            if (webSocket == null || ex != null){
+                showToast("Server not available.");
                 return;
             }
+
             ClientActivity.this.webSocket = webSocket;
+
             String uid = preferences.getString("uid", "111");
-            webSocket.send(TelepathyAPI.MESSAGE_LOGIN + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + uid);
-            webSocket.send(TelepathyAPI.MESSAGE_CONNECT + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + remoteUID);
-            setTimer();
+            webSocket.send(TelepathyAPI.MESSAGE_LOGIN + uid);
+            webSocket.send(TelepathyAPI.MESSAGE_CONNECT + remoteUID);
+            startPingPong();
+
             webSocket.setClosedCallback(new CompletedCallback() {
                 @Override
                 public void onCompleted(Exception e) {
-                    ClientActivity.this.webSocket = null;
                     finish();
                 }
             });
+
             webSocket.setStringCallback(new WebSocket.StringCallback() {
                 public void onStringAvailable(String s) {
                     if (s.startsWith(TelepathyAPI.MESSAGE_CONNECT_ACCEPTED)) {
                         showToast("Remote controlling user " + remoteUID);
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_CONNECT_FAILED)) {
                         showToast("User " + remoteUID + " not logged in.");
-                        webSocket.close();
+                        finish();
+                    } else if (s.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
+                        showToast("Server: " + s);
+                        finish();
                     } else {
                         String[] parts = s.split(",");
                         try {
@@ -125,74 +136,73 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
                     }
                 }
             });
+
             webSocket.setDataCallback(new DataCallback() {
                 @Override
                 public void onDataAvailable(DataEmitter dataEmitter, ByteBufferList byteBufferList) {
-                    if (true) {
-                        ByteBuffer b = byteBufferList.getAll();
-                        //b.position(info.offset);
-                        b.position(0);
-                        //b.limit(info.offset + info.size);
-                        b.limit(info.size);
-                        if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-                            MediaFormat format =
-                                    MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
-                                            videoResolution.x, videoResolution.y);
-                            format.setByteBuffer("csd-0", b);
-                            decoder.configure(format, surfaceView.getHolder().getSurface(), null, 0);
-                            decoder.start();
+                    ByteBuffer b = byteBufferList.getAll();
+                    //b.position(info.offset);
+                    b.position(0);
+                    //b.limit(info.offset + info.size);
+                    b.limit(info.size);
+                    if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                        MediaFormat format =
+                                MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
+                                        videoResolution.x, videoResolution.y);
+                        format.setByteBuffer("csd-0", b);
+                        decoder.configure(format, surfaceView.getHolder().getSurface(), null, 0);
+                        decoder.start();
+                        byteBufferList.recycle();
+                        decoderInputBuffers = decoder.getInputBuffers();
+                        decoderConfigured = true;
+                        return;
+                    }
+                    int inputBufIndex = decoder.dequeueInputBuffer(CodecUtils.TIMEOUT_USEC);
+                    if (inputBufIndex >= 0) {
+                        ByteBuffer inputBuf = decoderInputBuffers[inputBufIndex];
+                        inputBuf.clear();
+                        inputBuf.limit(info.offset + info.size);
+                        byte[] buff = new byte[info.size];
+                        b.get(buff, 0, info.size);
+                        try {
+                            inputBuf.put(buff);
+                        } catch (BufferOverflowException e) {
+                            showToast("Buffer Overflow = " + e.getMessage());
+                            Log.d(TAG, "Input buff capacity = " + inputBuf.capacity() + " limit = " + inputBuf.limit() + " byte size = " + buff.length);
+                            e.printStackTrace();
                             byteBufferList.recycle();
-                            decoderInputBuffers = decoder.getInputBuffers();
-                            decoderConfigured = true;
                             return;
                         }
-                        int inputBufIndex = decoder.dequeueInputBuffer(CodecUtils.TIMEOUT_USEC);
-                        if (inputBufIndex >= 0) {
-                            ByteBuffer inputBuf = decoderInputBuffers[inputBufIndex];
-                            inputBuf.clear();
-                            inputBuf.limit(info.offset + info.size);
-                            byte[] buff = new byte[info.size];
-                            b.get(buff, 0, info.size);
-                            try {
-                                inputBuf.put(buff);
-                            } catch (BufferOverflowException e) {
-                                showToast("Buffer Overflow = " + e.getMessage());
-                                Log.d(TAG, "Input buff capacity = " + inputBuf.capacity() + " limit = " + inputBuf.limit() + " byte size = " + buff.length);
-                                e.printStackTrace();
-                                byteBufferList.recycle();
-                                return;
-                            }
 
-                            inputBuf.rewind();
-                            decoder.queueInputBuffer(inputBufIndex, 0, info.size,
-                                    info.presentationTimeUs, 0 /*flags*/);
+                        inputBuf.rewind();
+                        decoder.queueInputBuffer(inputBufIndex, 0, info.size,
+                                info.presentationTimeUs, 0 /*flags*/);
+                    }
+                    int decoderStatus = decoder.dequeueOutputBuffer(info, CodecUtils.TIMEOUT_USEC);
+                    if (decoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                        // no output available yet
+                        Log.d(TAG, "no output from decoder available");
+                    } else if (decoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+                        // The storage associated with the direct ByteBuffer may already be unmapped,
+                        // so attempting to access data through the old output buffer array could
+                        // lead to a native crash.
+                        Log.d(TAG, "decoder output buffers changed");
+                    } else if (decoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                        // this happens before the first frame is returned
+                        MediaFormat decoderOutputFormat = decoder.getOutputFormat();
+                        Log.d(TAG, "decoder output format changed: " + decoderOutputFormat);
+                    } else if (decoderStatus < 0) {
+                        //TODO: fail
+                        showToast("Something wrong with the decoder. Need to stop everything.");
+                    } else {
+                        if (info.size == 0) {
+                            Log.d(TAG, "got empty frame");
                         }
-                        int decoderStatus = decoder.dequeueOutputBuffer(info, CodecUtils.TIMEOUT_USEC);
-                        if (decoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
-                            // no output available yet
-                            Log.d(TAG, "no output from decoder available");
-                        } else if (decoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
-                            // The storage associated with the direct ByteBuffer may already be unmapped,
-                            // so attempting to access data through the old output buffer array could
-                            // lead to a native crash.
-                            Log.d(TAG, "decoder output buffers changed");
-                        } else if (decoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                            // this happens before the first frame is returned
-                            MediaFormat decoderOutputFormat = decoder.getOutputFormat();
-                            Log.d(TAG, "decoder output format changed: " + decoderOutputFormat);
-                        } else if (decoderStatus < 0) {
-                            //TODO: fail
-                            showToast("Something wrong with the decoder. Need to stop everything.");
-                        } else {
-                            if (info.size == 0) {
-                                Log.d(TAG, "got empty frame");
-                            }
-                            if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                                Log.d(TAG, "output EOS");
-                            }
-                            boolean doRender = (info.size != 0);
-                            decoder.releaseOutputBuffer(decoderStatus, doRender /*render*/);
+                        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                            Log.d(TAG, "output EOS");
                         }
+                        boolean doRender = (info.size != 0);
+                        decoder.releaseOutputBuffer(decoderStatus, doRender /*render*/);
                     }
                     byteBufferList.recycle();
                 }
@@ -226,7 +236,7 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         try {
             decoder = MediaCodec.createDecoderByType(CodecUtils.MIME_TYPE);
-            AsyncHttpClient.getDefaultInstance().websocket("ws://" + address, null, websocketCallback);
+            AsyncHttpClient.getDefaultInstance().websocket("ws://" + serverAddress, null, websocketCallback);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -248,14 +258,14 @@ public class ClientActivity extends Activity implements SurfaceHolder.Callback, 
         return false;
     }
 
-    private void setTimer() {
+    private void startPingPong() {
         new Timer("keep_alive").scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 if (webSocket != null) {
-                    webSocket.send(TelepathyAPI.MESSAGE_HEARTBEAT);
+                    webSocket.ping(TelepathyAPI.MESSAGE_HEARTBEAT);
                 }
             }
-        }, 2000, 3000);
+        }, 0, 10 * 1000);
     }
 }

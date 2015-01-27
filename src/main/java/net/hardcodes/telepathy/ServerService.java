@@ -1,6 +1,5 @@
 package net.hardcodes.telepathy;
 
-import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -28,17 +27,15 @@ import com.koushikdutta.async.callback.CompletedCallback;
 import com.koushikdutta.async.callback.DataCallback;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.WebSocket;
-import com.koushikdutta.async.http.server.AsyncHttpServer;
 
 import net.hardcodes.telepathy.tools.CodecUtils;
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
-import net.hardcodes.telepathy.tools.Utils;
 
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ServerService extends Service {
 
@@ -73,12 +70,12 @@ public class ServerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && intent.getAction() == "STOP") {
-            if (encoder != null)
-                encoder.signalEndOfInputStream();
+        if (intent != null && intent.getAction().equals("STOP")) {
+            stopEncoder();
             stopForeground(true);
             stopSelf();
         }
+
         if (intent.getAction().equals("START")) {
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
             DisplayMetrics dm = new DisplayMetrics();
@@ -93,26 +90,50 @@ public class ServerService extends Service {
             resolution.y = (int) (resolution.y * resolutionRatio);
 
             bitrateRatio = Float.parseFloat(preferences.getString(SettingsActivity.KEY_BITRATE_PREF, "1"));
-            String address = preferences.getString("server", "192.168.0.104:8021/tp");
-            AsyncHttpClient.getDefaultInstance().websocket("ws://" + address, null, websocketCallback);
+            connect();
+
             mHandler = new Handler();
         }
         return START_NOT_STICKY;
     }
 
-    private AsyncHttpClient.WebSocketConnectCallback websocketCallback = new AsyncHttpClient.WebSocketConnectCallback() {
+    private void connect() {
+        String address = preferences.getString("server", "192.168.0.104:8021/tp");
+        AsyncHttpClient.getDefaultInstance().websocket("ws://" + address, null, webSocketCallback);
+    }
+
+    private void stopEncoder() {
+        if (encoder != null) {
+            encoder.signalEndOfInputStream();
+        }
+        if (encoderThread != null) {
+            encoderThread = null;
+        }
+    }
+
+    private AsyncHttpClient.WebSocketConnectCallback webSocketCallback = new AsyncHttpClient.WebSocketConnectCallback() {
 
         @Override
         public void onCompleted(Exception ex, final WebSocket webSocket) {
+            if (webSocket == null || ex != null) {
+                showToast("Server not available.");
+                connect();
+                return;
+            } else {
+                showToast("Connected to support server.");
+            }
+
             ServerService.this.webSocket = webSocket;
 
             String uid = preferences.getString("uid", "111");
-            webSocket.send(TelepathyAPI.MESSAGE_LOGIN + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + uid);
+            webSocket.send(TelepathyAPI.MESSAGE_LOGIN + uid);
+            startPingPong();
 
             webSocket.setClosedCallback(new CompletedCallback() {
                 @Override
                 public void onCompleted(Exception ex) {
-                    showToast("Disconnected.");
+                    showToast("Disconnected from server. Reconnecting...");
+                    connect();
                 }
             });
 
@@ -120,8 +141,8 @@ public class ServerService extends Service {
                 @Override
                 public void onStringAvailable(String s) {
                     if (s.startsWith(TelepathyAPI.MESSAGE_CONNECT)) {
-                        String remoteUID = s.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
-                        webSocket.send(TelepathyAPI.MESSAGE_CONNECT_ACCEPTED + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + remoteUID);
+                        String remoteUID = s.split(TelepathyAPI.MESSAGE_UID_DELIMITER)[1];
+                        webSocket.send(TelepathyAPI.MESSAGE_CONNECT_ACCEPTED + remoteUID);
                         showToast("User " + remoteUID + " has connected.");
                         //Start rendering display on the surface and set up the encoder.
                         if (encoderThread == null) {
@@ -129,6 +150,13 @@ public class ServerService extends Service {
                             encoderThread = new Thread(new EncoderWorker(), "Encoder Thread");
                             encoderThread.start();
                         }
+
+                    } else if (s.startsWith(TelepathyAPI.MESSAGE_DISCONNECT)) {
+                        stopEncoder();
+
+                    } else if (s.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
+                        showToast("Server: " + s);
+
                     } else {
                         String[] parts = s.split(",");
                         if (parts.length < 2) {
@@ -154,7 +182,6 @@ public class ServerService extends Service {
         }
     };
 
-    @TargetApi(19)
     private Surface createDisplaySurface() throws IOException {
         MediaFormat mMediaFormat = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
                 resolution.x, resolution.y);
@@ -172,7 +199,6 @@ public class ServerService extends Service {
         return surface;
     }
 
-    @TargetApi(19)
     public void startDisplayManager() {
         DisplayManager mDisplayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
         Surface encoderInputSurface = null;
@@ -185,7 +211,6 @@ public class ServerService extends Service {
                 encoderInputSurface, DisplayManager.VIRTUAL_DISPLAY_FLAG_SECURE | DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC | DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR);
     }
 
-    @TargetApi(19)
     private class EncoderWorker implements Runnable {
 
         @Override
@@ -223,28 +248,33 @@ public class ServerService extends Service {
                         return;
                     }
 
-                        if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-                            webSocket.send(info.offset + "," + info.size + "," +
-                                    info.presentationTimeUs + "," + info.flags + "," +
-                                    resolution.x + "," + resolution.y);
-                        } else {
-                            webSocket.send(info.offset + "," + info.size + "," +
-                                    info.presentationTimeUs + "," + info.flags);
-                        }
+                    if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                        webSocket.send(info.offset + "," + info.size + "," +
+                                info.presentationTimeUs + "," + info.flags + "," +
+                                resolution.x + "," + resolution.y);
+                    } else {
+                        webSocket.send(info.offset + "," + info.size + "," +
+                                info.presentationTimeUs + "," + info.flags);
+                    }
 
-                        byte[] b = new byte[info.size];
-                        try {
-                            encodedData.position(info.offset);
-                            encodedData.get(b, info.offset, info.offset + info.size);
-                            webSocket.send(b);
-                        } catch (BufferUnderflowException e) {
-                            e.printStackTrace();
-                        }
+                    byte[] b = new byte[info.size];
+                    try {
+                        encodedData.position(info.offset);
+                        encodedData.get(b, info.offset, info.offset + info.size);
+                        webSocket.send(b);
+                    } catch (BufferUnderflowException e) {
+                        e.printStackTrace();
+                    }
 
                     encoderDone = (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
 
                     try {
                         encoder.releaseOutputBuffer(encoderStatus, false);
+                        if (encoderDone) {
+                            encoder.stop();
+                            encoder.release();
+                            encoder = null;
+                        }
                     } catch (IllegalStateException e) {
                         e.printStackTrace();
                         break;
@@ -256,12 +286,9 @@ public class ServerService extends Service {
 
     @Override
     public void onDestroy() {
+        stopEncoder();
+        webSocket.send(TelepathyAPI.MESSAGE_LOGOUT);
         super.onDestroy();
-        if (encoder != null) {
-            encoder.stop();
-            encoder.release();
-            encoder = null;
-        }
     }
 
     @Override
@@ -273,6 +300,16 @@ public class ServerService extends Service {
         mHandler.post(new ToastRunnable(message));
     }
 
+    private void startPingPong() {
+        new Timer("keep_alive").scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (webSocket != null) {
+                    webSocket.ping(TelepathyAPI.MESSAGE_HEARTBEAT);
+                }
+            }
+        }, 0, 10 * 1000);
+    }
 
     private void updateNotification(String message) {
         Intent intent = new Intent(this, ServerService.class);

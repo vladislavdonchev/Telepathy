@@ -27,7 +27,7 @@ public class SettingsActivity extends PreferenceActivity implements
         addPreferencesFromResource(R.xml.preferences);
 
         portNumberPref = (EditTextPreference) findPreference(KEY_SERVER_PREF);
-        portNumberPref.setSummary("Telepathy server address.");
+        portNumberPref.setSummary("Telepathy server serverAddress.");
 
         bitratePref = (ListPreference) findPreference(KEY_BITRATE_PREF);
         bitratePref.setEntries(bitrateOptions);
