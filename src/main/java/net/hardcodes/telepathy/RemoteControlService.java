@@ -97,7 +97,7 @@ public class RemoteControlService extends Service {
         return START_NOT_STICKY;
     }
 
-    private void connect() {
+    private void connect(){
         String address = preferences.getString("server", "192.168.0.104:8021/tp");
         AsyncHttpClient.getDefaultInstance().websocket("ws://" + address, null, webSocketCallback);
     }
@@ -116,7 +116,11 @@ public class RemoteControlService extends Service {
         @Override
         public void onCompleted(Exception ex, final WebSocket webSocket) {
             if (webSocket == null || ex != null) {
-                showToast("Support server not available. Attempting to reconnect...");
+                showToast("Support server not available. Attempting to reconnect in 20 seconds...");
+                try {
+                    Thread.sleep(20000);
+                } catch (InterruptedException e) {
+                }
                 connect();
                 return;
             } else {
@@ -133,7 +137,11 @@ public class RemoteControlService extends Service {
                 @Override
                 public void onCompleted(Exception ex) {
                     // TODO: Why does the socket disconnect when the remote control session is interrupted from the other end?
-                    showToast("Disconnected from server. Reconnecting...");
+                    showToast("Disconnected from support server. Reconnecting in 20 seconds...");
+                    try {
+                        Thread.sleep(20000);
+                    } catch (InterruptedException e) {
+                    }
                     connect();
                 }
             });

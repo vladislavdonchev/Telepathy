@@ -129,7 +129,7 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
                     if (s.startsWith(TelepathyAPI.MESSAGE_CONNECT_ACCEPTED)) {
                         showToast("Remote controlling user " + remoteUID);
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_CONNECT_FAILED)) {
-                        showToast("User " + remoteUID + " not logged in.");
+                        showToast("User " + remoteUID + " not logged in. Please try again later.");
                         finish();
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
                         showToast("Server: " + s);
