@@ -14,6 +14,7 @@ import android.media.MediaFormat;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -89,7 +90,6 @@ public class RemoteControlService extends Service {
             resolution.x = (int) (resolution.x * resolutionRatio);
             resolution.y = (int) (resolution.y * resolutionRatio);
 
-            bitrateRatio = Float.parseFloat(preferences.getString(SettingsActivity.KEY_BITRATE_PREF, "1"));
             connect();
 
             mHandler = new Handler();
@@ -191,6 +191,18 @@ public class RemoteControlService extends Service {
     private Surface createDisplaySurface() throws IOException {
         MediaFormat mMediaFormat = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
                 resolution.x, resolution.y);
+
+        TelephonyManager telephonyManager;
+        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        int currentNetworkType = telephonyManager.getNetworkType();
+
+        if (currentNetworkType < TelephonyManager.NETWORK_TYPE_UMTS) {
+            bitrateRatio = 0.03125f;
+            showToast("2G connection detected - reducing support video stream quality.");
+        } else {
+            bitrateRatio = Float.parseFloat(preferences.getString(SettingsActivity.KEY_BITRATE_PREF, "1"));
+        }
+
         mMediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, (int) (1024 * 1024 * bitrateRatio));
         mMediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 15);
         mMediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
