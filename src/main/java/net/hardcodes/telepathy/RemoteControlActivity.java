@@ -55,6 +55,7 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
     int deviceHeight;
     Point videoResolution = new Point();
     private SharedPreferences preferences;
+    private Timer pingPongTimer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +69,7 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         serverAddress = preferences.getString("server", "192.168.0.104:8021/tp");
         remoteUID = getIntent().getStringExtra(AddressInputDialog.KEY_UID_EXTRA);
-        
+
         surfaceView = (SurfaceView) findViewById(R.id.main_surface_view);
         surfaceView.getHolder().addCallback(this);
         surfaceView.setOnTouchListener(this);
@@ -89,21 +90,31 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
 
 
     @Override
+    public void onBackPressed() {
+        disconnect();
+        super.onBackPressed();
+    }
+
+    @Override
     protected void onDestroy() {
+        disconnect();
+        super.onDestroy();
+    }
+
+    private void disconnect() {
         if (webSocket != null) {
-            webSocket.send(TelepathyAPI.MESSAGE_DISCONNECT);
+            webSocket.send(TelepathyAPI.MESSAGE_DISBAND);
             webSocket.send(TelepathyAPI.MESSAGE_LOGOUT);
             webSocket.close();
             webSocket = null;
         }
-        super.onDestroy();
     }
 
     private AsyncHttpClient.WebSocketConnectCallback websocketCallback = new AsyncHttpClient
             .WebSocketConnectCallback() {
         @Override
         public void onCompleted(Exception ex, final WebSocket webSocket) {
-            if (webSocket == null || ex != null){
+            if (webSocket == null || ex != null) {
                 showToast("Server not available.");
                 return;
             }
@@ -112,12 +123,13 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
 
             String uid = preferences.getString("uid", "111");
             webSocket.send(TelepathyAPI.MESSAGE_LOGIN + uid);
-            webSocket.send(TelepathyAPI.MESSAGE_CONNECT + remoteUID);
+            webSocket.send(TelepathyAPI.MESSAGE_BIND + remoteUID);
             startPingPong();
 
             webSocket.setClosedCallback(new CompletedCallback() {
                 @Override
                 public void onCompleted(Exception e) {
+                    stopPingPong();
                     finish();
                 }
             });
@@ -126,9 +138,9 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
                 public void onStringAvailable(String s) {
                     Log.d("API", s);
 
-                    if (s.startsWith(TelepathyAPI.MESSAGE_CONNECT_ACCEPTED)) {
+                    if (s.startsWith(TelepathyAPI.MESSAGE_BIND_ACCEPTED)) {
                         showToast("Remote controlling user " + remoteUID);
-                    } else if (s.startsWith(TelepathyAPI.MESSAGE_CONNECT_FAILED)) {
+                    } else if (s.startsWith(TelepathyAPI.MESSAGE_BIND_FAILED)) {
                         showToast("User " + remoteUID + " not logged in. Please try again later.");
                         finish();
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
@@ -280,13 +292,21 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
     }
 
     private void startPingPong() {
-        new Timer("keep_alive").scheduleAtFixedRate(new TimerTask() {
+        pingPongTimer = new Timer("keep_alive");
+        pingPongTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if (webSocket != null) {
+                try {
                     webSocket.ping(TelepathyAPI.MESSAGE_HEARTBEAT);
+                } catch (Exception e) {
+                    Log.d("WEBSOCKPING", e.toString(), e);
                 }
             }
         }, 0, 10 * 1000);
+    }
+    
+    private void stopPingPong(){
+        pingPongTimer.cancel();
+        pingPongTimer.purge();
     }
 }

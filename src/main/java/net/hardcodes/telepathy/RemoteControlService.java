@@ -55,6 +55,7 @@ public class RemoteControlService extends Service {
 
     Handler mHandler;
     SharedPreferences preferences;
+    private Timer pingPongTimer;
 
     private class ToastRunnable implements Runnable {
         String mText;
@@ -79,27 +80,27 @@ public class RemoteControlService extends Service {
 
         if (intent.getAction().equals("START")) {
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            DisplayMetrics dm = new DisplayMetrics();
-            Display mDisplay = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-            mDisplay.getMetrics(dm);
-            deviceWidth = dm.widthPixels;
-            deviceHeight = dm.heightPixels;
-            float resolutionRatio = Float.parseFloat(
-                    preferences.getString(SettingsActivity.KEY_RESOLUTION_PREF, "0.25"));
-            mDisplay.getRealSize(resolution);
-            resolution.x = (int) (resolution.x * resolutionRatio);
-            resolution.y = (int) (resolution.y * resolutionRatio);
-
             connect();
-
             mHandler = new Handler();
         }
         return START_NOT_STICKY;
     }
 
-    private void connect(){
+    private void connect() {
         String address = preferences.getString("server", "192.168.0.104:8021/tp");
         AsyncHttpClient.getDefaultInstance().websocket("ws://" + address, null, webSocketCallback);
+    }
+
+    private void initDisplayParameters(){
+        DisplayMetrics dm = new DisplayMetrics();
+        Display mDisplay = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        mDisplay.getMetrics(dm);
+        deviceWidth = dm.widthPixels;
+        deviceHeight = dm.heightPixels;
+        float resolutionRatio = Float.parseFloat(preferences.getString(SettingsActivity.KEY_RESOLUTION_PREF, "0.25"));
+        mDisplay.getRealSize(resolution);
+        resolution.x = (int) (resolution.x * resolutionRatio);
+        resolution.y = (int) (resolution.y * resolutionRatio);
     }
 
     private void stopEncoder() {
@@ -127,7 +128,9 @@ public class RemoteControlService extends Service {
                 showToast("Connected to support server.");
             }
 
-            RemoteControlService.this.webSocket = webSocket;
+            if (RemoteControlService.this.webSocket != null){
+                RemoteControlService.this.webSocket.close();
+            }
 
             String uid = preferences.getString("uid", "111");
             webSocket.send(TelepathyAPI.MESSAGE_LOGIN + uid);
@@ -136,6 +139,11 @@ public class RemoteControlService extends Service {
             webSocket.setClosedCallback(new CompletedCallback() {
                 @Override
                 public void onCompleted(Exception ex) {
+                    if (ex != null) {
+                        Log.d("WSCLOSE", ex.toString(), ex);
+                    }
+                    stopPingPong();
+
                     // TODO: Why does the socket disconnect when the remote control session is interrupted from the other end?
                     showToast("Disconnected from support server. Reconnecting in 20 seconds...");
                     try {
@@ -151,18 +159,19 @@ public class RemoteControlService extends Service {
                 public void onStringAvailable(String s) {
                     Log.d("API", s);
 
-                    if (s.startsWith(TelepathyAPI.MESSAGE_CONNECT)) {
+                    if (s.startsWith(TelepathyAPI.MESSAGE_BIND)) {
                         String remoteUID = s.split(TelepathyAPI.MESSAGE_UID_DELIMITER)[1];
-                        webSocket.send(TelepathyAPI.MESSAGE_CONNECT_ACCEPTED + remoteUID);
+                        webSocket.send(TelepathyAPI.MESSAGE_BIND_ACCEPTED + remoteUID);
                         showToast("User " + remoteUID + " has connected.");
                         //Start rendering display on the surface and set up the encoder.
                         if (encoderThread == null) {
+                            initDisplayParameters();
                             startDisplayManager();
                             encoderThread = new Thread(new EncoderWorker(), "Encoder Thread");
                             encoderThread.start();
                         }
 
-                    } else if (s.startsWith(TelepathyAPI.MESSAGE_DISCONNECT)) {
+                    } else if (s.startsWith(TelepathyAPI.MESSAGE_DISBAND)) {
                         stopEncoder();
 
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
@@ -193,6 +202,19 @@ public class RemoteControlService extends Service {
                     byteBufferList.recycle();
                 }
             });
+
+            webSocket.setEndCallback(new CompletedCallback() {
+                @Override
+                public void onCompleted(Exception ex) {
+                    if (ex == null) {
+                        Log.d("WSEND", "END?!");
+                    } else {
+                        Log.d("WSEND", ex.toString(), ex);
+                    }
+                }
+            });
+
+            RemoteControlService.this.webSocket = webSocket;
         }
     };
 
@@ -313,7 +335,7 @@ public class RemoteControlService extends Service {
     @Override
     public void onDestroy() {
         stopEncoder();
-        webSocket.send(TelepathyAPI.MESSAGE_DISCONNECT);
+        webSocket.send(TelepathyAPI.MESSAGE_DISBAND);
         webSocket.send(TelepathyAPI.MESSAGE_LOGOUT);
         super.onDestroy();
     }
@@ -327,15 +349,26 @@ public class RemoteControlService extends Service {
         mHandler.post(new ToastRunnable(message));
     }
 
+
     private void startPingPong() {
-        new Timer("keep_alive").scheduleAtFixedRate(new TimerTask() {
+        pingPongTimer = new Timer("keep_alive");
+        pingPongTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 if (webSocket != null) {
-                    webSocket.ping(TelepathyAPI.MESSAGE_HEARTBEAT);
+                    try {
+                        webSocket.ping(TelepathyAPI.MESSAGE_HEARTBEAT);
+                    } catch (Exception e) {
+                        Log.d("WEBSOCKPING", e.toString(), e);
+                    }
                 }
             }
         }, 0, 10 * 1000);
+    }
+
+    private void stopPingPong(){
+        pingPongTimer.cancel();
+        pingPongTimer.purge();
     }
 
     private void updateNotification(String message) {
