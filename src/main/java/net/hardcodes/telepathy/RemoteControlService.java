@@ -1,5 +1,6 @@
 package net.hardcodes.telepathy;
 
+import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -8,11 +9,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
+import android.hardware.display.VirtualDisplay;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
@@ -41,21 +44,24 @@ import java.util.TimerTask;
 public class RemoteControlService extends Service {
 
     private static final String TAG = "StreamingServer";
+    public static final String VIRTUAL_DISPLAY_TAG = "ScreenRecorder";
+
+    private SharedPreferences preferences;
+    private Handler toastHandler;
 
     public WebSocket webSocket;
+    private Timer pingPongTimer;
 
+    private DisplayManager displayManager;
+    private Surface encoderInputSurface = null;
+    private VirtualDisplay virtualDisplay = null;
     private MediaCodec encoder = null;
-    Thread encoderThread = null;
+    private Thread encoderThread = null;
 
     private float bitrateRatio;
-    int deviceWidth;
-    int deviceHeight;
-    Point resolution = new Point();
-    long frameCount = 0;
-
-    Handler mHandler;
-    SharedPreferences preferences;
-    private Timer pingPongTimer;
+    private int deviceWidth;
+    private int deviceHeight;
+    private Point resolution = new Point();
 
     private class ToastRunnable implements Runnable {
         String mText;
@@ -72,16 +78,19 @@ public class RemoteControlService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && intent.getAction().equals("STOP")) {
-            stopEncoder();
-            stopForeground(true);
-            stopSelf();
-        }
+        if (intent != null) {
+            if (intent.getAction().equals("STOP")) {
+                stopEncodingVirtualDisplay();
+                stopForeground(true);
+                stopSelf();
+            }
 
-        if (intent.getAction().equals("START")) {
-            preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            connect();
-            mHandler = new Handler();
+            if (intent.getAction().equals("START")) {
+                preferences = PreferenceManager.getDefaultSharedPreferences(this);
+                displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
+                connect();
+                toastHandler = new Handler();
+            }
         }
         return START_NOT_STICKY;
     }
@@ -91,7 +100,53 @@ public class RemoteControlService extends Service {
         AsyncHttpClient.getDefaultInstance().websocket("ws://" + address, null, webSocketCallback);
     }
 
-    private void initDisplayParameters(){
+    public void startEncodingVirtualDisplay() {
+        initDisplayParameters();
+
+        try {
+            encoderInputSurface = createDisplaySurface();
+        } catch (IOException e) {
+            Log.d("ENCODER", e.toString(), e);
+        }
+        virtualDisplay = displayManager.createVirtualDisplay(VIRTUAL_DISPLAY_TAG, resolution.x, resolution.y, 50,
+                encoderInputSurface, DisplayManager.VIRTUAL_DISPLAY_FLAG_SECURE | DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC | DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR);
+
+        encoderThread = new Thread(new EncoderWorker(), "Encoder Thread");
+        encoderThread.start();
+    }
+
+    private Surface createDisplaySurface() throws IOException {
+        MediaFormat mMediaFormat = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
+                resolution.x, resolution.y);
+
+        TelephonyManager telephonyManager;
+        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        int currentNetworkType = telephonyManager.getNetworkType();
+
+        if (currentNetworkType < TelephonyManager.NETWORK_TYPE_UMTS) {
+            bitrateRatio = 0.03125f;
+            showToast("2G connection detected - reducing support video stream quality.");
+        } else {
+            bitrateRatio = Float.parseFloat(preferences.getString(SettingsActivity.KEY_BITRATE_PREF, "1"));
+        }
+
+        mMediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, (int) (1024 * 1024 * bitrateRatio));
+        mMediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 15);
+        mMediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+        mMediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+        mMediaFormat.setInteger(MediaFormat.KEY_CAPTURE_RATE, 15);
+
+        Log.i(TAG, "Starting encoder");
+        encoder = MediaCodec.createEncoderByType(CodecUtils.MIME_TYPE);
+        encoder.configure(mMediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+
+        Surface surface = encoder.createInputSurface();
+
+        encoder.start();
+        return surface;
+    }
+
+    private void initDisplayParameters() {
         DisplayMetrics dm = new DisplayMetrics();
         Display mDisplay = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         mDisplay.getMetrics(dm);
@@ -103,12 +158,22 @@ public class RemoteControlService extends Service {
         resolution.y = (int) (resolution.y * resolutionRatio);
     }
 
-    private void stopEncoder() {
+    private void stopEncodingVirtualDisplay() {
         if (encoder != null) {
             encoder.signalEndOfInputStream();
         }
         if (encoderThread != null) {
             encoderThread = null;
+        }
+
+        if (virtualDisplay != null) {
+            virtualDisplay.release();
+            virtualDisplay = null;
+        }
+
+        if (encoderInputSurface != null){
+            encoderInputSurface.release();
+            encoderInputSurface = null;
         }
     }
 
@@ -128,7 +193,7 @@ public class RemoteControlService extends Service {
                 showToast("Connected to support server.");
             }
 
-            if (RemoteControlService.this.webSocket != null){
+            if (RemoteControlService.this.webSocket != null) {
                 RemoteControlService.this.webSocket.close();
             }
 
@@ -165,32 +230,43 @@ public class RemoteControlService extends Service {
                         showToast("User " + remoteUID + " has connected.");
                         //Start rendering display on the surface and set up the encoder.
                         if (encoderThread == null) {
-                            initDisplayParameters();
-                            startDisplayManager();
-                            encoderThread = new Thread(new EncoderWorker(), "Encoder Thread");
-                            encoderThread.start();
+                            startEncodingVirtualDisplay();
                         }
 
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_DISBAND)) {
-                        stopEncoder();
+                        stopEncodingVirtualDisplay();
 
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
                         showToast("Server: " + s);
-                        stopEncoder();
+                        stopEncodingVirtualDisplay();
 
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_INPUT)) {
-                        String messagePayload = s.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
-                        String[] parts = messagePayload.split(",");
 
-                        if (parts.length < 2) {
-                            return;
-                        }
-                        try {
-                            float x = Float.parseFloat(parts[0]) * deviceWidth;
-                            float y = Float.parseFloat(parts[1]) * deviceHeight;
-                            ShellCommandExecutor.getInstance().runCommand("input tap " + x + " " + y);
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        KeyguardManager myKM = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+                        if (myKM.inKeyguardRestrictedInputMode()) {
+                            KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+                            final KeyguardManager.KeyguardLock kl = km.newKeyguardLock("MyKeyguardLock");
+                            kl.disableKeyguard();
+
+                            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                            PowerManager.WakeLock wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK
+                                    | PowerManager.ACQUIRE_CAUSES_WAKEUP
+                                    | PowerManager.ON_AFTER_RELEASE, "MyWakeLock");
+                            wakeLock.acquire();
+                        } else {
+                            String messagePayload = s.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
+                            String[] parts = messagePayload.split(",");
+
+                            if (parts.length < 2) {
+                                return;
+                            }
+                            try {
+                                float x = Float.parseFloat(parts[0]) * deviceWidth;
+                                float y = Float.parseFloat(parts[1]) * deviceHeight;
+                                ShellCommandExecutor.getInstance().runCommand("input tap " + x + " " + y);
+                            } catch (Exception e) {
+                                Log.d("ENCODER", e.toString(), e);
+                            }
                         }
                     }
                 }
@@ -218,47 +294,6 @@ public class RemoteControlService extends Service {
         }
     };
 
-    private Surface createDisplaySurface() throws IOException {
-        MediaFormat mMediaFormat = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
-                resolution.x, resolution.y);
-
-        TelephonyManager telephonyManager;
-        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        int currentNetworkType = telephonyManager.getNetworkType();
-
-        if (currentNetworkType < TelephonyManager.NETWORK_TYPE_UMTS) {
-            bitrateRatio = 0.03125f;
-            showToast("2G connection detected - reducing support video stream quality.");
-        } else {
-            bitrateRatio = Float.parseFloat(preferences.getString(SettingsActivity.KEY_BITRATE_PREF, "1"));
-        }
-
-        mMediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, (int) (1024 * 1024 * bitrateRatio));
-        mMediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 15);
-        mMediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-        mMediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-        Log.i(TAG, "Starting encoder");
-        encoder = MediaCodec.createEncoderByType(CodecUtils.MIME_TYPE);
-        encoder.configure(mMediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-
-        Surface surface = encoder.createInputSurface();
-
-        encoder.start();
-        return surface;
-    }
-
-    public void startDisplayManager() {
-        DisplayManager mDisplayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
-        Surface encoderInputSurface = null;
-        try {
-            encoderInputSurface = createDisplaySurface();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        mDisplayManager.createVirtualDisplay("ScreenRecorder", resolution.x, resolution.y, 50,
-                encoderInputSurface, DisplayManager.VIRTUAL_DISPLAY_FLAG_SECURE | DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC | DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR);
-    }
-
     private class EncoderWorker implements Runnable {
 
         @Override
@@ -272,7 +307,7 @@ public class RemoteControlService extends Service {
                 try {
                     encoderStatus = encoder.dequeueOutputBuffer(info, CodecUtils.TIMEOUT_USEC);
                 } catch (IllegalStateException e) {
-                    e.printStackTrace();
+                    Log.d("ENCODER", e.toString(), e);
                     break;
                 }
 
@@ -311,7 +346,7 @@ public class RemoteControlService extends Service {
                         encodedData.get(b, info.offset, info.offset + info.size);
                         webSocket.send(b);
                     } catch (BufferUnderflowException e) {
-                        e.printStackTrace();
+                        Log.d("ENCODER", e.toString(), e);
                     }
 
                     encoderDone = (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
@@ -324,8 +359,8 @@ public class RemoteControlService extends Service {
                             encoder = null;
                         }
                     } catch (IllegalStateException e) {
-                        e.printStackTrace();
-                        break;
+                        Log.d("ENCODER", e.toString(), e);
+                        continue;
                     }
                 }
             }
@@ -334,9 +369,9 @@ public class RemoteControlService extends Service {
 
     @Override
     public void onDestroy() {
-        stopEncoder();
         webSocket.send(TelepathyAPI.MESSAGE_DISBAND);
         webSocket.send(TelepathyAPI.MESSAGE_LOGOUT);
+        stopEncodingVirtualDisplay();
         super.onDestroy();
     }
 
@@ -346,7 +381,7 @@ public class RemoteControlService extends Service {
     }
 
     private void showToast(final String message) {
-        mHandler.post(new ToastRunnable(message));
+        toastHandler.post(new ToastRunnable(message));
     }
 
 
@@ -366,7 +401,7 @@ public class RemoteControlService extends Service {
         }, 0, 10 * 1000);
     }
 
-    private void stopPingPong(){
+    private void stopPingPong() {
         pingPongTimer.cancel();
         pingPongTimer.purge();
     }

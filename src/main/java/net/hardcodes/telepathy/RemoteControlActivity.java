@@ -160,7 +160,6 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
                                 videoResolution.y = Integer.parseInt(parts[5]);
                             }
                         } catch (NumberFormatException e) {
-                            e.printStackTrace();
                             Log.d(TAG, e.toString(), e);
                             //TODO: Need to stop the decoder or to skip the current decoder loop
                             showToast(e.getMessage());
@@ -201,7 +200,6 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
                         } catch (BufferOverflowException e) {
                             showToast("Buffer Overflow = " + e.getMessage());
                             Log.d(TAG, "Input buff capacity = " + inputBuf.capacity() + " limit = " + inputBuf.limit() + " byte size = " + buff.length);
-                            e.printStackTrace();
                             byteBufferList.recycle();
                             return;
                         }
