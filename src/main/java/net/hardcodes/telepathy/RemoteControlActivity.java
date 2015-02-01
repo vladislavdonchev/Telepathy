@@ -25,6 +25,7 @@ import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.WebSocket;
 
 import net.hardcodes.telepathy.tools.CodecUtils;
+import net.hardcodes.telepathy.tools.TLSConnectionManager;
 
 import java.io.IOException;
 import java.nio.BufferOverflowException;
@@ -266,7 +267,7 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         try {
             decoder = MediaCodec.createDecoderByType(CodecUtils.MIME_TYPE);
-            AsyncHttpClient.getDefaultInstance().websocket("ws://" + serverAddress, null, websocketCallback);
+            TLSConnectionManager.connectToServer(this, websocketCallback, false);
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -34,6 +34,7 @@ import com.koushikdutta.async.http.WebSocket;
 
 import net.hardcodes.telepathy.tools.CodecUtils;
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
+import net.hardcodes.telepathy.tools.TLSConnectionManager;
 
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
@@ -88,16 +89,11 @@ public class RemoteControlService extends Service {
             if (intent.getAction().equals("START")) {
                 preferences = PreferenceManager.getDefaultSharedPreferences(this);
                 displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
-                connect();
+                TLSConnectionManager.connectToServer(this, webSocketCallback, false);
                 toastHandler = new Handler();
             }
         }
         return START_NOT_STICKY;
-    }
-
-    private void connect() {
-        String address = preferences.getString("server", "192.168.0.104:8021/tp");
-        AsyncHttpClient.getDefaultInstance().websocket("ws://" + address, null, webSocketCallback);
     }
 
     public void startEncodingVirtualDisplay() {
@@ -171,10 +167,19 @@ public class RemoteControlService extends Service {
             virtualDisplay = null;
         }
 
-        if (encoderInputSurface != null){
+        if (encoderInputSurface != null) {
             encoderInputSurface.release();
             encoderInputSurface = null;
         }
+    }
+
+    private void reconnectAfterError(String errorMessage) {
+        showToast(errorMessage);
+        try {
+            Thread.sleep(20000);
+        } catch (InterruptedException e) {
+        }
+        TLSConnectionManager.connectToServer(this, webSocketCallback, false);
     }
 
     private AsyncHttpClient.WebSocketConnectCallback webSocketCallback = new AsyncHttpClient.WebSocketConnectCallback() {
@@ -182,12 +187,10 @@ public class RemoteControlService extends Service {
         @Override
         public void onCompleted(Exception ex, final WebSocket webSocket) {
             if (webSocket == null || ex != null) {
-                showToast("Support server not available. Attempting to reconnect in 20 seconds...");
-                try {
-                    Thread.sleep(20000);
-                } catch (InterruptedException e) {
+                if (ex != null) {
+                    Log.d("WSFAIL", ex.toString() + ": " + ex.getCause(), ex);
                 }
-                connect();
+                reconnectAfterError("Support server not available. Attempting to reconnect in 20 seconds...");
                 return;
             } else {
                 showToast("Connected to support server.");
@@ -208,14 +211,8 @@ public class RemoteControlService extends Service {
                         Log.d("WSCLOSE", ex.toString(), ex);
                     }
                     stopPingPong();
-
                     // TODO: Why does the socket disconnect when the remote control session is interrupted from the other end?
-                    showToast("Disconnected from support server. Reconnecting in 20 seconds...");
-                    try {
-                        Thread.sleep(20000);
-                    } catch (InterruptedException e) {
-                    }
-                    connect();
+                    reconnectAfterError("Disconnected from support server. Reconnecting in 20 seconds...");
                 }
             });
 
