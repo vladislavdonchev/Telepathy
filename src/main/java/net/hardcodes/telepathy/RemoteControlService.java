@@ -13,6 +13,8 @@ import android.hardware.display.VirtualDisplay;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -89,7 +91,7 @@ public class RemoteControlService extends Service {
             if (intent.getAction().equals("START")) {
                 preferences = PreferenceManager.getDefaultSharedPreferences(this);
                 displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
-                TLSConnectionManager.connectToServer(this, webSocketCallback, false);
+                TLSConnectionManager.connectToServer(this, webSocketCallback);
                 toastHandler = new Handler();
             }
         }
@@ -118,8 +120,12 @@ public class RemoteControlService extends Service {
         TelephonyManager telephonyManager;
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         int currentNetworkType = telephonyManager.getNetworkType();
+        boolean isNetwork2G = currentNetworkType < TelephonyManager.NETWORK_TYPE_UMTS && currentNetworkType > TelephonyManager.NETWORK_TYPE_UNKNOWN;
 
-        if (currentNetworkType < TelephonyManager.NETWORK_TYPE_UMTS) {
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+        if (isNetwork2G && !wifi.isConnected()) {
             bitrateRatio = 0.03125f;
             showToast("2G connection detected - reducing support video stream quality.");
         } else {
@@ -179,7 +185,7 @@ public class RemoteControlService extends Service {
             Thread.sleep(20000);
         } catch (InterruptedException e) {
         }
-        TLSConnectionManager.connectToServer(this, webSocketCallback, false);
+        TLSConnectionManager.connectToServer(this, webSocketCallback);
     }
 
     private AsyncHttpClient.WebSocketConnectCallback webSocketCallback = new AsyncHttpClient.WebSocketConnectCallback() {

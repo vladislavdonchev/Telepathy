@@ -23,8 +23,9 @@ import javax.net.ssl.X509TrustManager;
  */
 public class TLSConnectionManager {
 
-    public static void connectToServer(Context context, AsyncHttpClient.WebSocketConnectCallback webSocketCallback, boolean secureConnection) {
+    public static void connectToServer(Context context, AsyncHttpClient.WebSocketConnectCallback webSocketCallback) {
 
+        boolean secureConnection = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("useTLS", false);
         String address = PreferenceManager.getDefaultSharedPreferences(context).getString("server", "192.168.0.104:8021/tp");
         String protocol = "ws://";
 

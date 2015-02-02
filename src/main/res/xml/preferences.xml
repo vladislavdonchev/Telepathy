@@ -9,6 +9,9 @@
 
         <EditTextPreference android:title="Server Address" android:key="server"
             android:defaultValue="192.168.0.104:8021/tp" android:inputType="text" />
+
+        <CheckBoxPreference  android:title="Use Encryption" android:key="useTLS"
+            android:defaultValue="false" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Video Streaming" android:key="pref_video">

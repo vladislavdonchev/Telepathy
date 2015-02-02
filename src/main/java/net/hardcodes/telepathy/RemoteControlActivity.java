@@ -267,7 +267,7 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         try {
             decoder = MediaCodec.createDecoderByType(CodecUtils.MIME_TYPE);
-            TLSConnectionManager.connectToServer(this, websocketCallback, false);
+            TLSConnectionManager.connectToServer(this, websocketCallback);
         } catch (IOException e) {
             e.printStackTrace();
         }
