@@ -192,10 +192,11 @@ public class RemoteControlService extends Service {
 
         @Override
         public void onCompleted(Exception ex, final WebSocket webSocket) {
-            if (webSocket == null || ex != null) {
-                if (ex != null) {
-                    Log.d("WSFAIL", ex.toString() + ": " + ex.getCause(), ex);
-                }
+            if (ex != null) {
+                Log.d("WSFAIL", ex.toString() + ": " + ex.getCause(), ex);
+            }
+
+            if (webSocket == null) {
                 reconnectAfterError("Support server not available. Attempting to reconnect in 20 seconds...");
                 return;
             } else {
