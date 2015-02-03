@@ -115,7 +115,11 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
             .WebSocketConnectCallback() {
         @Override
         public void onCompleted(Exception ex, final WebSocket webSocket) {
-            if (webSocket == null || ex != null) {
+            if (ex != null) {
+                Log.d("WSFAIL", ex.toString() + ": " + ex.getCause(), ex);
+            }
+
+            if (webSocket == null) {
                 showToast("Server not available.");
                 return;
             }
@@ -238,6 +242,17 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
                     byteBufferList.recycle();
                 }
             });
+
+            webSocket.setEndCallback(new CompletedCallback() {
+                @Override
+                public void onCompleted(Exception ex) {
+                    if (ex == null) {
+                        Log.d("WSEND", "END?!");
+                    } else {
+                        Log.d("WSEND", ex.toString(), ex);
+                    }
+                }
+            });
         }
     };
 
@@ -303,8 +318,8 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
             }
         }, 0, 10 * 1000);
     }
-    
-    private void stopPingPong(){
+
+    private void stopPingPong() {
         pingPongTimer.cancel();
         pingPongTimer.purge();
     }

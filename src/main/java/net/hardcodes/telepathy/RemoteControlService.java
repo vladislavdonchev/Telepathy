@@ -133,10 +133,10 @@ public class RemoteControlService extends Service {
         }
 
         mMediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, (int) (1024 * 1024 * bitrateRatio));
-        mMediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 15);
+        mMediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 5);
         mMediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         mMediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-        mMediaFormat.setInteger(MediaFormat.KEY_CAPTURE_RATE, 15);
+        mMediaFormat.setInteger(MediaFormat.KEY_CAPTURE_RATE, 5);
 
         Log.i(TAG, "Starting encoder");
         encoder = MediaCodec.createEncoderByType(CodecUtils.MIME_TYPE);
