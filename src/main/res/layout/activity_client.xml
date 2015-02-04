@@ -1,8 +1,62 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:layout_height="match_parent" tools:context="in.tosc.remotedroid.app.ClientActivity">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="in.tosc.remotedroid.app.ClientActivity">
 
-    <SurfaceView android:id="@+id/main_surface_view" android:layout_width="match_parent"
+    <SurfaceView
+        android:id="@+id/main_surface_view"
+        android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <ImageButton
+        android:id="@+id/arrow_show_hide_buttons"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="150dp"
+        android:padding="10dp"
+        android:layout_alignParentRight="true"
+        android:src="@drawable/ic_action_show"
+        android:textSize="20dp" />
+
+    <LinearLayout
+        android:id="@+id/buttons_container"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/arrow_show_hide_buttons"
+        android:layout_alignParentRight="true"
+        android:visibility="gone"
+        android:alpha=".9"
+        android:background="@android:color/background_dark"
+        android:orientation="vertical">
+
+        <ImageButton
+            android:id="@+id/lock_unlock_button"
+            android:layout_width="match_parent"
+            android:padding="10dp"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_action_screen_locked_to_portrait" />
+
+        <ImageButton
+            android:id="@+id/back_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_action_undo" />
+
+        <ImageButton
+            android:id="@+id/home_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:src="@drawable/ic_action" />
+
+        <ImageButton
+            android:id="@+id/recent_apps_button"
+            android:padding="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_action_recent" />
+
+    </LinearLayout>
 
 </RelativeLayout>
