@@ -33,6 +33,10 @@ public class ShellCommandExecutor {
         return instance;
     }
 
+    public static boolean isSUAvailable() {
+        return Shell.SU.available();
+    }
+
     public static class ShellCommandResult implements Parcelable {
 
         private int commandCode;

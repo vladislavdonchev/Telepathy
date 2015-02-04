@@ -12,7 +12,7 @@ import android.view.LayoutInflater;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
-public class AddressInputDialog extends DialogFragment {
+public class ConnectDialog extends DialogFragment {
 
     public static final String KEY_UID_EXTRA = "remoteUID";
     public static final String KEY_LAST_UID_PREF = "last_uid";
@@ -52,7 +52,7 @@ public class AddressInputDialog extends DialogFragment {
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        AddressInputDialog.this.getDialog().cancel();
+                        ConnectDialog.this.getDialog().cancel();
                     }
                 });
         return builder.create();

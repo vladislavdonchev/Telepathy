@@ -79,7 +79,7 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         serverAddress = preferences.getString("server", "192.168.0.104:8021/tp");
-        remoteUID = getIntent().getStringExtra(AddressInputDialog.KEY_UID_EXTRA);
+        remoteUID = getIntent().getStringExtra(ConnectDialog.KEY_UID_EXTRA);
 
         surfaceView = (SurfaceView) findViewById(R.id.main_surface_view);
         surfaceView.getHolder().addCallback(this);
