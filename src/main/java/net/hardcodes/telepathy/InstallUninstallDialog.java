@@ -4,10 +4,10 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.preference.PreferenceManager;
 import android.widget.Toast;
 
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
+import net.hardcodes.telepathy.tools.Utils;
 
 /**
  * Created by MnQko on 4.2.2015 г..
@@ -27,9 +27,14 @@ public class InstallUninstallDialog extends AlertDialog implements DialogInterfa
 
     private static final String UNINSTALL_SCRIPT =
             "mount -o rw,remount /system\n" +
-                    "rm /system/priv-app/Telepathy.apk.tmp\n" +
+                    "rm /system/priv-app/Telepathy.apk\n" +
                     "rm /data/app/net.hardcodes.*\n" +
+                    "rm %s\n" +
+                    "pm uninstall net.hardcodes.telepathy\n" +
+                    "sleep 5\n" +
                     "reboot";
+
+    public static final String CONFIGURATION_FILE = "telepathyInstallation.cfg";
 
     protected InstallUninstallDialog(Context context) {
         super(context);
@@ -37,14 +42,25 @@ public class InstallUninstallDialog extends AlertDialog implements DialogInterfa
 
     @Override
     public void onClick(DialogInterface dialog, int which) {
-        switch (which) {
-            case DialogInterface.BUTTON_POSITIVE:
+        if (dialog.equals(this)) {
+            switch (which) {
+                case DialogInterface.BUTTON_POSITIVE:
                     deployInSystem();
-                break;
-            case DialogInterface.BUTTON_NEGATIVE:
-                    uninstall();
-                break;
+                    break;
+                case DialogInterface.BUTTON_NEGATIVE:
+                    showUninstallConfirmationDialog();
+                    break;
+            }
+        } else {
+            if (which == DialogInterface.BUTTON_POSITIVE) {
+                uninstall();
+            }
         }
+    }
+
+    private void showUninstallConfirmationDialog() {
+        new Builder(getContext()).setMessage("Uninstalling the application will require a device reboot. Do you want to proceed?")
+                .setPositiveButton("Yes", this).setNegativeButton("No", this).show();
     }
 
     private void deployInSystem() {
@@ -54,7 +70,7 @@ public class InstallUninstallDialog extends AlertDialog implements DialogInterfa
                         getContext().getPackageCodePath(),
                         getContext().getPackageName()
                 }));
-        PreferenceManager.getDefaultSharedPreferences(getContext()).edit().putBoolean("appDeployed", true).commit();
+        Utils.writeInstallationDetailsToFile(getContext());
         gotoHomeScreen();
     }
 
@@ -67,6 +83,8 @@ public class InstallUninstallDialog extends AlertDialog implements DialogInterfa
 
     private void uninstall() {
         Toast.makeText(getContext(), "Uninstalling application and rebooting system...", Toast.LENGTH_LONG).show();
+           Utils.deleteInstallationDetails();
         ShellCommandExecutor.getInstance().runCommand(UNINSTALL_SCRIPT);
+        gotoHomeScreen();
     }
 }

@@ -38,23 +38,23 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
 
     private static final String TAG = "RemoteControlActivity";
 
-    SurfaceView surfaceView;
+    private SurfaceView surfaceView;
 
-    MediaCodec decoder;
-    boolean decoderConfigured = false;
-    ByteBuffer[] decoderInputBuffers = null;
-    MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+    private MediaCodec decoder;
+    private boolean decoderConfigured = false;
+    private ByteBuffer[] decoderInputBuffers = null;
+    private MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
 
-    long frameCount = 0;
+    private long frameCount = 0;
 
     private WebSocket webSocket;
 
-    String serverAddress;
-    String remoteUID;
+    private String serverAddress;
+    private String remoteUID;
 
-    int deviceWidth;
-    int deviceHeight;
-    Point videoResolution = new Point();
+    private int deviceWidth;
+    private int deviceHeight;
+    private Point videoResolution = new Point();
     private SharedPreferences preferences;
     private Timer pingPongTimer;
 

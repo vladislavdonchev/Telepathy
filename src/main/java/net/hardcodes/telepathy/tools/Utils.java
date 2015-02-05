@@ -1,7 +1,23 @@
 package net.hardcodes.telepathy.tools;
 
+import android.content.Context;
+import android.os.Environment;
+import android.util.Log;
+
+import net.hardcodes.telepathy.InstallUninstallDialog;
+import net.hardcodes.telepathy.R;
+
 import org.apache.http.conn.util.InetAddressUtils;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Collections;
@@ -9,68 +25,65 @@ import java.util.List;
 
 public class Utils {
 
-    /**
-     * Returns MAC address of the given interface name.
-     *
-     * @param interfaceName eth0, wlan0 or NULL=use first interface
-     * @return mac address or empty string
-     */
-    public static String getMACAddress(String interfaceName) {
+    public static void writeInstallationDetailsToFile(Context context) {
+        OutputStreamWriter outputStreamWriter = null;
         try {
-            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
-            for (NetworkInterface intf : interfaces) {
-                if (interfaceName != null) {
-                    if (!intf.getName().equalsIgnoreCase(interfaceName)) continue;
-                }
-                byte[] mac = intf.getHardwareAddress();
-                if (mac == null) return "";
-                StringBuilder buf = new StringBuilder();
-                for (int idx = 0; idx < mac.length; idx++)
-                    buf.append(String.format("%02X:", mac[idx]));
-                if (buf.length() > 0) buf.deleteCharAt(buf.length() - 1);
-                return buf.toString();
-            }
-        } catch (Exception ex) {
-        } // for now eat exceptions
-        return "";
-        /*try {
-            // this is so Linux hack
-            return loadFileAsString("/sys/class/net/" +interfaceName + "/address").toUpperCase().trim();
-        } catch (IOException ex) {
-            return null;
-        }*/
-    }
-
-    /**
-     * Get IP address from first non-localhost interface
-     *
-     * @param useIPv4 true=return ipv4, false=return ipv6
-     * @return address or empty string
-     */
-    public static String getIPAddress(boolean useIPv4) {
-        try {
-            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
-            for (NetworkInterface intf : interfaces) {
-                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
-                for (InetAddress addr : addrs) {
-                    if (!addr.isLoopbackAddress()) {
-                        String sAddr = addr.getHostAddress().toUpperCase();
-                        boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
-                        if (useIPv4) {
-                            if (isIPv4)
-                                return sAddr;
-                        } else {
-                            if (!isIPv4) {
-                                int delim = sAddr.indexOf('%'); // drop ip6 port suffix
-                                return delim < 0 ? sAddr : sAddr.substring(0, delim);
-                            }
-                        }
-                    }
+            outputStreamWriter = new OutputStreamWriter(new FileOutputStream (new File(Environment.getExternalStorageDirectory(), InstallUninstallDialog.CONFIGURATION_FILE)));
+            outputStreamWriter.write(context.getString(R.string.app_version));
+            outputStreamWriter.close();
+        } catch (IOException e) {
+            Log.e("Exception", "File write failed: " + e.toString());
+        } finally {
+            if (outputStreamWriter != null) {
+                try {
+                    outputStreamWriter.close();
+                } catch (IOException e) {
+                    Log.e("FILE", "Error closing output stream writer...: " + e.toString());
                 }
             }
-        } catch (Exception ex) {
-        } // for now eat exceptions
-        return "";
+        }
     }
 
+
+    public static String getInstallationDetailsFromFile(Context context) {
+        String version = "";
+        InputStream inputStream = null;
+
+        try {
+            inputStream = new FileInputStream(new File(Environment.getExternalStorageDirectory(), InstallUninstallDialog.CONFIGURATION_FILE));
+
+            if (inputStream != null) {
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                String receiveString = "";
+                StringBuilder stringBuilder = new StringBuilder();
+
+                while ((receiveString = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(receiveString);
+                }
+                version = stringBuilder.toString();
+            }
+        } catch (FileNotFoundException e) {
+            Log.e("FILE", "File not found: " + e.toString());
+        } catch (IOException e) {
+            Log.e("FILE", "Could not read file: " + e.toString());
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    Log.e("FILE", "Error closing input stream...: " + e.toString());
+                }
+            }
+        }
+
+        return version;
+    }
+
+    public static void deleteInstallationDetails() {
+        File configFile = new File(Environment.getExternalStorageDirectory(), InstallUninstallDialog.CONFIGURATION_FILE);
+        if (configFile != null && configFile.exists()) {
+            configFile.delete();
+        }
+    }
 }

@@ -4,39 +4,84 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
+import net.hardcodes.telepathy.tools.Utils;
 
 public class HomeScreenActivity extends Activity {
+
+    private final static int DEPLOYMENT_STATE_NOT_INSTALLED = 0;
+    private final static int DEPLOYMENT_STATE_NEEDS_UPDATE = 1;
+    private final static int DEPLOYMENT_STATE_UP_TO_DATE = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        boolean isAppDeployedInSystem = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("appDeployed", false);
-        if (!isAppDeployedInSystem) {
-            if (ShellCommandExecutor.isSUAvailable()) {
-                InstallUninstallDialog installUninstallDialog = new InstallUninstallDialog(this);
-                installUninstallDialog.setTitle("Application Deployment");
-                installUninstallDialog.setButton(DialogInterface.BUTTON_POSITIVE, "Install", installUninstallDialog);
-                installUninstallDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Uninstall", installUninstallDialog);
-                installUninstallDialog.show();
-            } else {
-                Toast.makeText(this, "SU not available. This device can only be used as a client.", Toast.LENGTH_LONG).show();
+        showDeploymentDialog(true);
+    }
+
+    private void showDeploymentDialog(boolean showOnlyIfNeeded) {
+        String installedVersion = Utils.getInstallationDetailsFromFile(this);
+        int deploymentState = checkDeploymentState(installedVersion);
+
+        if (ShellCommandExecutor.isSUAvailable()) {
+            if (!showOnlyIfNeeded || (showOnlyIfNeeded && deploymentState != DEPLOYMENT_STATE_UP_TO_DATE)) {
+                buildDeploymentDialog(deploymentState, installedVersion);
             }
+        } else {
+            Toast.makeText(this, "SU not available. This device can only be used as a client.", Toast.LENGTH_LONG).show();
         }
+    }
+
+    private int checkDeploymentState(String installedVersion) {
+        boolean isAppDeployedInSystem = !TextUtils.isEmpty(installedVersion);
+
+        int state = DEPLOYMENT_STATE_UP_TO_DATE;
+        if (!isAppDeployedInSystem) {
+            state = DEPLOYMENT_STATE_NOT_INSTALLED;
+        }
+        if (!getString(R.string.app_version).equals(installedVersion)) {
+            state = DEPLOYMENT_STATE_NEEDS_UPDATE;
+        }
+
+        return state;
+    }
+
+    private void buildDeploymentDialog(int state, String installedVersion) {
+        InstallUninstallDialog installUninstallDialog = new InstallUninstallDialog(this);
+        String message = "In order to be able to remote control this device you will need to deploy the application as a system service.\nPress 'Install' to begin the process.";
+        String positiveText = "Install";
+
+        switch (state) {
+            case DEPLOYMENT_STATE_UP_TO_DATE:
+                message = "Press 'Re-Install' to redeploy the remote control service.\nSelect 'Uninstall' to remove the application.";
+                positiveText = "Re-Install";
+                installUninstallDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Uninstall", installUninstallDialog);
+                break;
+            case DEPLOYMENT_STATE_NEEDS_UPDATE:
+                message = "Press 'Update' to install version " + getString(R.string.app_version) + " of the remote control service.";
+                positiveText = "Update";
+                break;
+        }
+
+        installUninstallDialog.setTitle("Application Deployment");
+        installUninstallDialog.setMessage(message);
+        installUninstallDialog.setButton(DialogInterface.BUTTON_POSITIVE, positiveText, installUninstallDialog);
+        installUninstallDialog.show();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+        menu.findItem(R.id.action_deployment).setVisible(ShellCommandExecutor.isSUAvailable());
         return true;
     }
 
@@ -45,10 +90,13 @@ public class HomeScreenActivity extends Activity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            return true;
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                startActivity(new Intent(this, SettingsActivity.class));
+                break;
+            case R.id.action_deployment:
+                showDeploymentDialog(false);
+                break;
         }
         return super.onOptionsItemSelected(item);
     }
