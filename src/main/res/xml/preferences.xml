@@ -8,7 +8,7 @@
             android:defaultValue="111" android:inputType="text" android:summary="Preferred user ID"/>
 
         <EditTextPreference android:title="Server Address" android:key="server"
-            android:defaultValue="192.168.0.104:8021/tp" android:inputType="text" android:summary="WebSocket server URL"/>
+            android:defaultValue="97e4fm0tw8.worldsupport.info:8021/tp" android:inputType="text" android:summary="WebSocket server URL"/>
 
         <CheckBoxPreference  android:title="Use Encryption" android:key="useTLS"
             android:defaultValue="false" android:summary="Toggle TLSv1.2"/>

@@ -47,7 +47,7 @@ public class HomeScreenActivity extends Activity {
         if (!isAppDeployedInSystem) {
             state = DEPLOYMENT_STATE_NOT_INSTALLED;
         }
-        if (!getString(R.string.app_version).equals(installedVersion)) {
+        if (isAppDeployedInSystem && !getString(R.string.app_version).equals(installedVersion)) {
             state = DEPLOYMENT_STATE_NEEDS_UPDATE;
         }
 
@@ -79,7 +79,6 @@ public class HomeScreenActivity extends Activity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         menu.findItem(R.id.action_deployment).setVisible(ShellCommandExecutor.isSUAvailable());
         return true;
@@ -100,6 +99,7 @@ public class HomeScreenActivity extends Activity {
         }
         return super.onOptionsItemSelected(item);
     }
+
 
     public void startClient(View v) {
         new ConnectDialog().show(getFragmentManager(), "Remote Control");

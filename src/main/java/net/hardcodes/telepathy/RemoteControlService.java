@@ -17,7 +17,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
@@ -27,6 +26,7 @@ import android.view.Surface;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
 import com.koushikdutta.async.DataEmitter;
 import com.koushikdutta.async.callback.CompletedCallback;
@@ -34,6 +34,7 @@ import com.koushikdutta.async.callback.DataCallback;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.WebSocket;
 
+import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.tools.CodecUtils;
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
 import net.hardcodes.telepathy.tools.TLSConnectionManager;
@@ -51,7 +52,8 @@ public class RemoteControlService extends Service {
 
     private SharedPreferences preferences;
     private Handler toastHandler;
-
+    KeyguardManager myKM;
+    KeyguardManager.KeyguardLock kl;
     public WebSocket webSocket;
     private Timer pingPongTimer;
 
@@ -93,6 +95,8 @@ public class RemoteControlService extends Service {
                 displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
                 TLSConnectionManager.connectToServer(this, webSocketCallback);
                 toastHandler = new Handler();
+                myKM = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+                kl = myKM.newKeyguardLock("MyKeyguardLock");
             }
         }
         return START_NOT_STICKY;
@@ -245,33 +249,10 @@ public class RemoteControlService extends Service {
                         stopEncodingVirtualDisplay();
 
                     } else if (s.startsWith(TelepathyAPI.MESSAGE_INPUT)) {
-
-                        KeyguardManager myKM = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-                        if (myKM.inKeyguardRestrictedInputMode()) {
-                            KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-                            final KeyguardManager.KeyguardLock kl = km.newKeyguardLock("MyKeyguardLock");
-                            kl.disableKeyguard();
-
-                            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-                            PowerManager.WakeLock wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK
-                                    | PowerManager.ACQUIRE_CAUSES_WAKEUP
-                                    | PowerManager.ON_AFTER_RELEASE, "MyWakeLock");
-                            wakeLock.acquire();
-                        } else {
-                            String messagePayload = s.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
-                            String[] parts = messagePayload.split(",");
-
-                            if (parts.length < 2) {
-                                return;
-                            }
-                            try {
-                                float x = Float.parseFloat(parts[0]) * deviceWidth;
-                                float y = Float.parseFloat(parts[1]) * deviceHeight;
-                                ShellCommandExecutor.getInstance().runCommand("input tap " + x + " " + y);
-                            } catch (Exception e) {
-                                Log.d("ENCODER", e.toString(), e);
-                            }
-                        }
+                        Gson gson = new Gson();
+                        String messagePayload = s.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
+                        InputEvent inputEventObject = gson.fromJson(messagePayload, InputEvent.class);
+                        decodeInputEvent(inputEventObject);
                     }
                 }
             });
@@ -297,6 +278,80 @@ public class RemoteControlService extends Service {
             RemoteControlService.this.webSocket = webSocket;
         }
     };
+
+    private void decodeInputEvent(InputEvent event) {
+        switch (event.getImputType()) {
+            case InputEvent.IMPUT_EVENT_TYPE_BACK_BUTTON:
+                try {
+                    ShellCommandExecutor.getInstance().runCommand("input keyevent 4");
+                } catch (Exception e) {
+                    Log.d("ENCODER", e.toString(), e);
+                }
+                break;
+            case InputEvent.IMPUT_EVENT_TYPE_HOME_BUTTON:
+                try {
+                    ShellCommandExecutor.getInstance().runCommand("input keyevent 3");
+                } catch (Exception e) {
+                    Log.d("ENCODER", e.toString(), e);
+                }
+                break;
+            case InputEvent.IMPUT_EVENT_TYPE_RECENT_BUTTON:
+                try {
+                    ShellCommandExecutor.getInstance().runCommand("input keyevent 187");
+                } catch (Exception e) {
+                    Log.d("ENCODER", e.toString(), e);
+                }
+                break;
+            case InputEvent.IMPUT_EVENT_TYPE_LOCK_UNLOCK_BUTTON:
+                if (myKM.inKeyguardRestrictedInputMode()) {
+                    kl.disableKeyguard();
+                    myKM.exitKeyguardSecurely(null);
+                    try {
+                        ShellCommandExecutor.getInstance().runCommand("input keyevent 26");
+                    } catch (Exception e) {
+                        Log.d("ENCODER", e.toString(), e);
+                    }
+                } else {
+                    kl.reenableKeyguard();
+                    try {
+                        ShellCommandExecutor.getInstance().runCommand("input keyevent 26");
+                    } catch (Exception e) {
+                        Log.d("ENCODER", e.toString(), e);
+                    }
+                }
+                break;
+            case InputEvent.IMPUT_EVENT_TYPE_TOUCH:
+                try {
+                    float x = event.getToucEventX() * deviceWidth;
+                    float y = event.getTouchEventY() * deviceHeight;
+                    ShellCommandExecutor.getInstance().runCommand("input tap " + x + " " + y);
+                } catch (Exception e) {
+                    Log.d("ENCODER", e.toString(), e);
+                }
+                break;
+            case InputEvent.IMPUT_EVENT_TYPE_LONG_PRESS:
+                try {
+                    float x = event.getToucEventX() * deviceWidth;
+                    float y = event.getTouchEventY() * deviceHeight;
+                    ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x + " " + y + " " + InputEvent.IMPUT_EVENT_LONG_PRESS_DURATION);
+                } catch (Exception e) {
+                    Log.d("ENCODER", e.toString(), e);
+                }
+                break;
+            case InputEvent.IMPUT_EVENT_TYPE_SWIPE:
+                try {
+                    float x = event.getToucEventX() * deviceWidth;
+                    float y = event.getTouchEventY() * deviceHeight;
+                    float x1 = event.getToucEventX1() * deviceWidth;
+                    float y1 = event.getTouchEventY1() * deviceHeight;
+                    ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x1 + " " + y1 + " " + InputEvent.IMPUT_EVENT_FLING_DURATION);
+                } catch (Exception e) {
+                    Log.d("ENCODER", e.toString(), e);
+                }
+                break;
+        }
+    }
+
 
     private class EncoderWorker implements Runnable {
 

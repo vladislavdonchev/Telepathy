@@ -26,7 +26,7 @@ public class TLSConnectionManager {
     public static void connectToServer(Context context, AsyncHttpClient.WebSocketConnectCallback webSocketCallback) {
 
         boolean secureConnection = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("useTLS", false);
-        String address = PreferenceManager.getDefaultSharedPreferences(context).getString("server", "192.168.0.104:8021/tp");
+        String address = PreferenceManager.getDefaultSharedPreferences(context).getString("server", "97e4fm0tw8.worldsupport.info:8021/tp");
         String protocol = "ws://";
 
         if (secureConnection) {

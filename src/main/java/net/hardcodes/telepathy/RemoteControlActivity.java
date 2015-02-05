@@ -8,15 +8,20 @@ import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.view.GestureDetectorCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
 import com.koushikdutta.async.DataEmitter;
 import com.koushikdutta.async.callback.CompletedCallback;
@@ -24,6 +29,7 @@ import com.koushikdutta.async.callback.DataCallback;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.WebSocket;
 
+import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.tools.CodecUtils;
 import net.hardcodes.telepathy.tools.TLSConnectionManager;
 
@@ -34,7 +40,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 
-public class RemoteControlActivity extends Activity implements SurfaceHolder.Callback, View.OnTouchListener {
+public class RemoteControlActivity extends Activity implements SurfaceHolder.Callback, GestureDetector.OnGestureListener, View.OnClickListener {
 
     private static final String TAG = "RemoteControlActivity";
 
@@ -58,6 +64,14 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
     private SharedPreferences preferences;
     private Timer pingPongTimer;
 
+    private ImageButton buttonShowHideButtons;
+    private LinearLayout buttonsContainer;
+    private ImageButton buttinHome;
+    private ImageButton buttonBack;
+    private ImageButton buttonLockUnlock;
+    private ImageButton buttonRecentApps;
+    private GestureDetectorCompat mDetector;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,7 +87,21 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
 
         surfaceView = (SurfaceView) findViewById(R.id.main_surface_view);
         surfaceView.getHolder().addCallback(this);
-        surfaceView.setOnTouchListener(this);
+
+        buttonsContainer = (LinearLayout) findViewById(R.id.buttons_container);
+
+        buttonShowHideButtons = (ImageButton) findViewById(R.id.arrow_show_hide_buttons);
+        buttonShowHideButtons.setOnClickListener(this);
+        buttinHome = (ImageButton) findViewById(R.id.home_button);
+        buttinHome.setOnClickListener(this);
+        buttonBack = (ImageButton) findViewById(R.id.back_button);
+        buttonBack.setOnClickListener(this);
+        buttonLockUnlock = (ImageButton) findViewById(R.id.lock_unlock_button);
+        buttonLockUnlock.setOnClickListener(this);
+        buttonRecentApps = (ImageButton) findViewById(R.id.recent_apps_button);
+        buttonRecentApps.setOnClickListener(this);
+
+        mDetector = new GestureDetectorCompat(this, this);
     }
 
     @Override
@@ -273,7 +301,7 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
         RemoteControlActivity.this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(RemoteControlActivity.this, message, Toast.LENGTH_SHORT).show();
+                Toast.makeText(RemoteControlActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -296,14 +324,6 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
     }
 
-    @Override
-    public boolean onTouch(View view, MotionEvent motionEvent) {
-        // TODO: Support the whole range of motion events.
-        if (webSocket != null) {
-            webSocket.send(TelepathyAPI.MESSAGE_INPUT + motionEvent.getX() / deviceWidth + "," + motionEvent.getY() / deviceHeight);
-        }
-        return false;
-    }
 
     private void startPingPong() {
         pingPongTimer = new Timer("keep_alive");
@@ -322,5 +342,85 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
     private void stopPingPong() {
         pingPongTimer.cancel();
         pingPongTimer.purge();
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.arrow_show_hide_buttons) {
+            if (buttonsContainer.getVisibility() == View.GONE) {
+                buttonsContainer.setVisibility(View.VISIBLE);
+                buttonShowHideButtons.setImageResource(R.drawable.ic_action_hide);
+            } else {
+                hideButtonsContainer();
+            }
+        } else if (v.getId() == R.id.back_button) {
+            sendInputAction(InputEvent.IMPUT_EVENT_TYPE_BACK_BUTTON, 0, 0, 0, 0);
+            hideButtonsContainer();
+        } else if (v.getId() == R.id.home_button) {
+            sendInputAction(InputEvent.IMPUT_EVENT_TYPE_HOME_BUTTON, 0, 0, 0, 0);
+            hideButtonsContainer();
+        } else if (v.getId() == R.id.recent_apps_button) {
+            sendInputAction(InputEvent.IMPUT_EVENT_TYPE_RECENT_BUTTON, 0, 0, 0, 0);
+            hideButtonsContainer();
+        } else if (v.getId() == R.id.lock_unlock_button) {
+            sendInputAction(InputEvent.IMPUT_EVENT_TYPE_LOCK_UNLOCK_BUTTON, 0, 0, 0, 0);
+            hideButtonsContainer();
+        }
+    }
+
+    private void sendInputAction(int eventType, float x, float y, float x1, float y1) {
+        Gson gson = new Gson();
+        InputEvent event = new InputEvent();
+        event.setImputType(eventType);
+        event.setToucEventX(x);
+        event.setTouchEventY(y);
+        event.setToucEventX1(x1);
+        event.setTouchEventY1(y1);
+        String eventJson = gson.toJson(event);
+        if (webSocket != null) {
+            webSocket.send(TelepathyAPI.MESSAGE_INPUT + eventJson);
+        }
+    }
+
+    private void hideButtonsContainer() {
+        buttonsContainer.setVisibility(View.GONE);
+        buttonShowHideButtons.setImageResource(R.drawable.ic_action_show);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        this.mDetector.onTouchEvent(event);
+        return super.onTouchEvent(event);
+    }
+
+    @Override
+    public boolean onDown(MotionEvent e) {
+        return false;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent e) {
+    }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent e) {
+        sendInputAction(InputEvent.IMPUT_EVENT_TYPE_TOUCH, (e.getX() / deviceWidth), (e.getY() / deviceHeight), 0, 0);
+        return false;
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+        return false;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent e) {
+        sendInputAction(InputEvent.IMPUT_EVENT_TYPE_LONG_PRESS, (e.getX() / deviceWidth), (e.getY() / deviceHeight), 0, 0);
+    }
+
+    @Override
+    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+        sendInputAction(InputEvent.IMPUT_EVENT_TYPE_SWIPE, (e1.getX() / deviceWidth), (e1.getY() / deviceHeight), (e2.getX() / deviceWidth), (e2.getY() / deviceHeight));
+        return false;
     }
 }
