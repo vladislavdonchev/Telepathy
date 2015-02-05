@@ -282,13 +282,25 @@ public class RemoteControlService extends Service {
     private void decodeInputEvent(InputEvent event) {
         switch (event.getImputType()) {
             case InputEvent.IMPUT_EVENT_TYPE_BACK_BUTTON:
-
+                try {
+                    ShellCommandExecutor.getInstance().runCommand("input keyevent 4");
+                } catch (Exception e) {
+                    Log.d("ENCODER", e.toString(), e);
+                }
                 break;
             case InputEvent.IMPUT_EVENT_TYPE_HOME_BUTTON:
-
+                try {
+                    ShellCommandExecutor.getInstance().runCommand("input keyevent 3");
+                } catch (Exception e) {
+                    Log.d("ENCODER", e.toString(), e);
+                }
                 break;
             case InputEvent.IMPUT_EVENT_TYPE_RECENT_BUTTON:
-
+                try {
+                    ShellCommandExecutor.getInstance().runCommand("input keyevent 187");
+                } catch (Exception e) {
+                    Log.d("ENCODER", e.toString(), e);
+                }
                 break;
             case InputEvent.IMPUT_EVENT_TYPE_LOCK_UNLOCK_BUTTON:
                 if (myKM.inKeyguardRestrictedInputMode()) {
@@ -313,6 +325,26 @@ public class RemoteControlService extends Service {
                     float x = event.getToucEventX() * deviceWidth;
                     float y = event.getTouchEventY() * deviceHeight;
                     ShellCommandExecutor.getInstance().runCommand("input tap " + x + " " + y);
+                } catch (Exception e) {
+                    Log.d("ENCODER", e.toString(), e);
+                }
+                break;
+            case InputEvent.IMPUT_EVENT_TYPE_LONG_PRESS:
+                try {
+                    float x = event.getToucEventX() * deviceWidth;
+                    float y = event.getTouchEventY() * deviceHeight;
+                    ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x + " " + y + " " + InputEvent.IMPUT_EVENT_LONG_PRESS_DURATION);
+                } catch (Exception e) {
+                    Log.d("ENCODER", e.toString(), e);
+                }
+                break;
+            case InputEvent.IMPUT_EVENT_TYPE_SWIPE:
+                try {
+                    float x = event.getToucEventX() * deviceWidth;
+                    float y = event.getTouchEventY() * deviceHeight;
+                    float x1 = event.getToucEventX1() * deviceWidth;
+                    float y1 = event.getTouchEventY1() * deviceHeight;
+                    ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x1 + " " + y1 + " " + InputEvent.IMPUT_EVENT_FLING_DURATION);
                 } catch (Exception e) {
                     Log.d("ENCODER", e.toString(), e);
                 }
