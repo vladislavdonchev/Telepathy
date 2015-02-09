@@ -47,6 +47,9 @@ import java.util.TimerTask;
 
 public class RemoteControlService extends Service {
 
+public static final String ACTION_START = "START";
+public static final String ACTION_STOP = "STOP";
+
     private static final String TAG = "StreamingServer";
     public static final String VIRTUAL_DISPLAY_TAG = "ScreenRecorder";
 
@@ -84,19 +87,19 @@ public class RemoteControlService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
-            if (intent.getAction().equals("STOP")) {
-                stopEncodingVirtualDisplay();
-                stopForeground(true);
-                stopSelf();
-            }
-
-            if (intent.getAction().equals("START")) {
+            if (intent.getAction().equals(ACTION_START)) {
                 preferences = PreferenceManager.getDefaultSharedPreferences(this);
                 displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
                 ConnectionManager.connectToServer(this, webSocketCallback);
                 toastHandler = new Handler();
                 myKM = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
                 kl = myKM.newKeyguardLock("MyKeyguardLock");
+            }
+
+            if (intent.getAction().equals(ACTION_STOP)) {
+                stopEncodingVirtualDisplay();
+                stopForeground(true);
+                stopSelf();
             }
         }
         return START_NOT_STICKY;

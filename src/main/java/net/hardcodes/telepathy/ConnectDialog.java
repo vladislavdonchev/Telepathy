@@ -26,7 +26,7 @@ public class ConnectDialog extends DialogFragment {
         final SharedPreferences prefs = getActivity().getSharedPreferences("MAIN_PREFS", Context.MODE_PRIVATE);
         String lastUID = prefs.getString(KEY_LAST_UID_PREF, "");
 
-        final LinearLayout dialogLayout = (LinearLayout) inflater.inflate(R.layout.dialog_address_input, null);
+        final LinearLayout dialogLayout = (LinearLayout) inflater.inflate(R.layout.dialog_connect, null);
         final EditText uidInput = (EditText) dialogLayout.findViewById(R.id.uid_input);
         uidInput.setText(lastUID);
 

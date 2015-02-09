@@ -22,7 +22,7 @@ public class HomeScreenActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_home_screen);
 
         showDeploymentDialog(true);
     }
@@ -100,15 +100,12 @@ public class HomeScreenActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-
     public void startClient(View v) {
         new ConnectDialog().show(getFragmentManager(), "Remote Control");
     }
 
     public void startServer(View v) {
-        Intent startServerIntent = new Intent(HomeScreenActivity.this, RemoteControlService.class);
-        startServerIntent.setAction("START");
-        startService(startServerIntent);
+        Utils.startService(this);
         finish();
     }
 }

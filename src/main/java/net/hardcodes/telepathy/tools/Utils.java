@@ -1,11 +1,13 @@
 package net.hardcodes.telepathy.tools;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Environment;
 import android.util.Log;
 
 import net.hardcodes.telepathy.InstallUninstallDialog;
 import net.hardcodes.telepathy.R;
+import net.hardcodes.telepathy.RemoteControlService;
 
 import org.apache.http.conn.util.InetAddressUtils;
 
@@ -85,5 +87,11 @@ public class Utils {
         if (configFile != null && configFile.exists()) {
             configFile.delete();
         }
+    }
+
+    public static void startService(Context context) {
+        Intent startServerIntent = new Intent(context, RemoteControlService.class);
+        startServerIntent.setAction(RemoteControlService.ACTION_START);
+        context.startService(startServerIntent);
     }
 }
