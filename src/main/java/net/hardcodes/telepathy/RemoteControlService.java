@@ -36,8 +36,8 @@ import com.koushikdutta.async.http.WebSocket;
 
 import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.tools.CodecUtils;
+import net.hardcodes.telepathy.tools.ConnectionManager;
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
-import net.hardcodes.telepathy.tools.TLSConnectionManager;
 
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
@@ -93,7 +93,7 @@ public class RemoteControlService extends Service {
             if (intent.getAction().equals("START")) {
                 preferences = PreferenceManager.getDefaultSharedPreferences(this);
                 displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
-                TLSConnectionManager.connectToServer(this, webSocketCallback);
+                ConnectionManager.connectToServer(this, webSocketCallback);
                 toastHandler = new Handler();
                 myKM = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
                 kl = myKM.newKeyguardLock("MyKeyguardLock");
@@ -165,31 +165,36 @@ public class RemoteControlService extends Service {
     }
 
     private void stopEncodingVirtualDisplay() {
-        if (encoder != null) {
-            encoder.signalEndOfInputStream();
-        }
-        if (encoderThread != null) {
-            encoderThread = null;
-        }
+        try {
+            if (encoder != null) {
+                encoder.signalEndOfInputStream();
+            }
+            if (encoderThread != null) {
+                encoderThread = null;
+            }
 
-        if (virtualDisplay != null) {
-            virtualDisplay.release();
-            virtualDisplay = null;
-        }
+            if (virtualDisplay != null) {
+                virtualDisplay.release();
+                virtualDisplay = null;
+            }
 
-        if (encoderInputSurface != null) {
-            encoderInputSurface.release();
-            encoderInputSurface = null;
+            if (encoderInputSurface != null) {
+                encoderInputSurface.release();
+                encoderInputSurface = null;
+            }
+        } catch (Exception e) {
+            Log.e("SERVICE", e.toString(), e);
         }
     }
 
     private void reconnectAfterError(String errorMessage) {
         showToast(errorMessage);
+        stopEncodingVirtualDisplay();
         try {
             Thread.sleep(20000);
         } catch (InterruptedException e) {
         }
-        TLSConnectionManager.connectToServer(this, webSocketCallback);
+        ConnectionManager.connectToServer(this, webSocketCallback);
     }
 
     private AsyncHttpClient.WebSocketConnectCallback webSocketCallback = new AsyncHttpClient.WebSocketConnectCallback() {

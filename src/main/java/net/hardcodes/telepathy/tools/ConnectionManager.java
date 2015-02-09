@@ -21,7 +21,7 @@ import javax.net.ssl.X509TrustManager;
 /**
  * Created by MnQko on 1.2.2015 г..
  */
-public class TLSConnectionManager {
+public class ConnectionManager {
 
     public static void connectToServer(Context context, AsyncHttpClient.WebSocketConnectCallback webSocketCallback) {
 

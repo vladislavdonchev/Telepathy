@@ -31,7 +31,7 @@ import com.koushikdutta.async.http.WebSocket;
 
 import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.tools.CodecUtils;
-import net.hardcodes.telepathy.tools.TLSConnectionManager;
+import net.hardcodes.telepathy.tools.ConnectionManager;
 
 import java.io.IOException;
 import java.nio.BufferOverflowException;
@@ -51,11 +51,8 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
     private ByteBuffer[] decoderInputBuffers = null;
     private MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
 
-    private long frameCount = 0;
 
     private WebSocket webSocket;
-
-    private String serverAddress;
     private String remoteUID;
 
     private int deviceWidth;
@@ -66,7 +63,7 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
 
     private ImageButton buttonShowHideButtons;
     private LinearLayout buttonsContainer;
-    private ImageButton buttinHome;
+    private ImageButton buttonHome;
     private ImageButton buttonBack;
     private ImageButton buttonLockUnlock;
     private ImageButton buttonRecentApps;
@@ -82,7 +79,6 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
         initDisplayMetrics();
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        serverAddress = preferences.getString("server", "192.168.0.104:8021/tp");
         remoteUID = getIntent().getStringExtra(ConnectDialog.KEY_UID_EXTRA);
 
         surfaceView = (SurfaceView) findViewById(R.id.main_surface_view);
@@ -92,8 +88,8 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
 
         buttonShowHideButtons = (ImageButton) findViewById(R.id.arrow_show_hide_buttons);
         buttonShowHideButtons.setOnClickListener(this);
-        buttinHome = (ImageButton) findViewById(R.id.home_button);
-        buttinHome.setOnClickListener(this);
+        buttonHome = (ImageButton) findViewById(R.id.home_button);
+        buttonHome.setOnClickListener(this);
         buttonBack = (ImageButton) findViewById(R.id.back_button);
         buttonBack.setOnClickListener(this);
         buttonLockUnlock = (ImageButton) findViewById(R.id.lock_unlock_button);
@@ -310,7 +306,7 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         try {
             decoder = MediaCodec.createDecoderByType(CodecUtils.MIME_TYPE);
-            TLSConnectionManager.connectToServer(this, websocketCallback);
+            ConnectionManager.connectToServer(this, websocketCallback);
         } catch (IOException e) {
             e.printStackTrace();
         }

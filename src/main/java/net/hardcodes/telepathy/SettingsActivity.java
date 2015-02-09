@@ -31,6 +31,7 @@ public class SettingsActivity extends PreferenceActivity implements
         bitratePref = (ListPreference) findPreference(KEY_BITRATE_PREF);
         bitratePref.setEntries(bitrateOptions);
         bitratePref.setEntryValues(bitrateValues);
+        bitratePref.setDefaultValue("0.25");
 
         resolutionPref = (ListPreference) findPreference(KEY_RESOLUTION_PREF);
         setResolutionOptions();
@@ -66,5 +67,6 @@ public class SettingsActivity extends PreferenceActivity implements
         }
         resolutionPref.setEntries(resolutionOptions);
         resolutionPref.setEntryValues(new String[]{"1", "0.5", ".33", ".25"});
+        resolutionPref.setDefaultValue("0.25");
     }
 }
