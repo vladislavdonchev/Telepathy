@@ -111,7 +111,7 @@ public class HomeScreenActivity extends Activity {
     }
 
     public void startClient(View v) {
-        new ConnectDialog().show(getFragmentManager(), "Remote Control");
+        new PasswordDialog().show(getFragmentManager(), "Input Password");
     }
 
     public void toggleService(View v) {
