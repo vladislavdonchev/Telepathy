@@ -18,7 +18,7 @@ public class BootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent){
         try{
-            Utils.startService(context);
+            Utils.toggleService(context);
             Log.i(TAG, "Starting service...");
         }catch(Exception e){
             Log.e(TAG, e.toString(), e);

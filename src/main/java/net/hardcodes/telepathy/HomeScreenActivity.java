@@ -4,11 +4,15 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
+
+import com.koushikdutta.async.Util;
 
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
 import net.hardcodes.telepathy.tools.Utils;
@@ -38,6 +42,12 @@ public class HomeScreenActivity extends Activity {
         } else {
             Toast.makeText(this, "SU not available. This device can only be used as a client.", Toast.LENGTH_LONG).show();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkServiceState();
     }
 
     private int checkDeploymentState(String installedVersion) {
@@ -104,8 +114,21 @@ public class HomeScreenActivity extends Activity {
         new ConnectDialog().show(getFragmentManager(), "Remote Control");
     }
 
-    public void startServer(View v) {
-        Utils.startService(this);
-        finish();
+    public void toggleService(View v) {
+        Utils.toggleService(this);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                checkServiceState();
+            }
+        }, 1000);
+    }
+
+    private void checkServiceState() {
+        if (Utils.isServiceRunning(this, RemoteControlService.class)) {
+            ((Button) findViewById(R.id.server_control_button)).setText("Stop Service");
+        } else {
+            ((Button) findViewById(R.id.server_control_button)).setText("Start Service");
+        }
     }
 }

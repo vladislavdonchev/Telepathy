@@ -1,5 +1,6 @@
 package net.hardcodes.telepathy.tools;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Environment;
@@ -8,8 +9,6 @@ import android.util.Log;
 import net.hardcodes.telepathy.InstallUninstallDialog;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.RemoteControlService;
-
-import org.apache.http.conn.util.InetAddressUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -20,10 +19,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.util.Collections;
-import java.util.List;
 
 public class Utils {
 
@@ -89,9 +84,23 @@ public class Utils {
         }
     }
 
-    public static void startService(Context context) {
+    public static void toggleService(Context context) {
         Intent startServerIntent = new Intent(context, RemoteControlService.class);
-        startServerIntent.setAction(RemoteControlService.ACTION_START);
+        if ( isServiceRunning(context, RemoteControlService.class)) {
+            startServerIntent.setAction(RemoteControlService.ACTION_STOP);
+        } else {
+            startServerIntent.setAction(RemoteControlService.ACTION_START);
+        }
         context.startService(startServerIntent);
+    }
+
+    public static boolean isServiceRunning(Context context, Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

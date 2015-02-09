@@ -71,6 +71,8 @@ public static final String ACTION_STOP = "STOP";
     private int deviceHeight;
     private Point resolution = new Point();
 
+    private boolean running = false;
+
     private class ToastRunnable implements Runnable {
         String mText;
 
@@ -88,6 +90,7 @@ public static final String ACTION_STOP = "STOP";
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
             if (intent.getAction().equals(ACTION_START)) {
+                running = true;
                 preferences = PreferenceManager.getDefaultSharedPreferences(this);
                 displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
                 ConnectionManager.connectToServer(this, webSocketCallback);
@@ -97,7 +100,7 @@ public static final String ACTION_STOP = "STOP";
             }
 
             if (intent.getAction().equals(ACTION_STOP)) {
-                stopEncodingVirtualDisplay();
+                running = false;
                 stopForeground(true);
                 stopSelf();
             }
@@ -209,7 +212,11 @@ public static final String ACTION_STOP = "STOP";
             }
 
             if (webSocket == null) {
-                reconnectAfterError("Support server not available. Attempting to reconnect in 20 seconds...");
+                if (running) {
+                    reconnectAfterError("Support server not available. Attempting to reconnect in 20 seconds...");
+                } else {
+                    showToast("Support service stopped.");
+                }
                 return;
             } else {
                 showToast("Connected to support server.");
@@ -226,6 +233,11 @@ public static final String ACTION_STOP = "STOP";
             webSocket.setClosedCallback(new CompletedCallback() {
                 @Override
                 public void onCompleted(Exception ex) {
+                    if (!running) {
+                        showToast("Support service stopped.");
+                        return;
+                    }
+
                     if (ex != null) {
                         Log.d("WSCLOSE", ex.toString(), ex);
                     }
