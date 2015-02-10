@@ -101,8 +101,7 @@ public static final String ACTION_STOP = "STOP";
 
             if (intent.getAction().equals(ACTION_STOP)) {
                 running = false;
-                stopForeground(true);
-                stopSelf();
+                logout();
             }
         }
         return START_NOT_STICKY;
@@ -448,10 +447,18 @@ public static final String ACTION_STOP = "STOP";
 
     @Override
     public void onDestroy() {
-        webSocket.send(TelepathyAPI.MESSAGE_DISBAND);
-        webSocket.send(TelepathyAPI.MESSAGE_LOGOUT);
-        stopEncodingVirtualDisplay();
+        if (running) {
+            logout();
+        }
         super.onDestroy();
+    }
+
+    private void logout() {
+        if (webSocket != null && webSocket.isOpen()) {
+            webSocket.send(TelepathyAPI.MESSAGE_DISBAND);
+            webSocket.send(TelepathyAPI.MESSAGE_LOGOUT);
+        }
+        stopEncodingVirtualDisplay();
     }
 
     @Override
