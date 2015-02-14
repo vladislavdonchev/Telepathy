@@ -1,8 +1,11 @@
 package net.hardcodes.telepathy;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
@@ -22,6 +25,8 @@ public class HomeScreenActivity extends Activity {
     private final static int DEPLOYMENT_STATE_NOT_INSTALLED = 0;
     private final static int DEPLOYMENT_STATE_NEEDS_UPDATE = 1;
     private final static int DEPLOYMENT_STATE_UP_TO_DATE = 2;
+
+    private ServiceStateChangeReceiver serviceStateChangeReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,9 +51,21 @@ public class HomeScreenActivity extends Activity {
 
     @Override
     protected void onResume() {
-        super.onResume();
+        if (serviceStateChangeReceiver == null) {
+            serviceStateChangeReceiver = new ServiceStateChangeReceiver();
+        }
+        IntentFilter intentFilter = new IntentFilter(RemoteControlService.ACTION_SERVICE_STATE_CHANGED);
+        registerReceiver(serviceStateChangeReceiver, intentFilter);
         checkServiceState();
+        super.onResume();
     }
+
+    @Override
+    protected void onPause() {
+        unregisterReceiver(serviceStateChangeReceiver);
+        super.onPause();
+    }
+
 
     private int checkDeploymentState(String installedVersion) {
         boolean isAppDeployedInSystem = !TextUtils.isEmpty(installedVersion);
@@ -116,12 +133,13 @@ public class HomeScreenActivity extends Activity {
 
     public void toggleService(View v) {
         Utils.toggleService(this);
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                checkServiceState();
-            }
-        }, 1000);
+    }
+
+    private class ServiceStateChangeReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            checkServiceState();
+        }
     }
 
     private void checkServiceState() {

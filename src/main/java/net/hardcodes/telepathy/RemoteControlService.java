@@ -47,6 +47,8 @@ import java.util.TimerTask;
 
 public class RemoteControlService extends Service {
 
+    public static final String ACTION_SERVICE_STATE_CHANGED = "stateChanged";
+
     public static final String ACTION_START = "START";
     public static final String ACTION_STOP = "STOP";
 
@@ -103,6 +105,8 @@ public class RemoteControlService extends Service {
                 running = false;
                 logout();
             }
+
+            sendBroadcast(new Intent(ACTION_SERVICE_STATE_CHANGED));
         }
         return START_NOT_STICKY;
     }
@@ -452,6 +456,8 @@ public class RemoteControlService extends Service {
         if (running) {
             logout();
         }
+        sendBroadcast(new Intent(ACTION_SERVICE_STATE_CHANGED));
+        showToast("Support service stopped.");
         super.onDestroy();
     }
 
