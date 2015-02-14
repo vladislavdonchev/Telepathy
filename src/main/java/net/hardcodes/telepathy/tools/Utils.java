@@ -85,15 +85,24 @@ public class Utils {
     }
 
     public static void toggleService(Context context) {
-        Intent serverIntent = new Intent(context, RemoteControlService.class);
-        if ( isServiceRunning(context, RemoteControlService.class)) {
-            serverIntent.setAction(RemoteControlService.ACTION_STOP);
-            context.startService(serverIntent);
-            context.stopService(serverIntent);
+        if (isServiceRunning(context, RemoteControlService.class)) {
+            stopService(context);
         } else {
-            serverIntent.setAction(RemoteControlService.ACTION_START);
-            context.startService(serverIntent);
+            startService(context);
         }
+    }
+
+    public static void startService(Context context) {
+        Intent serverIntent = new Intent(context, RemoteControlService.class);
+        serverIntent.setAction(RemoteControlService.ACTION_START);
+        context.startService(serverIntent);
+    }
+
+    public static void stopService(Context context) {
+        Intent serverIntent = new Intent(context, RemoteControlService.class);
+        serverIntent.setAction(RemoteControlService.ACTION_STOP);
+        context.startService(serverIntent);
+        context.stopService(serverIntent);
     }
 
     public static boolean isServiceRunning(Context context, Class<?> serviceClass) {

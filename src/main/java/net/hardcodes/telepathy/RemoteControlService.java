@@ -47,8 +47,8 @@ import java.util.TimerTask;
 
 public class RemoteControlService extends Service {
 
-public static final String ACTION_START = "START";
-public static final String ACTION_STOP = "STOP";
+    public static final String ACTION_START = "START";
+    public static final String ACTION_STOP = "STOP";
 
     private static final String TAG = "StreamingServer";
     public static final String VIRTUAL_DISPLAY_TAG = "ScreenRecorder";
@@ -193,13 +193,15 @@ public static final String ACTION_STOP = "STOP";
     }
 
     private void reconnectAfterError(String errorMessage) {
-        showToast(errorMessage);
         stopEncodingVirtualDisplay();
         try {
             Thread.sleep(20000);
         } catch (InterruptedException e) {
         }
-        ConnectionManager.connectToServer(this, webSocketCallback);
+        if (running) {
+            showToast(errorMessage);
+            ConnectionManager.connectToServer(this, webSocketCallback);
+        }
     }
 
     private AsyncHttpClient.WebSocketConnectCallback webSocketCallback = new AsyncHttpClient.WebSocketConnectCallback() {
@@ -212,7 +214,7 @@ public static final String ACTION_STOP = "STOP";
 
             if (webSocket == null) {
                 if (running) {
-                    reconnectAfterError("Support server not available. Attempting to reconnect in 20 seconds...");
+                    reconnectAfterError("Support server not available. Attempting to reconnect...");
                 } else {
                     showToast("Support service stopped.");
                 }
@@ -242,7 +244,7 @@ public static final String ACTION_STOP = "STOP";
                     }
                     stopPingPong();
                     // TODO: Why does the socket disconnect when the remote control session is interrupted from the other end?
-                    reconnectAfterError("Disconnected from support server. Reconnecting in 20 seconds...");
+                    reconnectAfterError("Disconnected from support server. Attempting to reconnect...");
                 }
             });
 
