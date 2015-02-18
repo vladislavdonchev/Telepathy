@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
@@ -21,7 +22,7 @@ import net.hardcodes.telepathy.tools.ShellCommandExecutor;
 import net.hardcodes.telepathy.tools.Utils;
 
 public class HomeScreenActivity extends Activity {
-
+    Typeface telepthyFont;
     private final static int DEPLOYMENT_STATE_NOT_INSTALLED = 0;
     private final static int DEPLOYMENT_STATE_NEEDS_UPDATE = 1;
     private final static int DEPLOYMENT_STATE_UP_TO_DATE = 2;
@@ -32,8 +33,10 @@ public class HomeScreenActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_screen);
-
+        telepthyFont = Typeface.createFromAsset(getAssets(), "font/forced_square.ttf");
         showDeploymentDialog(true);
+
+        ((Button) findViewById(R.id.start_client_button)).setTypeface(telepthyFont);
     }
 
     private void showDeploymentDialog(boolean showOnlyIfNeeded) {
@@ -144,9 +147,13 @@ public class HomeScreenActivity extends Activity {
 
     private void checkServiceState() {
         if (Utils.isServiceRunning(this, RemoteControlService.class)) {
-            ((Button) findViewById(R.id.server_control_button)).setText("Stop Service");
+            Button serverControl = (Button) findViewById(R.id.server_control_button);
+            serverControl.setText("Stop Service");
+            serverControl.setTypeface(telepthyFont);
         } else {
-            ((Button) findViewById(R.id.server_control_button)).setText("Start Service");
+            Button startService = (Button) findViewById(R.id.server_control_button);
+            startService.setText("Start Service");
+            startService.setTypeface(telepthyFont);
         }
     }
 }
