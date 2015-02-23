@@ -14,6 +14,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.koushikdutta.async.Util;
@@ -37,6 +38,13 @@ public class HomeScreenActivity extends Activity {
         showDeploymentDialog(true);
 
         ((Button) findViewById(R.id.start_client_button)).setTypeface(telepthyFont);
+        ImageView settinsg = (ImageView)findViewById(R.id.image_view_settings_button);
+        settinsg .setOnClickListener( new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(HomeScreenActivity.this, SettingsActivity.class));
+            }
+        });
     }
 
     private void showDeploymentDialog(boolean showOnlyIfNeeded) {
