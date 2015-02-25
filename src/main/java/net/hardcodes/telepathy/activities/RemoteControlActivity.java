@@ -1,4 +1,4 @@
-package net.hardcodes.telepathy;
+package net.hardcodes.telepathy.activities;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -29,6 +29,9 @@ import com.koushikdutta.async.callback.DataCallback;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.WebSocket;
 
+import net.hardcodes.telepathy.ConnectDialog;
+import net.hardcodes.telepathy.R;
+import net.hardcodes.telepathy.TelepathyAPI;
 import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.tools.CodecUtils;
 import net.hardcodes.telepathy.tools.ConnectionManager;

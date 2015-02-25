@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent">
+    
+        <RelativeLayout
+            android:id="@+id/text_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/custom_green">
+    
+            <net.hardcodes.telepathy.tools.FontTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="10dp"
+                android:text="Uninstall the system service will require device reboot. \n\n Do you want to continue?"
+                android:textColor="@android:color/white" />
+        </RelativeLayout>
+    
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_below="@+id/text_container"
+            android:layout_marginTop="3dp">
+    
+            <net.hardcodes.telepathy.tools.FontButton
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentBottom="true"
+                android:layout_marginRight="3dp"
+                android:layout_weight="1"
+                android:background="@color/custom_green"
+                android:text="no"
+                android:textColor="@android:color/white" />
+
+            <net.hardcodes.telepathy.tools.FontButton
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentBottom="true"
+                android:layout_weight="1"
+                android:background="@color/custom_green"
+                android:text="yes"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+ </RelativeLayout>

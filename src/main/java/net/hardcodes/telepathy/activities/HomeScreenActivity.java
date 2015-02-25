@@ -1,4 +1,4 @@
-package net.hardcodes.telepathy;
+package net.hardcodes.telepathy.activities;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,13 +16,16 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.koushikdutta.async.Util;
-
+import net.hardcodes.telepathy.ConnectDialog;
+import net.hardcodes.telepathy.InstallUninstallDialog;
+import net.hardcodes.telepathy.R;
+import net.hardcodes.telepathy.RemoteControlService;
+import net.hardcodes.telepathy.tools.FontButton;
+import net.hardcodes.telepathy.tools.FontTextView;
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
 import net.hardcodes.telepathy.tools.Utils;
 
 public class HomeScreenActivity extends Activity {
-    Typeface telepthyFont;
     private final static int DEPLOYMENT_STATE_NOT_INSTALLED = 0;
     private final static int DEPLOYMENT_STATE_NEEDS_UPDATE = 1;
     private final static int DEPLOYMENT_STATE_UP_TO_DATE = 2;
@@ -34,12 +36,9 @@ public class HomeScreenActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_screen);
-        telepthyFont = Typeface.createFromAsset(getAssets(), "font/forced_square.ttf");
         showDeploymentDialog(true);
-
-        ((Button) findViewById(R.id.start_client_button)).setTypeface(telepthyFont);
         ImageView settinsg = (ImageView)findViewById(R.id.image_view_settings_button);
-        settinsg .setOnClickListener( new View.OnClickListener() {
+        settinsg .setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(HomeScreenActivity.this, SettingsActivity.class));
@@ -155,13 +154,11 @@ public class HomeScreenActivity extends Activity {
 
     private void checkServiceState() {
         if (Utils.isServiceRunning(this, RemoteControlService.class)) {
-            Button serverControl = (Button) findViewById(R.id.server_control_button);
+            FontButton serverControl = (FontButton) findViewById(R.id.server_control_button);
             serverControl.setText("Stop Service");
-            serverControl.setTypeface(telepthyFont);
         } else {
-            Button startService = (Button) findViewById(R.id.server_control_button);
+            FontButton startService = (FontButton) findViewById(R.id.server_control_button);
             startService.setText("Start Service");
-            startService.setTypeface(telepthyFont);
         }
     }
 }

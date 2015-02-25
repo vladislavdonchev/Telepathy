@@ -36,7 +36,7 @@ public class InstallUninstallDialog extends AlertDialog implements DialogInterfa
 
     public static final String CONFIGURATION_FILE = "telepathyInstallation.cfg";
 
-    protected InstallUninstallDialog(Context context) {
+    public InstallUninstallDialog(Context context) {
         super(context);
     }
 

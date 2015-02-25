@@ -1,4 +1,4 @@
-package net.hardcodes.telepathy;
+package net.hardcodes.telepathy.activities;
 
 import android.content.SharedPreferences;
 import android.graphics.Point;
@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.PreferenceActivity;
+
+import net.hardcodes.telepathy.R;
 
 public class SettingsActivity extends PreferenceActivity implements
         SharedPreferences.OnSharedPreferenceChangeListener {

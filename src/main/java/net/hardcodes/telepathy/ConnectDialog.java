@@ -12,6 +12,8 @@ import android.view.LayoutInflater;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import net.hardcodes.telepathy.activities.RemoteControlActivity;
+
 public class ConnectDialog extends DialogFragment {
 
     public static final String KEY_UID_EXTRA = "remoteUID";
