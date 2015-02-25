@@ -23,11 +23,6 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
-import com.koushikdutta.async.DataEmitter;
-import com.koushikdutta.async.callback.CompletedCallback;
-import com.koushikdutta.async.callback.DataCallback;
-import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.WebSocket;
 
 import net.hardcodes.telepathy.ConnectDialog;
 import net.hardcodes.telepathy.R;
@@ -39,11 +34,9 @@ import net.hardcodes.telepathy.tools.ConnectionManager;
 import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
 
 
-public class RemoteControlActivity extends Activity implements SurfaceHolder.Callback, GestureDetector.OnGestureListener, View.OnClickListener {
+public class RemoteControlActivity extends Activity implements ConnectionManager.WebSocketConnectionListener, SurfaceHolder.Callback, GestureDetector.OnGestureListener, View.OnClickListener {
 
     private static final String TAG = "RemoteControlActivity";
 
@@ -54,15 +47,12 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
     private ByteBuffer[] decoderInputBuffers = null;
     private MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
 
-
-    private WebSocket webSocket;
     private String remoteUID;
 
     private int deviceWidth;
     private int deviceHeight;
     private Point videoResolution = new Point();
     private SharedPreferences preferences;
-    private Timer pingPongTimer;
 
     private ImageButton buttonShowHideButtons;
     private LinearLayout buttonsContainer;
@@ -71,6 +61,127 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
     private ImageButton buttonLockUnlock;
     private ImageButton buttonRecentApps;
     private GestureDetectorCompat mDetector;
+
+    @Override
+    public void onConnect() {
+        ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_BIND + remoteUID);
+    }
+
+    @Override
+    public void onError(int errorCode) {
+            showToast("Server error.");
+            finish();
+    }
+
+    @Override
+    public void onTextMessage(String message) {
+        Log.d("API", message);
+
+        if (message.startsWith(TelepathyAPI.MESSAGE_BIND_ACCEPTED)) {
+            showToast("Remote controlling user " + remoteUID);
+
+        } else if (message.startsWith(TelepathyAPI.MESSAGE_BIND_FAILED)) {
+            showToast("User " + remoteUID + " not logged in. Please try again later.");
+            finish();
+
+        } else if (message.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
+            showToast("Server: " + message);
+            finish();
+
+        } else if (message.startsWith(TelepathyAPI.MESSAGE_VIDEO_METADATA)) {
+            String messagePayload = message.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
+            String[] parts = messagePayload.split(",");
+
+            try {
+                info.set(Integer.parseInt(parts[0]),
+                        Integer.parseInt(parts[1]),
+                        Long.parseLong(parts[2]),
+                        Integer.parseInt(parts[3]));
+                if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                    videoResolution.x = Integer.parseInt(parts[4]);
+                    videoResolution.y = Integer.parseInt(parts[5]);
+                }
+            } catch (NumberFormatException e) {
+                Log.d(TAG, e.toString(), e);
+                //TODO: Need to stop the decoder or to skip the current decoder loop
+                showToast(e.getMessage());
+            }
+
+        }
+    }
+
+    @Override
+    public void onBinaryMessage(ByteBufferList byteBufferList) {
+        ByteBuffer b = byteBufferList.getAll();
+        //b.position(info.offset);
+        b.position(0);
+        //b.limit(info.offset + info.size);
+        b.limit(info.size);
+        if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+            MediaFormat format =
+                    MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
+                            videoResolution.x, videoResolution.y);
+            format.setByteBuffer("csd-0", b);
+            decoder.configure(format, surfaceView.getHolder().getSurface(), null, 0);
+            decoder.start();
+            byteBufferList.recycle();
+            decoderInputBuffers = decoder.getInputBuffers();
+            decoderConfigured = true;
+            return;
+        }
+        int inputBufIndex = decoder.dequeueInputBuffer(CodecUtils.TIMEOUT_USEC);
+        if (inputBufIndex >= 0) {
+            ByteBuffer inputBuf = decoderInputBuffers[inputBufIndex];
+            inputBuf.clear();
+            inputBuf.limit(info.offset + info.size);
+            byte[] buff = new byte[info.size];
+            b.get(buff, 0, info.size);
+            try {
+                inputBuf.put(buff);
+            } catch (BufferOverflowException e) {
+                showToast("Buffer Overflow = " + e.getMessage());
+                Log.d(TAG, "Input buff capacity = " + inputBuf.capacity() + " limit = " + inputBuf.limit() + " byte size = " + buff.length);
+                byteBufferList.recycle();
+                return;
+            }
+
+            inputBuf.rewind();
+            decoder.queueInputBuffer(inputBufIndex, 0, info.size,
+                    info.presentationTimeUs, 0 /*flags*/);
+        }
+        int decoderStatus = decoder.dequeueOutputBuffer(info, CodecUtils.TIMEOUT_USEC);
+        if (decoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
+            // no output available yet
+            Log.d(TAG, "no output from decoder available");
+        } else if (decoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+            // The storage associated with the direct ByteBuffer may already be unmapped,
+            // so attempting to access data through the old output buffer array could
+            // lead to a native crash.
+            Log.d(TAG, "decoder output buffers changed");
+        } else if (decoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+            // this happens before the first frame is returned
+            MediaFormat decoderOutputFormat = decoder.getOutputFormat();
+            Log.d(TAG, "decoder output format changed: " + decoderOutputFormat);
+        } else if (decoderStatus < 0) {
+            //TODO: fail
+            showToast("Something wrong with the decoder. Need to stop everything.");
+        } else {
+            if (info.size == 0) {
+                Log.d(TAG, "got empty frame");
+            }
+            if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                Log.d(TAG, "output EOS");
+            }
+            boolean doRender = (info.size != 0);
+            decoder.releaseOutputBuffer(decoderStatus, doRender /*render*/);
+        }
+        byteBufferList.recycle();
+    }
+
+    @Override
+    public void onDisconnect() {
+        finish();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,172 +227,11 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
         deviceHeight = dm.heightPixels;
     }
 
-
-    @Override
-    public void onBackPressed() {
-        disconnect();
-        super.onBackPressed();
-    }
-
     @Override
     protected void onDestroy() {
-        disconnect();
+        ConnectionManager.getInstance().releaseConnection(this);
         super.onDestroy();
     }
-
-    private void disconnect() {
-        if (webSocket != null) {
-            webSocket.send(TelepathyAPI.MESSAGE_DISBAND);
-            webSocket.send(TelepathyAPI.MESSAGE_LOGOUT);
-            webSocket.close();
-            webSocket = null;
-        }
-    }
-
-    private AsyncHttpClient.WebSocketConnectCallback websocketCallback = new AsyncHttpClient
-            .WebSocketConnectCallback() {
-        @Override
-        public void onCompleted(Exception ex, final WebSocket webSocket) {
-            if (ex != null) {
-                Log.d("WSFAIL", ex.toString() + ": " + ex.getCause(), ex);
-            }
-
-            if (webSocket == null) {
-                showToast("Server not available.");
-                return;
-            }
-
-            RemoteControlActivity.this.webSocket = webSocket;
-
-            String uid = preferences.getString("uid", "111");
-            webSocket.send(TelepathyAPI.MESSAGE_LOGIN + uid);
-            webSocket.send(TelepathyAPI.MESSAGE_BIND + remoteUID);
-            startPingPong();
-
-            webSocket.setClosedCallback(new CompletedCallback() {
-                @Override
-                public void onCompleted(Exception e) {
-                    stopPingPong();
-                    finish();
-                }
-            });
-
-            webSocket.setStringCallback(new WebSocket.StringCallback() {
-                public void onStringAvailable(String s) {
-                    Log.d("API", s);
-
-                    if (s.startsWith(TelepathyAPI.MESSAGE_BIND_ACCEPTED)) {
-                        showToast("Remote controlling user " + remoteUID);
-                    } else if (s.startsWith(TelepathyAPI.MESSAGE_BIND_FAILED)) {
-                        showToast("User " + remoteUID + " not logged in. Please try again later.");
-                        finish();
-                    } else if (s.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
-                        showToast("Server: " + s);
-                        finish();
-                    } else if (s.startsWith(TelepathyAPI.MESSAGE_VIDEO_METADATA)) {
-                        String messagePayload = s.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
-                        String[] parts = messagePayload.split(",");
-
-                        try {
-                            info.set(Integer.parseInt(parts[0]),
-                                    Integer.parseInt(parts[1]),
-                                    Long.parseLong(parts[2]),
-                                    Integer.parseInt(parts[3]));
-                            if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-                                videoResolution.x = Integer.parseInt(parts[4]);
-                                videoResolution.y = Integer.parseInt(parts[5]);
-                            }
-                        } catch (NumberFormatException e) {
-                            Log.d(TAG, e.toString(), e);
-                            //TODO: Need to stop the decoder or to skip the current decoder loop
-                            showToast(e.getMessage());
-                        }
-                    }
-                }
-            });
-
-            webSocket.setDataCallback(new DataCallback() {
-                @Override
-                public void onDataAvailable(DataEmitter dataEmitter, ByteBufferList byteBufferList) {
-                    ByteBuffer b = byteBufferList.getAll();
-                    //b.position(info.offset);
-                    b.position(0);
-                    //b.limit(info.offset + info.size);
-                    b.limit(info.size);
-                    if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-                        MediaFormat format =
-                                MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
-                                        videoResolution.x, videoResolution.y);
-                        format.setByteBuffer("csd-0", b);
-                        decoder.configure(format, surfaceView.getHolder().getSurface(), null, 0);
-                        decoder.start();
-                        byteBufferList.recycle();
-                        decoderInputBuffers = decoder.getInputBuffers();
-                        decoderConfigured = true;
-                        return;
-                    }
-                    int inputBufIndex = decoder.dequeueInputBuffer(CodecUtils.TIMEOUT_USEC);
-                    if (inputBufIndex >= 0) {
-                        ByteBuffer inputBuf = decoderInputBuffers[inputBufIndex];
-                        inputBuf.clear();
-                        inputBuf.limit(info.offset + info.size);
-                        byte[] buff = new byte[info.size];
-                        b.get(buff, 0, info.size);
-                        try {
-                            inputBuf.put(buff);
-                        } catch (BufferOverflowException e) {
-                            showToast("Buffer Overflow = " + e.getMessage());
-                            Log.d(TAG, "Input buff capacity = " + inputBuf.capacity() + " limit = " + inputBuf.limit() + " byte size = " + buff.length);
-                            byteBufferList.recycle();
-                            return;
-                        }
-
-                        inputBuf.rewind();
-                        decoder.queueInputBuffer(inputBufIndex, 0, info.size,
-                                info.presentationTimeUs, 0 /*flags*/);
-                    }
-                    int decoderStatus = decoder.dequeueOutputBuffer(info, CodecUtils.TIMEOUT_USEC);
-                    if (decoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
-                        // no output available yet
-                        Log.d(TAG, "no output from decoder available");
-                    } else if (decoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
-                        // The storage associated with the direct ByteBuffer may already be unmapped,
-                        // so attempting to access data through the old output buffer array could
-                        // lead to a native crash.
-                        Log.d(TAG, "decoder output buffers changed");
-                    } else if (decoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                        // this happens before the first frame is returned
-                        MediaFormat decoderOutputFormat = decoder.getOutputFormat();
-                        Log.d(TAG, "decoder output format changed: " + decoderOutputFormat);
-                    } else if (decoderStatus < 0) {
-                        //TODO: fail
-                        showToast("Something wrong with the decoder. Need to stop everything.");
-                    } else {
-                        if (info.size == 0) {
-                            Log.d(TAG, "got empty frame");
-                        }
-                        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                            Log.d(TAG, "output EOS");
-                        }
-                        boolean doRender = (info.size != 0);
-                        decoder.releaseOutputBuffer(decoderStatus, doRender /*render*/);
-                    }
-                    byteBufferList.recycle();
-                }
-            });
-
-            webSocket.setEndCallback(new CompletedCallback() {
-                @Override
-                public void onCompleted(Exception ex) {
-                    if (ex == null) {
-                        Log.d("WSEND", "END?!");
-                    } else {
-                        Log.d("WSEND", ex.toString(), ex);
-                    }
-                }
-            });
-        }
-    };
 
     private void hideSystemUI() {
         // Set the IMMERSIVE flag.
@@ -309,7 +259,7 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         try {
             decoder = MediaCodec.createDecoderByType(CodecUtils.MIME_TYPE);
-            ConnectionManager.connectToServer(this, websocketCallback);
+            ConnectionManager.getInstance().acquireConnection(this, this);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -321,26 +271,6 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-    }
-
-
-    private void startPingPong() {
-        pingPongTimer = new Timer("keep_alive");
-        pingPongTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    webSocket.ping(TelepathyAPI.MESSAGE_HEARTBEAT);
-                } catch (Exception e) {
-                    Log.d("WEBSOCKPING", e.toString(), e);
-                }
-            }
-        }, 0, 10 * 1000);
-    }
-
-    private void stopPingPong() {
-        pingPongTimer.cancel();
-        pingPongTimer.purge();
     }
 
     @Override
@@ -376,9 +306,7 @@ public class RemoteControlActivity extends Activity implements SurfaceHolder.Cal
         event.setToucEventX1(x1);
         event.setTouchEventY1(y1);
         String eventJson = gson.toJson(event);
-        if (webSocket != null) {
-            webSocket.send(TelepathyAPI.MESSAGE_INPUT + eventJson);
-        }
+        ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_INPUT + eventJson);
     }
 
     private void hideButtonsContainer() {
