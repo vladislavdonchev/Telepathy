@@ -203,7 +203,7 @@ public class RemoteControlService extends Service {
         } catch (InterruptedException e) {
         }
         if (running) {
-            showToast(errorMessage);
+            //showToast(errorMessage);
             ConnectionManager.connectToServer(this, webSocketCallback);
         }
     }
@@ -487,6 +487,7 @@ public class RemoteControlService extends Service {
                 if (webSocket != null) {
                     try {
                         webSocket.ping(TelepathyAPI.MESSAGE_HEARTBEAT);
+                        Log.d("WEBSOCKPING", "ping");
                     } catch (Exception e) {
                         Log.d("WEBSOCKPING", e.toString(), e);
                     }
