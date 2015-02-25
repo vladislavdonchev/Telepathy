@@ -28,11 +28,6 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
-import com.koushikdutta.async.DataEmitter;
-import com.koushikdutta.async.callback.CompletedCallback;
-import com.koushikdutta.async.callback.DataCallback;
-import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.WebSocket;
 
 import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.tools.CodecUtils;
@@ -42,10 +37,8 @@ import net.hardcodes.telepathy.tools.ShellCommandExecutor;
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class RemoteControlService extends Service {
+public class RemoteControlService extends Service implements ConnectionManager.WebSocketConnectionListener {
 
     public static final String ACTION_SERVICE_STATE_CHANGED = "stateChanged";
 
@@ -59,8 +52,6 @@ public class RemoteControlService extends Service {
     private Handler toastHandler;
     KeyguardManager myKM;
     KeyguardManager.KeyguardLock kl;
-    public WebSocket webSocket;
-    private Timer pingPongTimer;
 
     private DisplayManager displayManager;
     private Surface encoderInputSurface = null;
@@ -74,6 +65,61 @@ public class RemoteControlService extends Service {
     private Point resolution = new Point();
 
     private boolean running = false;
+
+    @Override
+    public void onConnect() {
+        showToast("Connected to support server.");
+    }
+
+    @Override
+    public void onError(int errorCode) {
+        if (running) {
+            reconnectAfterError("Support server not available. Attempting to reconnect...");
+        }
+    }
+
+    @Override
+    public void onTextMessage(String message) {
+        Log.d("API", message);
+
+        if (message.startsWith(TelepathyAPI.MESSAGE_BIND)) {
+            String remoteUID = message.split(TelepathyAPI.MESSAGE_UID_DELIMITER)[1];
+            ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_BIND_ACCEPTED + remoteUID);
+            showToast("User " + remoteUID + " has connected.");
+            //Start rendering display on the surface and set up the encoder.
+            if (encoderThread == null) {
+                startEncodingVirtualDisplay();
+            }
+
+        } else if (message.startsWith(TelepathyAPI.MESSAGE_DISBAND)) {
+            stopEncodingVirtualDisplay();
+
+        } else if (message.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
+            showToast("Server: " + message);
+            stopEncodingVirtualDisplay();
+
+        } else if (message.startsWith(TelepathyAPI.MESSAGE_INPUT)) {
+            Gson gson = new Gson();
+            String messagePayload = message.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
+            InputEvent inputEventObject = gson.fromJson(messagePayload, InputEvent.class);
+            decodeInputEvent(inputEventObject);
+
+        }
+    }
+
+    @Override
+    public void onBinaryMessage(ByteBufferList byteBufferList) {
+    }
+
+    @Override
+    public void onDisconnect() {
+        if (running) {
+            reconnectAfterError("Disconnected from support server. Attempting to reconnect...");
+        } else {
+            ConnectionManager.getInstance().unregisterListener(this);
+            showToast("Support service stopped.");
+        }
+    }
 
     private class ToastRunnable implements Runnable {
         String mText;
@@ -95,7 +141,7 @@ public class RemoteControlService extends Service {
                 running = true;
                 preferences = PreferenceManager.getDefaultSharedPreferences(this);
                 displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
-                ConnectionManager.connectToServer(this, webSocketCallback);
+                ConnectionManager.getInstance().acquireConnection(this, this);
                 toastHandler = new Handler();
                 myKM = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
                 kl = myKM.newKeyguardLock("MyKeyguardLock");
@@ -103,7 +149,7 @@ public class RemoteControlService extends Service {
 
             if (intent.getAction().equals(ACTION_STOP)) {
                 running = false;
-                logout();
+                disconnect();
             }
 
             sendBroadcast(new Intent(ACTION_SERVICE_STATE_CHANGED));
@@ -204,105 +250,9 @@ public class RemoteControlService extends Service {
         }
         if (running) {
             //showToast(errorMessage);
-            ConnectionManager.connectToServer(this, webSocketCallback);
+            ConnectionManager.getInstance().acquireConnection(this, this);
         }
     }
-
-    private AsyncHttpClient.WebSocketConnectCallback webSocketCallback = new AsyncHttpClient.WebSocketConnectCallback() {
-
-        @Override
-        public void onCompleted(Exception ex, final WebSocket webSocket) {
-            if (ex != null) {
-                Log.d("WSFAIL", ex.toString() + ": " + ex.getCause(), ex);
-            }
-
-            if (webSocket == null) {
-                if (running) {
-                    reconnectAfterError("Support server not available. Attempting to reconnect...");
-                } else {
-                    showToast("Support service stopped.");
-                }
-                return;
-            } else {
-                showToast("Connected to support server.");
-            }
-
-            if (RemoteControlService.this.webSocket != null) {
-                RemoteControlService.this.webSocket.close();
-            }
-
-            String uid = preferences.getString("uid", "111");
-            webSocket.send(TelepathyAPI.MESSAGE_LOGIN + uid);
-            startPingPong();
-
-            webSocket.setClosedCallback(new CompletedCallback() {
-                @Override
-                public void onCompleted(Exception ex) {
-                    if (!running) {
-                        showToast("Support service stopped.");
-                        return;
-                    }
-
-                    if (ex != null) {
-                        Log.d("WSCLOSE", ex.toString(), ex);
-                    }
-                    stopPingPong();
-                    // TODO: Why does the socket disconnect when the remote control session is interrupted from the other end?
-                    reconnectAfterError("Disconnected from support server. Attempting to reconnect...");
-                }
-            });
-
-            webSocket.setStringCallback(new WebSocket.StringCallback() {
-                @Override
-                public void onStringAvailable(String s) {
-                    Log.d("API", s);
-
-                    if (s.startsWith(TelepathyAPI.MESSAGE_BIND)) {
-                        String remoteUID = s.split(TelepathyAPI.MESSAGE_UID_DELIMITER)[1];
-                        webSocket.send(TelepathyAPI.MESSAGE_BIND_ACCEPTED + remoteUID);
-                        showToast("User " + remoteUID + " has connected.");
-                        //Start rendering display on the surface and set up the encoder.
-                        if (encoderThread == null) {
-                            startEncodingVirtualDisplay();
-                        }
-
-                    } else if (s.startsWith(TelepathyAPI.MESSAGE_DISBAND)) {
-                        stopEncodingVirtualDisplay();
-
-                    } else if (s.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
-                        showToast("Server: " + s);
-                        stopEncodingVirtualDisplay();
-
-                    } else if (s.startsWith(TelepathyAPI.MESSAGE_INPUT)) {
-                        Gson gson = new Gson();
-                        String messagePayload = s.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
-                        InputEvent inputEventObject = gson.fromJson(messagePayload, InputEvent.class);
-                        decodeInputEvent(inputEventObject);
-                    }
-                }
-            });
-
-            webSocket.setDataCallback(new DataCallback() {
-                @Override
-                public void onDataAvailable(DataEmitter dataEmitter, ByteBufferList byteBufferList) {
-                    byteBufferList.recycle();
-                }
-            });
-
-            webSocket.setEndCallback(new CompletedCallback() {
-                @Override
-                public void onCompleted(Exception ex) {
-                    if (ex == null) {
-                        Log.d("WSEND", "END?!");
-                    } else {
-                        Log.d("WSEND", ex.toString(), ex);
-                    }
-                }
-            });
-
-            RemoteControlService.this.webSocket = webSocket;
-        }
-    };
 
     private void decodeInputEvent(InputEvent event) {
         switch (event.getImputType()) {
@@ -416,11 +366,11 @@ public class RemoteControlService extends Service {
                     }
 
                     if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-                        webSocket.send(TelepathyAPI.MESSAGE_VIDEO_METADATA + info.offset + "," + info.size + "," +
+                        ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_VIDEO_METADATA + info.offset + "," + info.size + "," +
                                 info.presentationTimeUs + "," + info.flags + "," +
                                 resolution.x + "," + resolution.y);
                     } else {
-                        webSocket.send(TelepathyAPI.MESSAGE_VIDEO_METADATA + info.offset + "," + info.size + "," +
+                        ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_VIDEO_METADATA + info.offset + "," + info.size + "," +
                                 info.presentationTimeUs + "," + info.flags);
                     }
 
@@ -428,7 +378,7 @@ public class RemoteControlService extends Service {
                     try {
                         encodedData.position(info.offset);
                         encodedData.get(b, info.offset, info.offset + info.size);
-                        webSocket.send(b);
+                        ConnectionManager.getInstance().sendBinaryMessage(b);
                     } catch (BufferUnderflowException e) {
                         Log.d("ENCODER", e.toString(), e);
                     }
@@ -454,18 +404,15 @@ public class RemoteControlService extends Service {
     @Override
     public void onDestroy() {
         if (running) {
-            logout();
+            disconnect();
         }
         sendBroadcast(new Intent(ACTION_SERVICE_STATE_CHANGED));
         showToast("Support service stopped.");
         super.onDestroy();
     }
 
-    private void logout() {
-        if (webSocket != null && webSocket.isOpen()) {
-            webSocket.send(TelepathyAPI.MESSAGE_DISBAND);
-            webSocket.send(TelepathyAPI.MESSAGE_LOGOUT);
-        }
+    private void disconnect() {
+        ConnectionManager.getInstance().releaseConnection(this);
         stopEncodingVirtualDisplay();
     }
 
@@ -476,29 +423,6 @@ public class RemoteControlService extends Service {
 
     private void showToast(final String message) {
         toastHandler.post(new ToastRunnable(message));
-    }
-
-
-    private void startPingPong() {
-        pingPongTimer = new Timer("keep_alive");
-        pingPongTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                if (webSocket != null) {
-                    try {
-                        webSocket.ping(TelepathyAPI.MESSAGE_HEARTBEAT);
-                        Log.d("WEBSOCKPING", "ping");
-                    } catch (Exception e) {
-                        Log.d("WEBSOCKPING", e.toString(), e);
-                    }
-                }
-            }
-        }, 0, 10 * 1000);
-    }
-
-    private void stopPingPong() {
-        pingPongTimer.cancel();
-        pingPongTimer.purge();
     }
 
     private void updateNotification(String message) {
