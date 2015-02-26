@@ -1,10 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent">
+    
+        <RelativeLayout
+            android:id="@+id/text_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/custom_green">
+    
+            <net.hardcodes.telepathy.model.FontTextView
+                android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="10dp"
+                android:text="Remote Control"
+                android:textSize="20sp"
+                android:textColor="@android:color/white" />
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+            <EditText
+                android:id="@+id/uid_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/title"
+                android:layout_margin="10dp"
+                android:textColor="@android:color/white"
+                android:textColorHint="@android:color/white"
+                android:hint="Type in User ID..." />
 
-    <EditText android:id="@+id/uid_input" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:hint="Type in User ID..." />
+        </RelativeLayout>
+    
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_below="@+id/text_container"
+            android:layout_marginTop="3dp">
+    
+            <net.hardcodes.telepathy.model.FontButton
+                android:id="@+id/btn_connect"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentBottom="true"
+                android:layout_marginRight="3dp"
+                android:layout_weight="1"
+                android:background="@color/custom_green"
+                android:text="Connect"
+                android:textColor="@android:color/white" />
 
-</LinearLayout>
+            <net.hardcodes.telepathy.model.FontButton
+                android:id="@+id/btn_cancel"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentBottom="true"
+                android:layout_weight="1"
+                android:background="@color/custom_green"
+                android:text="Cancel"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+ </RelativeLayout>
