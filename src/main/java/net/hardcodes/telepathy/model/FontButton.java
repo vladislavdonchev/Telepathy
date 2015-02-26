@@ -1,4 +1,4 @@
-package net.hardcodes.telepathy.tools;
+package net.hardcodes.telepathy.model;
 
 import android.content.Context;
 import android.graphics.Typeface;

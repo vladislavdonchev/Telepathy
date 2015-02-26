@@ -10,7 +10,7 @@
             android:layout_height="wrap_content"
             android:background="@color/custom_green">
     
-            <net.hardcodes.telepathy.tools.FontTextView
+            <net.hardcodes.telepathy.model.FontTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
@@ -25,7 +25,7 @@
             android:layout_below="@+id/text_container"
             android:layout_marginTop="3dp">
     
-            <net.hardcodes.telepathy.tools.FontButton
+            <net.hardcodes.telepathy.model.FontButton
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_alignParentBottom="true"
@@ -35,7 +35,7 @@
                 android:text="no"
                 android:textColor="@android:color/white" />
 
-            <net.hardcodes.telepathy.tools.FontButton
+            <net.hardcodes.telepathy.model.FontButton
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_alignParentBottom="true"
