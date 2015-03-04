@@ -6,6 +6,8 @@ import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.widget.RadioButton;
 
+import net.hardcodes.telepathy.R;
+
 /**
  * Created by aleksandardimitrov on 3/4/15.
  */
@@ -29,6 +31,7 @@ public class FontRadioButton extends RadioButton {
     private void init() {
         Typeface tf = Typeface.createFromAsset(getContext().getAssets(), "font/forced_square.ttf");
         setTypeface(tf);
+        setShadowLayer(8, 8, 8, R.color.text_shade_color);
     }
     /**
      * Fix for putting the drawable in the center
