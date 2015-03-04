@@ -55,7 +55,7 @@ public class ConnectDialog extends DialogFragment {
                 }
             }
         });
-        
+
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         dialog.setContentView(dialogLayout);

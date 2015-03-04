@@ -2,4 +2,5 @@
 <resources>
     <color name="description">#ff486e6d</color>
     <color name="custom_green">#549f8d</color>
+    <color name="text_shade_color">#545454</color>
 </resources>

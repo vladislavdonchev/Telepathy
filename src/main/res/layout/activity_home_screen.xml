@@ -24,7 +24,11 @@
                 android:layout_centerHorizontal="true"
                 android:onClick="toggleService"
                 android:background="@android:color/white"
-                android:alpha="0.3"
+                android:alpha="0.6"
+                android:shadowColor="#545454"
+                android:shadowDx="8"
+                android:shadowDy="8"
+                android:shadowRadius="8"
                 android:text="Start Service"
                 android:textColor="#000000" />
         </RelativeLayout>
@@ -43,7 +47,11 @@
                 android:layout_centerHorizontal="true"
                 android:onClick="startClient"
                 android:text="Connect"
-                android:alpha="0.3"
+                android:alpha="0.6"
+                android:shadowColor="#545454"
+                android:shadowDx="8"
+                android:shadowDy="8"
+                android:shadowRadius="8"
                 android:background="@android:color/white"
                 android:textColor="#000000" />
         </RelativeLayout>

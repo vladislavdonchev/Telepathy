@@ -1,12 +1,345 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:background="@drawable/telepathy_background"
-    android:layout_height="match_parent">
+    android:orientation="vertical">
 
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:src="@drawable/telepathy_settings"/>
+        android:src="@drawable/telepathy_settings" />
+
+    <net.hardcodes.telepathy.model.FontTextView
+        android:id="@+id/system_textview"
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:background="@android:color/white"
+        android:clickable="true"
+        android:gravity="center"
+        android:text="system"
+        android:textSize="@dimen/activity_settings_title" />
+
+    <LinearLayout
+        android:id="@+id/system_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="20dp"
+        android:paddingTop="20dp">
+
+        <CheckBox
+            android:id="@+id/checkbox_start_server_boot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="onCheckboxClicked"
+            android:text="start server on boot"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/activity_settings_textviews" />
+
+        <CheckBox
+            android:id="@+id/checkbox_login_auto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="onCheckboxClicked"
+            android:text="login automatically"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/activity_settings_textviews" />
+
+        <net.hardcodes.telepathy.model.FontTextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:gravity="center"
+            android:text="KitKat system service"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/activity_settings_textviews" />
+
+        <net.hardcodes.telepathy.model.FontTextView
+            android:id="@+id/textview_uninstall"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text="click to uninstall"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/activity_settings_textviews" />
+
+        <net.hardcodes.telepathy.model.FontTextView
+            android:id="@+id/textview_version"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:gravity="center"
+            android:text="v 0.1"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/activity_settings_textviews" />
+
+    </LinearLayout>
+
+    <net.hardcodes.telepathy.model.FontTextView
+        android:id="@+id/permissions_textview"
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:background="@android:color/white"
+        android:gravity="center"
+        android:text="permissions"
+        android:textSize="@dimen/activity_settings_title" />
+
+    <LinearLayout
+        android:id="@+id/permissions_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="20dp"
+        android:paddingTop="20dp"
+        android:visibility="gone">
+
+        <net.hardcodes.telepathy.model.FontTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="connection request:"
+            android:textColor="@android:color/white"
+            android:textSize="18sp" />
+
+        <RadioGroup
+            android:id="@+id/radio_group_connection"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal"
+            android:textSize="@dimen/activity_settings_textviews">
+
+            <net.hardcodes.telepathy.model.FontRadioButton
+                android:id="@+id/radio_prompt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="true"
+                android:text="prompt"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+
+            <net.hardcodes.telepathy.model.FontRadioButton
+                android:id="@+id/radio_allow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="allow"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+
+            <net.hardcodes.telepathy.model.FontRadioButton
+                android:id="@+id/radio_deny"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="deny"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+        </RadioGroup>
+
+        <net.hardcodes.telepathy.model.FontTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="remote control request:"
+            android:textColor="@android:color/white"
+            android:textSize="18sp" />
+
+        <RadioGroup
+            android:id="@+id/radio_group_remote_control"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal"
+            android:textSize="@dimen/activity_settings_textviews">
+
+            <net.hardcodes.telepathy.model.FontRadioButton
+                android:id="@+id/radio_prompt_remote_control"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="true"
+                android:text="prompt"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+
+            <net.hardcodes.telepathy.model.FontRadioButton
+                android:id="@+id/radio_allow_remote_control"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="allow"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+
+            <net.hardcodes.telepathy.model.FontRadioButton
+                android:id="@+id/radio_deny_remote_control"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="deny"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+        </RadioGroup>
+
+
+        <net.hardcodes.telepathy.model.FontTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="screen lock / unlock:"
+            android:textColor="@android:color/white"
+            android:textSize="18sp" />
+
+        <RadioGroup
+            android:id="@+id/radio_group_screen"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal"
+            android:textSize="@dimen/activity_settings_textviews">
+
+            <net.hardcodes.telepathy.model.FontRadioButton
+                android:id="@+id/radio_prompt_screen"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="true"
+                android:text="prompt"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+
+            <net.hardcodes.telepathy.model.FontRadioButton
+                android:id="@+id/radio_allow_screen"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="allow"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+
+            <net.hardcodes.telepathy.model.FontRadioButton
+                android:id="@+id/radio_deny_screen"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="deny"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+        </RadioGroup>
+    </LinearLayout>
+
+    <net.hardcodes.telepathy.model.FontTextView
+        android:id="@+id/network_textview"
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:background="@android:color/white"
+        android:gravity="center"
+        android:text="network"
+        android:textSize="@dimen/activity_settings_title" />
+
+    <LinearLayout
+        android:id="@+id/network_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="20dp"
+        android:paddingTop="20dp"
+        android:visibility="gone">
+
+        <net.hardcodes.telepathy.model.FontTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="streaming video quality:"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/activity_settings_textviews" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <net.hardcodes.telepathy.model.FontTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="WiFi"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+
+            <net.hardcodes.telepathy.model.FontTextView
+                android:id="@+id/wifi_arrow_left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="40dp"
+                android:text="@string/arrow_left_button"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+
+            <net.hardcodes.telepathy.model.FontTextView
+                android:id="@+id/wifi_selected_item"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:text="High (1MBps)"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+
+            <net.hardcodes.telepathy.model.FontTextView
+                android:id="@+id/wifi_arrow_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:text=">"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <net.hardcodes.telepathy.model.FontTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="mobile"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+
+            <net.hardcodes.telepathy.model.FontTextView
+                android:id="@+id/mobile_arrow_left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:text="@string/arrow_left_button"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+
+            <net.hardcodes.telepathy.model.FontTextView
+                android:id="@+id/mobile_selected_item"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:text="Medium (512MBps)"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+
+            <net.hardcodes.telepathy.model.FontTextView
+                android:id="@+id/mobile_arrow_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:text=">"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/activity_settings_textviews" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>
