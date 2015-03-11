@@ -278,6 +278,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="40dp"
+                android:paddingBottom="5dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="5dp"
                 android:text="@string/arrow_left_button"
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
@@ -287,15 +291,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="20dp"
-                android:text="High (1MBps)"
+                android:text="High (1 MBps)"
                 android:textColor="@android:color/white"
-                android:textSize="@dimen/activity_settings_textviews" />
+                android:textSize="19sp" />
 
             <net.hardcodes.telepathy.model.FontTextView
                 android:id="@+id/wifi_arrow_right"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="20dp"
+                android:paddingBottom="5dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="5dp"
                 android:text=">"
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
@@ -319,6 +327,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="20dp"
+                android:paddingBottom="5dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="5dp"
                 android:text="@string/arrow_left_button"
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
@@ -328,15 +340,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="20dp"
-                android:text="Medium (512MBps)"
+                android:text="Medium (512 KBps)"
                 android:textColor="@android:color/white"
-                android:textSize="@dimen/activity_settings_textviews" />
+                android:textSize="19sp" />
 
             <net.hardcodes.telepathy.model.FontTextView
                 android:id="@+id/mobile_arrow_right"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="20dp"
+                android:paddingBottom="5dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="5dp"
                 android:text=">"
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />

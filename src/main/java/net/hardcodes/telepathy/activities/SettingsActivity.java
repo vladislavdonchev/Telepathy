@@ -11,7 +11,6 @@ import android.widget.CheckBox;
 import android.widget.LinearLayout;
 
 import net.hardcodes.telepathy.R;
-import net.hardcodes.telepathy.model.FontButton;
 import net.hardcodes.telepathy.model.FontTextView;
 
 public class SettingsActivity extends Activity {
@@ -19,7 +18,7 @@ public class SettingsActivity extends Activity {
     public static final String KEY_SERVER_PREF = "server";
     public static final String KEY_BITRATE_PREF = "bitrate";
     public static final String KEY_RESOLUTION_PREF = "resolution";
-    private static final String[] bitrateOptions = {"256 Kbps", "512 Kbps", "1 Mbps", "2 Mbps"};
+    private static final String[] bitrateOptions = {"Low (256 Kbps)", "Medium (512 Kbps)", "High (1 Mbps)", "Very High (2 Mbps)"};
     private static final String[] bitrateValues = {"0.25", "0.5", "1", "2"};
     FontTextView btnSystem;
     FontTextView btnPermissions;
@@ -27,17 +26,32 @@ public class SettingsActivity extends Activity {
     LinearLayout systemSettings;
     LinearLayout permissionsSettings;
     LinearLayout networkSettings;
+    CheckBox checkBoxStartServer;
+    CheckBox checkBoxLoginAuto;
+    FontTextView arrowWiFiLeft;
+    FontTextView arrowWiFiRight;
+    FontTextView arrowMobileLeft;
+    FontTextView arrowMobileRight;
+    FontTextView bitrateWiFiSelected;
+    FontTextView bitrateMobileSelected;
     private EditTextPreference portNumberPref;
     private ListPreference bitratePref;
     private ListPreference resolutionPref;
-    CheckBox checkBoxStartServer;
-    CheckBox checkBoxLoginAuto;
+    private int selectedBitRateWiFi = 2;
+    private int selectedBitRateMobile = 1;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        Typeface custom_font = Typeface.createFromAsset(getAssets(),"font/forced_square.ttf");
+
+        arrowWiFiLeft = (FontTextView) findViewById(R.id.wifi_arrow_left);
+        arrowWiFiRight = (FontTextView) findViewById(R.id.wifi_arrow_right);
+        arrowMobileLeft = (FontTextView) findViewById(R.id.mobile_arrow_left);
+        arrowMobileRight = (FontTextView) findViewById(R.id.mobile_arrow_right);
+        bitrateWiFiSelected = (FontTextView) findViewById(R.id.wifi_selected_item);
+        bitrateMobileSelected = (FontTextView) findViewById(R.id.mobile_selected_item);
+        Typeface custom_font = Typeface.createFromAsset(getAssets(), "font/forced_square.ttf");
 
         systemSettings = (LinearLayout) findViewById(R.id.system_layout);
         permissionsSettings = (LinearLayout) findViewById(R.id.permissions_layout);
@@ -79,6 +93,43 @@ public class SettingsActivity extends Activity {
                 systemSettings.setVisibility(View.GONE);
                 permissionsSettings.setVisibility(View.GONE);
                 networkSettings.setVisibility(View.VISIBLE);
+            }
+        });
+
+        arrowWiFiLeft.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (selectedBitRateWiFi > 0) {
+                    selectedBitRateWiFi--;
+                }
+                bitrateWiFiSelected.setText(bitrateOptions[selectedBitRateWiFi]);
+            }
+        });
+        arrowWiFiRight.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (selectedBitRateWiFi < 3) {
+                    selectedBitRateWiFi++;
+                }
+                bitrateWiFiSelected.setText(bitrateOptions[selectedBitRateWiFi]);
+            }
+        });
+        arrowMobileLeft.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (selectedBitRateMobile > 0) {
+                    selectedBitRateMobile--;
+                }
+                bitrateMobileSelected.setText(bitrateOptions[selectedBitRateMobile]);
+            }
+        });
+        arrowMobileRight.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (selectedBitRateMobile < 3) {
+                    selectedBitRateMobile++;
+                }
+                bitrateMobileSelected.setText(bitrateOptions[selectedBitRateMobile]);
             }
         });
 //        portNumberPref = (EditTextPreference) findPreference(KEY_SERVER_PREF);

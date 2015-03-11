@@ -2,24 +2,43 @@
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory android:title="Network" android:key="pref_network">
+    <PreferenceCategory
+        android:key="pref_network"
+        android:title="Network">
 
-        <EditTextPreference android:title="User ID" android:key="uid"
-            android:defaultValue="111" android:inputType="text" android:summary="Preferred user ID"/>
+        <EditTextPreference
+            android:defaultValue="111"
+            android:inputType="text"
+            android:key="uid"
+            android:summary="Preferred user ID"
+            android:title="User ID" />
 
-        <EditTextPreference android:title="Server Address" android:key="server"
-            android:defaultValue="97e4fm0tw8.worldsupport.info:8021/tp" android:inputType="text" android:summary="WebSocket server URL"/>
+        <EditTextPreference
+            android:defaultValue="97e4fm0tw8.worldsupport.info:8021/tp"
+            android:inputType="text"
+            android:key="server"
+            android:summary="WebSocket server URL"
+            android:title="Server Address" />
 
-        <CheckBoxPreference  android:title="Use Encryption" android:key="useTLS"
-            android:defaultValue="false" android:summary="Toggle TLSv1.2"/>
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="useTLS"
+            android:summary="Toggle TLSv1.2"
+            android:title="Use Encryption" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Video Streaming" android:key="pref_video">
+    <PreferenceCategory
+        android:key="pref_video"
+        android:title="Video Streaming">
 
-        <ListPreference android:key="bitrate" android:title="Bitrate"
-            android:summary="Keep it low for slow internet connection" />
+        <ListPreference
+            android:key="bitrate"
+            android:summary="Keep it low for slow internet connection"
+            android:title="Bitrate" />
 
-        <ListPreference android:key="resolution" android:title="Video resolution"
-            android:summary="Keep it low for slow internet connection" />
+        <ListPreference
+            android:key="resolution"
+            android:summary="Keep it low for slow internet connection"
+            android:title="Video resolution" />
     </PreferenceCategory>
 </PreferenceScreen>
