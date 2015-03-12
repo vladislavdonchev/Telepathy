@@ -3,9 +3,15 @@ package net.hardcodes.telepathy.tools;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Environment;
+import android.preference.PreferenceManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.InstallUninstallDialog;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.RemoteControlService;
@@ -113,5 +119,19 @@ public class Utils {
             }
         }
         return false;
+    }
+
+    public static void setStringPref(Context context, String pref, String value) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(pref, value);
+        editor.commit();
+    }
+
+    public static void setBooleanPref(Context context, String pref, Boolean value) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean(pref, value);
+        editor.commit();
     }
 }

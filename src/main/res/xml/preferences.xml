@@ -27,18 +27,4 @@
             android:title="Use Encryption" />
     </PreferenceCategory>
 
-    <PreferenceCategory
-        android:key="pref_video"
-        android:title="Video Streaming">
-
-        <ListPreference
-            android:key="bitrate"
-            android:summary="Keep it low for slow internet connection"
-            android:title="Bitrate" />
-
-        <ListPreference
-            android:key="resolution"
-            android:summary="Keep it low for slow internet connection"
-            android:title="Video resolution" />
-    </PreferenceCategory>
 </PreferenceScreen>

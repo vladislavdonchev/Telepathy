@@ -29,10 +29,10 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
 
-import net.hardcodes.telepathy.activities.SettingsActivity;
 import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.tools.CodecUtils;
 import net.hardcodes.telepathy.tools.ConnectionManager;
+import net.hardcodes.telepathy.tools.NetworkUtil;
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
 
 import java.io.IOException;
@@ -45,15 +45,12 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     public static final String ACTION_START = "START";
     public static final String ACTION_STOP = "STOP";
-
-    private static final String TAG = "StreamingServer";
     public static final String VIRTUAL_DISPLAY_TAG = "ScreenRecorder";
-
-    private SharedPreferences preferences;
-    private Handler toastHandler;
+    private static final String TAG = "StreamingServer";
     KeyguardManager myKM;
     KeyguardManager.KeyguardLock kl;
-
+    private SharedPreferences preferences;
+    private Handler toastHandler;
     private DisplayManager displayManager;
     private Surface encoderInputSurface = null;
     private VirtualDisplay virtualDisplay = null;
@@ -122,19 +119,6 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         }
     }
 
-    private class ToastRunnable implements Runnable {
-        String mText;
-
-        public ToastRunnable(String text) {
-            mText = text;
-        }
-
-        @Override
-        public void run() {
-            Toast.makeText(getApplicationContext(), mText, Toast.LENGTH_SHORT).show();
-        }
-    }
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
@@ -174,22 +158,15 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     }
 
     private Surface createDisplaySurface() throws IOException {
-        MediaFormat mMediaFormat = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
-                resolution.x, resolution.y);
+        MediaFormat mMediaFormat = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE, resolution.x, resolution.y);
 
-        TelephonyManager telephonyManager;
-        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        int currentNetworkType = telephonyManager.getNetworkType();
-        boolean isNetwork2G = currentNetworkType < TelephonyManager.NETWORK_TYPE_UMTS && currentNetworkType > TelephonyManager.NETWORK_TYPE_UNKNOWN;
-
-        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-
-        if (isNetwork2G && !wifi.isConnected()) {
+        if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_2G)) {
             bitrateRatio = 0.03125f;
             showToast("2G connection detected - reducing support video stream quality.");
+        } else if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_3G)){
+            bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_MOBILE, "1"));
         } else {
-            bitrateRatio = Float.parseFloat(preferences.getString(SettingsActivity.KEY_BITRATE_PREF, "1"));
+            bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_WIFI, "2"));
         }
 
         mMediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, (int) (1024 * 1024 * bitrateRatio));
@@ -214,7 +191,12 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         mDisplay.getMetrics(dm);
         deviceWidth = dm.widthPixels;
         deviceHeight = dm.heightPixels;
-        float resolutionRatio = Float.parseFloat(preferences.getString(SettingsActivity.KEY_RESOLUTION_PREF, "0.25"));
+        float resolutionRatio;
+        if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_WFI)) {
+            resolutionRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_WIFI, "2"));
+        } else {
+            resolutionRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_MOBILE, "0.25"));
+        }
         mDisplay.getRealSize(resolution);
         resolution.x = (int) (resolution.x * resolutionRatio);
         resolution.y = (int) (resolution.y * resolutionRatio);
@@ -328,6 +310,55 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         }
     }
 
+    @Override
+    public void onDestroy() {
+        if (running) {
+            disconnect();
+        }
+        sendBroadcast(new Intent(ACTION_SERVICE_STATE_CHANGED));
+        showToast("Support service stopped.");
+        super.onDestroy();
+    }
+
+    private void disconnect() {
+        ConnectionManager.getInstance().releaseConnection(this);
+        stopEncodingVirtualDisplay();
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    private void showToast(final String message) {
+        toastHandler.post(new ToastRunnable(message));
+    }
+
+    private void updateNotification(String message) {
+        Intent intent = new Intent(this, RemoteControlService.class);
+        intent.setAction("STOP");
+        PendingIntent stopServiceIntent = PendingIntent.getService(this, 0, intent, 0);
+        Notification.Builder mBuilder =
+                new Notification.Builder(this)
+                        .setSmallIcon(R.drawable.ic_launcher)
+                        .setOngoing(true)
+                        .addAction(R.drawable.ic_media_stop, "Stop", stopServiceIntent)
+                        .setContentTitle(message);
+        startForeground(6000, mBuilder.build());
+    }
+
+    private class ToastRunnable implements Runnable {
+        String mText;
+
+        public ToastRunnable(String text) {
+            mText = text;
+        }
+
+        @Override
+        public void run() {
+            Toast.makeText(getApplicationContext(), mText, Toast.LENGTH_SHORT).show();
+        }
+    }
 
     private class EncoderWorker implements Runnable {
 
@@ -400,42 +431,5 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                 }
             }
         }
-    }
-
-    @Override
-    public void onDestroy() {
-        if (running) {
-            disconnect();
-        }
-        sendBroadcast(new Intent(ACTION_SERVICE_STATE_CHANGED));
-        showToast("Support service stopped.");
-        super.onDestroy();
-    }
-
-    private void disconnect() {
-        ConnectionManager.getInstance().releaseConnection(this);
-        stopEncodingVirtualDisplay();
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    private void showToast(final String message) {
-        toastHandler.post(new ToastRunnable(message));
-    }
-
-    private void updateNotification(String message) {
-        Intent intent = new Intent(this, RemoteControlService.class);
-        intent.setAction("STOP");
-        PendingIntent stopServiceIntent = PendingIntent.getService(this, 0, intent, 0);
-        Notification.Builder mBuilder =
-                new Notification.Builder(this)
-                        .setSmallIcon(R.drawable.ic_launcher)
-                        .setOngoing(true)
-                        .addAction(R.drawable.ic_media_stop, "Stop", stopServiceIntent)
-                        .setContentTitle(message);
-        startForeground(6000, mBuilder.build());
     }
 }

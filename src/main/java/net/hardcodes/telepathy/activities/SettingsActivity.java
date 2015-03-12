@@ -1,23 +1,22 @@
 package net.hardcodes.telepathy.activities;
 
 import android.app.Activity;
-import android.graphics.Point;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
+import android.widget.RadioGroup;
 
+import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.model.FontTextView;
+import net.hardcodes.telepathy.tools.Utils;
 
-public class SettingsActivity extends Activity {
-
-    public static final String KEY_SERVER_PREF = "server";
-    public static final String KEY_BITRATE_PREF = "bitrate";
-    public static final String KEY_RESOLUTION_PREF = "resolution";
+public class SettingsActivity extends Activity implements RadioGroup.OnCheckedChangeListener {
     private static final String[] bitrateOptions = {"Low (256 Kbps)", "Medium (512 Kbps)", "High (1 Mbps)", "Very High (2 Mbps)"};
     private static final String[] bitrateValues = {"0.25", "0.5", "1", "2"};
     FontTextView btnSystem;
@@ -34,6 +33,10 @@ public class SettingsActivity extends Activity {
     FontTextView arrowMobileRight;
     FontTextView bitrateWiFiSelected;
     FontTextView bitrateMobileSelected;
+    RadioGroup radioGroupConnection;
+    RadioGroup radioGroupRemoteControl;
+    RadioGroup radioGroupScreen;
+
     private EditTextPreference portNumberPref;
     private ListPreference bitratePref;
     private ListPreference resolutionPref;
@@ -45,6 +48,9 @@ public class SettingsActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
+        radioGroupConnection = (RadioGroup) findViewById(R.id.radio_group_connection);
+        radioGroupRemoteControl = (RadioGroup) findViewById(R.id.radio_group_remote_control);
+        radioGroupScreen = (RadioGroup) findViewById(R.id.radio_group_screen);
         arrowWiFiLeft = (FontTextView) findViewById(R.id.wifi_arrow_left);
         arrowWiFiRight = (FontTextView) findViewById(R.id.wifi_arrow_right);
         arrowMobileLeft = (FontTextView) findViewById(R.id.mobile_arrow_left);
@@ -66,6 +72,10 @@ public class SettingsActivity extends Activity {
 
         checkBoxStartServer.setTypeface(custom_font);
         checkBoxLoginAuto.setTypeface(custom_font);
+
+        radioGroupConnection.setOnCheckedChangeListener(this);
+        radioGroupRemoteControl.setOnCheckedChangeListener(this);
+        radioGroupScreen.setOnCheckedChangeListener(this);
 
         btnSystem.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -103,6 +113,7 @@ public class SettingsActivity extends Activity {
                     selectedBitRateWiFi--;
                 }
                 bitrateWiFiSelected.setText(bitrateOptions[selectedBitRateWiFi]);
+                Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_BITRATE_WIFI, bitrateValues[selectedBitRateWiFi]);
             }
         });
         arrowWiFiRight.setOnClickListener(new View.OnClickListener() {
@@ -112,6 +123,7 @@ public class SettingsActivity extends Activity {
                     selectedBitRateWiFi++;
                 }
                 bitrateWiFiSelected.setText(bitrateOptions[selectedBitRateWiFi]);
+                Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_BITRATE_WIFI, bitrateValues[selectedBitRateWiFi]);
             }
         });
         arrowMobileLeft.setOnClickListener(new View.OnClickListener() {
@@ -121,6 +133,7 @@ public class SettingsActivity extends Activity {
                     selectedBitRateMobile--;
                 }
                 bitrateMobileSelected.setText(bitrateOptions[selectedBitRateMobile]);
+                Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_BITRATE_MOBILE, bitrateValues[selectedBitRateMobile]);
             }
         });
         arrowMobileRight.setOnClickListener(new View.OnClickListener() {
@@ -130,17 +143,29 @@ public class SettingsActivity extends Activity {
                     selectedBitRateMobile++;
                 }
                 bitrateMobileSelected.setText(bitrateOptions[selectedBitRateMobile]);
+                Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_BITRATE_MOBILE, bitrateValues[selectedBitRateMobile]);
             }
         });
-//        portNumberPref = (EditTextPreference) findPreference(KEY_SERVER_PREF);
-//
-//        bitratePref = (ListPreference) findPreference(KEY_BITRATE_PREF);
-//        bitratePref.setEntries(bitrateOptions);
-//        bitratePref.setEntryValues(bitrateValues);
-//        bitratePref.setDefaultValue("0.25");
+    }
 
-//        resolutionPref = (ListPreference) findPreference(KEY_RESOLUTION_PREF);
-        //       setResolutionOptions();
+    public void onCheckboxClicked(View v) {
+        switch (v.getId()) {
+            case R.id.checkbox_start_server_boot:
+                if (checkBoxStartServer.isChecked()) {
+                    Utils.setBooleanPref(SettingsActivity.this, Constants.PREFERENCE_START_SERVER_ON_BOOT, true);
+                } else {
+                    Utils.setBooleanPref(SettingsActivity.this, Constants.PREFERENCE_START_SERVER_ON_BOOT, false);
+                }
+                break;
+
+            case R.id.checkbox_login_auto:
+                if (checkBoxLoginAuto.isChecked()) {
+                    Utils.setBooleanPref(SettingsActivity.this, Constants.PREFERENCE_LOGIN_AUTO, true);
+                } else {
+                    Utils.setBooleanPref(SettingsActivity.this, Constants.PREFERENCE_LOGIN_AUTO, false);
+                }
+                break;
+        }
     }
 
     @Override
@@ -153,17 +178,36 @@ public class SettingsActivity extends Activity {
         super.onPause();
     }
 
-    private void setResolutionOptions() {
-        Point point = new Point();
-        getWindowManager().getDefaultDisplay().getRealSize(point);
-        int nativeWidth = point.x;
-        int nativeHeight = point.y;
-        String[] resolutionOptions = new String[4];
-        for (int i = 1; i < 5; ++i) {
-            resolutionOptions[i - 1] = String.valueOf(nativeHeight / i) + " x " + String.valueOf(nativeWidth / i);
+    @Override
+    public void onCheckedChanged(RadioGroup group, int checkedId) {
+        switch (checkedId) {
+            case R.id.radio_prompt_connection:
+                Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_CONNECTION_RQ, Constants.CONSTANT_STRING_PROMPT);
+                break;
+            case R.id. radio_allow_connection:
+                Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_CONNECTION_RQ, Constants.CONSTANT_STRING_ALLOW);
+                break;
+            case R.id.radio_deny_connection:
+                Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_CONNECTION_RQ, Constants.CONSTANT_STRING_DENY);
+                break;
+            case R.id.radio_prompt_remote_control:
+                Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_REMOTE_CONTROL_RQ, Constants.CONSTANT_STRING_PROMPT);
+                break;
+            case R.id. radio_allow_remote_control:
+                Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_REMOTE_CONTROL_RQ, Constants.CONSTANT_STRING_ALLOW);
+                break;
+            case R.id.radio_deny_remote_control:
+                Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_REMOTE_CONTROL_RQ, Constants.CONSTANT_STRING_DENY);
+                break;
+            case R.id.radio_prompt_screen:
+                Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_SCREEN_LOCK_UNLOCK, Constants.CONSTANT_STRING_PROMPT);
+                break;
+            case R.id. radio_allow_screen:
+                Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_SCREEN_LOCK_UNLOCK, Constants.CONSTANT_STRING_ALLOW);
+                break;
+            case R.id.radio_deny_screen:
+                Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_SCREEN_LOCK_UNLOCK, Constants.CONSTANT_STRING_DENY);
+                break;
         }
-        resolutionPref.setEntries(resolutionOptions);
-        resolutionPref.setEntryValues(new String[]{"1", "0.5", ".33", ".25"});
-        resolutionPref.setDefaultValue("0.25");
     }
 }
