@@ -8,19 +8,17 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import net.hardcodes.telepathy.ConnectDialog;
-import net.hardcodes.telepathy.InstallUninstallDialog;
+import net.hardcodes.telepathy.dialogs.ConnectDialog;
+import net.hardcodes.telepathy.dialogs.InstallUninstallDialog;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.RemoteControlService;
 import net.hardcodes.telepathy.model.FontButton;
-import net.hardcodes.telepathy.tools.NetworkUtil;
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
 import net.hardcodes.telepathy.tools.Utils;
 
@@ -36,8 +34,8 @@ public class HomeScreenActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_screen);
         showDeploymentDialog(true);
-        ImageView settinsg = (ImageView)findViewById(R.id.image_view_settings_button);
-        settinsg .setOnClickListener(new View.OnClickListener() {
+        ImageView settings = (ImageView)findViewById(R.id.image_view_settings_button);
+        settings .setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(HomeScreenActivity.this, SettingsActivity.class));

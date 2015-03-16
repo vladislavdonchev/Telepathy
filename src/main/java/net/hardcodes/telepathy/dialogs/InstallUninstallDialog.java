@@ -1,4 +1,4 @@
-package net.hardcodes.telepathy;
+package net.hardcodes.telepathy.dialogs;
 
 import android.app.AlertDialog;
 import android.content.Context;

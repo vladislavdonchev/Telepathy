@@ -4,15 +4,11 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 
-import net.hardcodes.telepathy.Constants;
-import net.hardcodes.telepathy.InstallUninstallDialog;
+import net.hardcodes.telepathy.dialogs.InstallUninstallDialog;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.RemoteControlService;
 

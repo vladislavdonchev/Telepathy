@@ -1,19 +1,23 @@
 package net.hardcodes.telepathy.activities;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
-import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
+import android.widget.Toast;
 
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
+import net.hardcodes.telepathy.dialogs.UninstallDialog;
 import net.hardcodes.telepathy.model.FontTextView;
+import net.hardcodes.telepathy.tools.ShellCommandExecutor;
 import net.hardcodes.telepathy.tools.Utils;
 
 public class SettingsActivity extends Activity implements RadioGroup.OnCheckedChangeListener {
@@ -36,6 +40,8 @@ public class SettingsActivity extends Activity implements RadioGroup.OnCheckedCh
     RadioGroup radioGroupConnection;
     RadioGroup radioGroupRemoteControl;
     RadioGroup radioGroupScreen;
+    ImageView settingsTitle;
+    FontTextView uninstall;
 
     private EditTextPreference portNumberPref;
     private ListPreference bitratePref;
@@ -69,6 +75,8 @@ public class SettingsActivity extends Activity implements RadioGroup.OnCheckedCh
 
         checkBoxStartServer = (CheckBox) findViewById(R.id.checkbox_start_server_boot);
         checkBoxLoginAuto = (CheckBox) findViewById(R.id.checkbox_login_auto);
+        settingsTitle = (ImageView) findViewById(R.id.settings_titel);
+        uninstall = (FontTextView) findViewById(R.id.textview_uninstall);
 
         checkBoxStartServer.setTypeface(custom_font);
         checkBoxLoginAuto.setTypeface(custom_font);
@@ -76,6 +84,26 @@ public class SettingsActivity extends Activity implements RadioGroup.OnCheckedCh
         radioGroupConnection.setOnCheckedChangeListener(this);
         radioGroupRemoteControl.setOnCheckedChangeListener(this);
         radioGroupScreen.setOnCheckedChangeListener(this);
+
+        uninstall.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ShellCommandExecutor.isSUAvailable()) {
+                    new UninstallDialog().show(getFragmentManager(), "Uninstall");
+                } else {
+                    Toast.makeText(SettingsActivity.this, "The system service is not installed.", Toast.LENGTH_LONG).show();
+                }
+
+            }
+        });
+
+        settingsTitle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(SettingsActivity.this, HomeScreenActivity.class));
+                finish();
+            }
+        });
 
         btnSystem.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -184,7 +212,7 @@ public class SettingsActivity extends Activity implements RadioGroup.OnCheckedCh
             case R.id.radio_prompt_connection:
                 Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_CONNECTION_RQ, Constants.CONSTANT_STRING_PROMPT);
                 break;
-            case R.id. radio_allow_connection:
+            case R.id.radio_allow_connection:
                 Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_CONNECTION_RQ, Constants.CONSTANT_STRING_ALLOW);
                 break;
             case R.id.radio_deny_connection:
@@ -193,7 +221,7 @@ public class SettingsActivity extends Activity implements RadioGroup.OnCheckedCh
             case R.id.radio_prompt_remote_control:
                 Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_REMOTE_CONTROL_RQ, Constants.CONSTANT_STRING_PROMPT);
                 break;
-            case R.id. radio_allow_remote_control:
+            case R.id.radio_allow_remote_control:
                 Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_REMOTE_CONTROL_RQ, Constants.CONSTANT_STRING_ALLOW);
                 break;
             case R.id.radio_deny_remote_control:
@@ -202,7 +230,7 @@ public class SettingsActivity extends Activity implements RadioGroup.OnCheckedCh
             case R.id.radio_prompt_screen:
                 Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_SCREEN_LOCK_UNLOCK, Constants.CONSTANT_STRING_PROMPT);
                 break;
-            case R.id. radio_allow_screen:
+            case R.id.radio_allow_screen:
                 Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_SCREEN_LOCK_UNLOCK, Constants.CONSTANT_STRING_ALLOW);
                 break;
             case R.id.radio_deny_screen:
