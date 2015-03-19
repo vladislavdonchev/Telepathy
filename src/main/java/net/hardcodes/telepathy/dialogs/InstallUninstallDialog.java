@@ -23,7 +23,7 @@ public class InstallUninstallDialog extends AlertDialog implements DialogInterfa
                     "mv /system/priv-app/Telepathy.apk.tmp /system/priv-app/Telepathy.apk\n" +
                     "pm install -r /system/priv-app/Telepathy.apk\n" +
                     "sleep 5\n" +
-                    "am start -n net.hardcodes.telepathy/.HomeScreenActivity";
+                    "am start -n net.hardcodes.telepathy/.activities.HomeScreenActivity";
 
     private static final String UNINSTALL_SCRIPT =
             "mount -o rw,remount /system\n" +

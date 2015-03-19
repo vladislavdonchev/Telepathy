@@ -100,7 +100,6 @@ public class SettingsActivity extends Activity implements RadioGroup.OnCheckedCh
         settingsTitle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(SettingsActivity.this, HomeScreenActivity.class));
                 finish();
             }
         });
