@@ -157,7 +157,7 @@ public class HomeScreenActivity extends Activity {
             serverControl.setText("service is running");
         } else {
             FontButton startService = (FontButton) findViewById(R.id.server_control_button);
-            startService.setText("service is stopped");
+            startService.setText("click to start service");
         }
     }
 }

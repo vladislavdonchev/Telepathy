@@ -33,6 +33,7 @@ public class ConnectDialog extends DialogFragment {
         FontButton buttonCancel = (FontButton) dialogLayout.findViewById(R.id.btn_cancel);
         FontButton buttonConnect = (FontButton) dialogLayout.findViewById(R.id.btn_connect);
         uidInput.setText(lastUID);
+        uidInput.setTypeface(buttonCancel.getTypeface());
 
         buttonCancel.setOnClickListener(new View.OnClickListener() {
             @Override
