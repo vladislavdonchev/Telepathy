@@ -1,6 +1,5 @@
-package net.hardcodes.telepathy;
+package net.hardcodes.telepathy.dialogs;
 
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
@@ -13,6 +12,7 @@ import android.view.Window;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 
+import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.activities.RemoteControlActivity;
 import net.hardcodes.telepathy.model.FontButton;
 

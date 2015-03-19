@@ -8,7 +8,8 @@
     <string name="action_deployment">Application Deployment</string>
     <string name="title_activity_client">Remote Control Client</string>
     <string name="title_activity_server">Remote Control Service</string>
-
+    <string name="string_uninstall"><u>click to uninstall</u></string>
     <!-- Buttons -->
     <string name="arrow_left_button">&#x3C;</string>
+
 </resources>

@@ -24,7 +24,7 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
 
-import net.hardcodes.telepathy.ConnectDialog;
+import net.hardcodes.telepathy.dialogs.ConnectDialog;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.TelepathyAPI;
 import net.hardcodes.telepathy.model.InputEvent;
