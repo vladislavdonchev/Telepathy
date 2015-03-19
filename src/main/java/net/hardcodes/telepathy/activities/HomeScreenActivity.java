@@ -154,10 +154,10 @@ public class HomeScreenActivity extends Activity {
     private void checkServiceState() {
         if (Utils.isServiceRunning(this, RemoteControlService.class)) {
             FontButton serverControl = (FontButton) findViewById(R.id.server_control_button);
-            serverControl.setText("Stop Service");
+            serverControl.setText("service is running");
         } else {
             FontButton startService = (FontButton) findViewById(R.id.server_control_button);
-            startService.setText("Start Service");
+            startService.setText("service is stopped");
         }
     }
 }

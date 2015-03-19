@@ -3,66 +3,45 @@
     android:layout_height="match_parent"
     android:background="@drawable/telepathy_background">
 
-    <RelativeLayout
-        android:id="@+id/home_buttons"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+    <ImageView
+        android:id="@+id/image_view_logo_button"
+        android:layout_width="128dp"
+        android:layout_height="64dp"
+        android:layout_alignParentLeft="true"
+        android:clickable="true"
+        android:layout_margin="32dp"
+        android:src="@drawable/src_logo_button" />
+
+    <net.hardcodes.telepathy.model.FontButton
+        android:id="@+id/start_client_button"
+        android:layout_width="wrap_content"
+        android:layout_height="192px"
+        android:layout_centerHorizontal="true"
         android:layout_centerInParent="true"
-        android:paddingBottom="@dimen/activity_vertical_margin"
-        android:paddingTop="@dimen/activity_vertical_margin">
-
-        <RelativeLayout
-            android:id="@+id/start_server_parent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <net.hardcodes.telepathy.model.FontButton
-                android:id="@+id/server_control_button"
-                style="@style/button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:onClick="toggleService"
-                android:background="@android:color/white"
-                android:alpha="0.6"
-                android:shadowColor="#545454"
-                android:shadowDx="8"
-                android:shadowDy="8"
-                android:shadowRadius="8"
-                android:text="Start Service"
-                android:textColor="#000000" />
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/start_client_parent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/start_server_parent">
-
-            <net.hardcodes.telepathy.model.FontButton
-                android:id="@+id/start_client_button"
-                style="@style/button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:onClick="startClient"
-                android:text="Connect"
-                android:alpha="0.6"
-                android:shadowColor="#545454"
-                android:shadowDx="8"
-                android:shadowDy="8"
-                android:shadowRadius="8"
-                android:background="@android:color/white"
-                android:textColor="#000000" />
-        </RelativeLayout>
-    </RelativeLayout>
+        android:background="@drawable/bg_connect_button"
+        android:onClick="startClient" />
 
     <ImageView
         android:id="@+id/image_view_settings_button"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_centerHorizontal="true"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:layout_alignParentBottom="true"
-        android:src="@drawable/telepathy_settings_button"
-        android:layout_marginBottom="60dp"/>
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="60dp"
+        android:src="@drawable/src_settings_button" />
+
+    <net.hardcodes.telepathy.model.FontButton
+        android:id="@+id/server_control_button"
+        style="@style/button"
+        android:background="@android:color/transparent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:onClick="toggleService"
+        android:shadowColor="#000000"
+        android:shadowDx="8"
+        android:shadowDy="8"
+        android:shadowRadius="8"
+        android:text="Start Service"
+        android:textColor="#FFFFFF" />
 </RelativeLayout>

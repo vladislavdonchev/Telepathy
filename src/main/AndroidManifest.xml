@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     android:versionName="@string/app_version"
-    android:versionCode="011"
+    android:versionCode="012"
     package="net.hardcodes.telepathy" android:permission="android.permission.RECEIVE_BOOT_COMPLETED" >
 
     <uses-permission android:name="android.permission.INTERNET" />
