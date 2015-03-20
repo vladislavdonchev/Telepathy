@@ -6,7 +6,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,8 +36,23 @@ public class HomeScreenActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_screen);
         showDeploymentDialog(true);
-        ImageView settings = (ImageView)findViewById(R.id.image_view_settings_button);
-        settings .setOnClickListener(new View.OnClickListener() {
+        initViews();
+    }
+
+    private void initViews() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        FontButton userButton = (FontButton) findViewById(R.id.user_button);
+        userButton.setText(preferences.getString("uid", "111"));
+        userButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
+        ImageView settings = (ImageView) findViewById(R.id.image_view_settings_button);
+        settings.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(HomeScreenActivity.this, SettingsActivity.class));

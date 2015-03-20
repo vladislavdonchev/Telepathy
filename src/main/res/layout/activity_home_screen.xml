@@ -21,6 +21,21 @@
         android:background="@drawable/bg_connect_button"
         android:onClick="startClient" />
 
+    <net.hardcodes.telepathy.model.FontButton
+        android:id="@+id/user_button"
+        style="@style/button"
+        android:background="@android:color/transparent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/start_client_button"
+        android:onClick="toggleService"
+        android:layout_margin="16dp"
+        android:shadowColor="#000000"
+        android:shadowDx="8"
+        android:shadowDy="8"
+        android:shadowRadius="8"
+        android:textColor="#FFFFFF" />
+
     <ImageView
         android:id="@+id/image_view_settings_button"
         android:layout_width="64dp"
@@ -42,6 +57,5 @@
         android:shadowDx="8"
         android:shadowDy="8"
         android:shadowRadius="8"
-        android:text="Start Service"
         android:textColor="#FFFFFF" />
 </RelativeLayout>
