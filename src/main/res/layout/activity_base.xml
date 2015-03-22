@@ -1,0 +1,26 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/telepathy_background">
+
+    <net.hardcodes.telepathy.views.FontButton
+        android:id="@+id/server_control_button"
+        style="@style/button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@android:color/transparent"
+        android:onClick="toggleService"
+        android:shadowColor="#000000"
+        android:shadowDx="8"
+        android:shadowDy="8"
+        android:shadowRadius="8"
+        android:textColor="#FFFFFF" />
+
+    <LinearLayout
+        android:id="@+id/activity_contents"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/server_control_button"
+        android:orientation="vertical"/>
+</RelativeLayout>

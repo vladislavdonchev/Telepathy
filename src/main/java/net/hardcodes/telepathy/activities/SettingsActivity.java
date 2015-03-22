@@ -1,7 +1,5 @@
 package net.hardcodes.telepathy.activities;
 
-import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
@@ -11,37 +9,35 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
-import android.widget.Toast;
 
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
-import net.hardcodes.telepathy.dialogs.UninstallDialog;
-import net.hardcodes.telepathy.model.FontTextView;
-import net.hardcodes.telepathy.tools.ShellCommandExecutor;
+import net.hardcodes.telepathy.views.FontTextView;
 import net.hardcodes.telepathy.tools.Utils;
 
-public class SettingsActivity extends Activity implements RadioGroup.OnCheckedChangeListener {
+public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheckedChangeListener {
     private static final String[] bitrateOptions = {"Low (256 Kbps)", "Medium (512 Kbps)", "High (1 Mbps)", "Very High (2 Mbps)"};
     private static final String[] bitrateValues = {"0.25", "0.5", "1", "2"};
-    FontTextView btnSystem;
-    FontTextView btnPermissions;
-    FontTextView btnNetwork;
-    LinearLayout systemSettings;
-    LinearLayout permissionsSettings;
-    LinearLayout networkSettings;
-    CheckBox checkBoxStartServer;
-    CheckBox checkBoxLoginAuto;
-    FontTextView arrowWiFiLeft;
-    FontTextView arrowWiFiRight;
-    FontTextView arrowMobileLeft;
-    FontTextView arrowMobileRight;
-    FontTextView bitrateWiFiSelected;
-    FontTextView bitrateMobileSelected;
-    RadioGroup radioGroupConnection;
-    RadioGroup radioGroupRemoteControl;
-    RadioGroup radioGroupScreen;
-    ImageView settingsTitle;
-    FontTextView uninstall;
+
+    private FontTextView btnSystem;
+    private FontTextView btnPermissions;
+    private FontTextView btnNetwork;
+    private LinearLayout systemSettings;
+    private LinearLayout permissionsSettings;
+    private LinearLayout networkSettings;
+    private CheckBox checkBoxStartServer;
+    private CheckBox checkBoxLoginAuto;
+    private FontTextView arrowWiFiLeft;
+    private FontTextView arrowWiFiRight;
+    private FontTextView arrowMobileLeft;
+    private FontTextView arrowMobileRight;
+    private FontTextView bitrateWiFiSelected;
+    private FontTextView bitrateMobileSelected;
+    private RadioGroup radioGroupConnection;
+    private RadioGroup radioGroupRemoteControl;
+    private RadioGroup radioGroupScreen;
+    private ImageView settingsTitle;
+    private FontTextView uninstall;
 
     private EditTextPreference portNumberPref;
     private ListPreference bitratePref;
@@ -52,7 +48,7 @@ public class SettingsActivity extends Activity implements RadioGroup.OnCheckedCh
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_settings);
+        setContents(R.layout.activity_settings);
 
         radioGroupConnection = (RadioGroup) findViewById(R.id.radio_group_connection);
         radioGroupRemoteControl = (RadioGroup) findViewById(R.id.radio_group_remote_control);
@@ -88,12 +84,7 @@ public class SettingsActivity extends Activity implements RadioGroup.OnCheckedCh
         uninstall.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (ShellCommandExecutor.isSUAvailable()) {
-                    new UninstallDialog().show(getFragmentManager(), "Uninstall");
-                } else {
-                    Toast.makeText(SettingsActivity.this, "The system service is not installed.", Toast.LENGTH_LONG).show();
-                }
-
+                showDeploymentDialog(false);
             }
         });
 

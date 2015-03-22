@@ -13,7 +13,7 @@ import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.WebSocket;
 
 import net.hardcodes.telepathy.R;
-import net.hardcodes.telepathy.TelepathyAPI;
+import net.hardcodes.telepathy.model.TelepathyAPI;
 
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;

@@ -1,4 +1,4 @@
-package net.hardcodes.telepathy.model;
+package net.hardcodes.telepathy.views;
 
 import android.content.Context;
 import android.graphics.Canvas;

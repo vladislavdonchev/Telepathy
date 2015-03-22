@@ -1,61 +1,50 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/telepathy_background">
+    android:layout_height="match_parent">
 
     <ImageView
-        android:id="@+id/image_view_logo_button"
+        android:id="@+id/activity_home_screen_logo_button"
         android:layout_width="128dp"
         android:layout_height="64dp"
         android:layout_alignParentLeft="true"
-        android:clickable="true"
         android:layout_margin="32dp"
+        android:clickable="true"
         android:src="@drawable/src_logo_button" />
 
-    <net.hardcodes.telepathy.model.FontButton
-        android:id="@+id/start_client_button"
-        android:layout_width="wrap_content"
-        android:layout_height="192px"
-        android:layout_centerHorizontal="true"
-        android:layout_centerInParent="true"
-        android:background="@drawable/bg_connect_button"
-        android:onClick="startClient" />
-
-    <net.hardcodes.telepathy.model.FontButton
-        android:id="@+id/user_button"
-        style="@style/button"
-        android:background="@android:color/transparent"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@id/start_client_button"
-        android:onClick="toggleService"
-        android:layout_margin="16dp"
-        android:shadowColor="#000000"
-        android:shadowDx="8"
-        android:shadowDy="8"
-        android:shadowRadius="8"
-        android:textColor="#FFFFFF" />
+        android:layout_centerHorizontal="true"
+        android:layout_centerInParent="true"
+        android:orientation="vertical">
+
+        <net.hardcodes.telepathy.views.FontButton
+            android:id="@+id/activity_home_screen_user_button"
+            style="@style/button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:background="@android:color/transparent"
+            android:shadowColor="#000000"
+            android:shadowDx="8"
+            android:shadowDy="8"
+            android:shadowRadius="8"
+            android:textColor="#FFFFFF" />
+
+        <net.hardcodes.telepathy.views.FontButton
+            android:id="@+id/activity_home_screen_connect_button"
+            android:layout_width="wrap_content"
+            android:layout_height="192px"
+            android:background="@drawable/bg_connect_button" />
+    </LinearLayout>
+
 
     <ImageView
-        android:id="@+id/image_view_settings_button"
+        android:id="@+id/activity_homne_screen_settings_button"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="60dp"
         android:src="@drawable/src_settings_button" />
-
-    <net.hardcodes.telepathy.model.FontButton
-        android:id="@+id/server_control_button"
-        style="@style/button"
-        android:background="@android:color/transparent"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:onClick="toggleService"
-        android:shadowColor="#000000"
-        android:shadowDx="8"
-        android:shadowDy="8"
-        android:shadowRadius="8"
-        android:textColor="#FFFFFF" />
 </RelativeLayout>

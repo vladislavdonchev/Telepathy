@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EditText xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/view_uid_input"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@+id/title"
+    android:layout_margin="10dp"
+    android:layout_marginLeft="32dp"
+    android:layout_marginRight="32dp"
+    android:background="@drawable/textfield_activated_telepathy"
+    android:textColor="@android:color/white"
+    android:textColorHint="@android:color/white"
+    android:textSize="26sp" />

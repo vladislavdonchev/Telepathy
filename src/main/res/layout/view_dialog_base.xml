@@ -4,45 +4,51 @@
     android:layout_height="match_parent"
     android:background="@android:color/transparent">
 
-    <RelativeLayout
-        android:id="@+id/text_container"
+    <LinearLayout
+        android:id="@+id/view_dialog_base_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/custom_green">
+        android:background="@color/custom_green"
+        android:orientation="vertical">
 
-        <net.hardcodes.telepathy.model.FontTextView
-            android:id="@+id/title"
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/view_dialog_base_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:padding="10dp"
-            android:text="Please enter user ID:"
             android:textColor="@android:color/white"
             android:textSize="28sp" />
 
-        <EditText
-            android:id="@+id/uid_input"
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/view_dialog_base_message"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/title"
-            android:background="@drawable/textfield_activated_telepathy"
-            android:layout_margin="10dp"
-            android:layout_marginLeft="32dp"
-            android:layout_marginRight="32dp"
-            android:textSize="26sp"
+            android:layout_below="@id/view_dialog_base_title"
+            android:gravity="center"
+            android:padding="10dp"
             android:textColor="@android:color/white"
-            android:textColorHint="@android:color/white" />
+            android:textSize="20sp"
+            android:visibility="gone" />
 
-    </RelativeLayout>
+        <LinearLayout
+            android:id="@+id/view_dialog_base_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/view_dialog_base_message"
+            android:layout_margin="16dp"
+            android:orientation="vertical" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_below="@+id/text_container"
-        android:layout_marginTop="3dp">
+        android:layout_below="@id/view_dialog_base_header"
+        android:layout_marginTop="3dp"
+        android:background="@android:color/transparent">
 
-        <net.hardcodes.telepathy.model.FontButton
-            android:id="@+id/btn_connect"
+        <net.hardcodes.telepathy.views.FontButton
+            android:id="@+id/view_dialog_base_button_left"
             style="@style/button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -50,12 +56,12 @@
             android:layout_marginRight="3dp"
             android:layout_weight="1"
             android:background="@color/custom_green"
-            android:text="connect"
+            android:text="ok"
             android:textColor="@android:color/white"
             android:textSize="28sp" />
 
-        <net.hardcodes.telepathy.model.FontButton
-            android:id="@+id/btn_cancel"
+        <net.hardcodes.telepathy.views.FontButton
+            android:id="@+id/view_dialog_base_button_right"
             style="@style/button"
             android:layout_width="0dp"
             android:layout_height="match_parent"

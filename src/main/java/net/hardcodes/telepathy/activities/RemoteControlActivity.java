@@ -26,7 +26,7 @@ import com.koushikdutta.async.ByteBufferList;
 
 import net.hardcodes.telepathy.dialogs.ConnectDialog;
 import net.hardcodes.telepathy.R;
-import net.hardcodes.telepathy.TelepathyAPI;
+import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.tools.CodecUtils;
 import net.hardcodes.telepathy.tools.ConnectionManager;

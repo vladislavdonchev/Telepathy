@@ -2,7 +2,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/telepathy_background"
     android:orientation="vertical">
 
     <ImageView
@@ -11,7 +10,7 @@
         android:layout_height="wrap_content"
         android:src="@drawable/telepathy_settings" />
 
-    <net.hardcodes.telepathy.model.FontTextView
+    <net.hardcodes.telepathy.views.FontTextView
         android:id="@+id/system_textview"
         android:layout_width="fill_parent"
         android:layout_height="50dp"
@@ -48,7 +47,7 @@
             android:textColor="@android:color/white"
             android:textSize="@dimen/activity_settings_textviews" />
 
-        <net.hardcodes.telepathy.model.FontTextView
+        <net.hardcodes.telepathy.views.FontTextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
@@ -57,7 +56,7 @@
             android:textColor="@android:color/white"
             android:textSize="@dimen/activity_settings_textviews" />
 
-        <net.hardcodes.telepathy.model.FontTextView
+        <net.hardcodes.telepathy.views.FontTextView
             android:id="@+id/textview_uninstall"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -67,7 +66,7 @@
             android:textColor="@android:color/holo_red_dark"
             android:textSize="@dimen/activity_settings_textviews" />
 
-        <net.hardcodes.telepathy.model.FontTextView
+        <net.hardcodes.telepathy.views.FontTextView
             android:id="@+id/textview_version"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -79,7 +78,7 @@
 
     </LinearLayout>
 
-    <net.hardcodes.telepathy.model.FontTextView
+    <net.hardcodes.telepathy.views.FontTextView
         android:id="@+id/permissions_textview"
         android:layout_width="fill_parent"
         android:layout_height="50dp"
@@ -98,7 +97,7 @@
         android:paddingTop="20dp"
         android:visibility="gone">
 
-        <net.hardcodes.telepathy.model.FontTextView
+        <net.hardcodes.telepathy.views.FontTextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="connection request:"
@@ -113,7 +112,7 @@
             android:orientation="horizontal"
             android:textSize="@dimen/activity_settings_textviews">
 
-            <net.hardcodes.telepathy.model.FontRadioButton
+            <net.hardcodes.telepathy.views.FontRadioButton
                 android:id="@+id/radio_prompt_connection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -123,7 +122,7 @@
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
 
-            <net.hardcodes.telepathy.model.FontRadioButton
+            <net.hardcodes.telepathy.views.FontRadioButton
                 android:id="@+id/radio_allow_connection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -132,7 +131,7 @@
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
 
-            <net.hardcodes.telepathy.model.FontRadioButton
+            <net.hardcodes.telepathy.views.FontRadioButton
                 android:id="@+id/radio_deny_connection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -142,7 +141,7 @@
                 android:textSize="@dimen/activity_settings_textviews" />
         </RadioGroup>
 
-        <net.hardcodes.telepathy.model.FontTextView
+        <net.hardcodes.telepathy.views.FontTextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
@@ -158,7 +157,7 @@
             android:orientation="horizontal"
             android:textSize="@dimen/activity_settings_textviews">
 
-            <net.hardcodes.telepathy.model.FontRadioButton
+            <net.hardcodes.telepathy.views.FontRadioButton
                 android:id="@+id/radio_prompt_remote_control"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -168,7 +167,7 @@
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
 
-            <net.hardcodes.telepathy.model.FontRadioButton
+            <net.hardcodes.telepathy.views.FontRadioButton
                 android:id="@+id/radio_allow_remote_control"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -177,7 +176,7 @@
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
 
-            <net.hardcodes.telepathy.model.FontRadioButton
+            <net.hardcodes.telepathy.views.FontRadioButton
                 android:id="@+id/radio_deny_remote_control"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -188,7 +187,7 @@
         </RadioGroup>
 
 
-        <net.hardcodes.telepathy.model.FontTextView
+        <net.hardcodes.telepathy.views.FontTextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
@@ -204,7 +203,7 @@
             android:orientation="horizontal"
             android:textSize="@dimen/activity_settings_textviews">
 
-            <net.hardcodes.telepathy.model.FontRadioButton
+            <net.hardcodes.telepathy.views.FontRadioButton
                 android:id="@+id/radio_prompt_screen"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -214,7 +213,7 @@
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
 
-            <net.hardcodes.telepathy.model.FontRadioButton
+            <net.hardcodes.telepathy.views.FontRadioButton
                 android:id="@+id/radio_allow_screen"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -223,7 +222,7 @@
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
 
-            <net.hardcodes.telepathy.model.FontRadioButton
+            <net.hardcodes.telepathy.views.FontRadioButton
                 android:id="@+id/radio_deny_screen"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -234,7 +233,7 @@
         </RadioGroup>
     </LinearLayout>
 
-    <net.hardcodes.telepathy.model.FontTextView
+    <net.hardcodes.telepathy.views.FontTextView
         android:id="@+id/network_textview"
         android:layout_width="fill_parent"
         android:layout_height="50dp"
@@ -253,7 +252,7 @@
         android:paddingTop="20dp"
         android:visibility="gone">
 
-        <net.hardcodes.telepathy.model.FontTextView
+        <net.hardcodes.telepathy.views.FontTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -267,14 +266,14 @@
             android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
-            <net.hardcodes.telepathy.model.FontTextView
+            <net.hardcodes.telepathy.views.FontTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="WiFi"
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
 
-            <net.hardcodes.telepathy.model.FontTextView
+            <net.hardcodes.telepathy.views.FontTextView
                 android:id="@+id/wifi_arrow_left"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -287,7 +286,7 @@
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
 
-            <net.hardcodes.telepathy.model.FontTextView
+            <net.hardcodes.telepathy.views.FontTextView
                 android:id="@+id/wifi_selected_item"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -296,7 +295,7 @@
                 android:textColor="@android:color/white"
                 android:textSize="19sp" />
 
-            <net.hardcodes.telepathy.model.FontTextView
+            <net.hardcodes.telepathy.views.FontTextView
                 android:id="@+id/wifi_arrow_right"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -316,14 +315,14 @@
             android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
-            <net.hardcodes.telepathy.model.FontTextView
+            <net.hardcodes.telepathy.views.FontTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="mobile"
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
 
-            <net.hardcodes.telepathy.model.FontTextView
+            <net.hardcodes.telepathy.views.FontTextView
                 android:id="@+id/mobile_arrow_left"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -336,7 +335,7 @@
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
 
-            <net.hardcodes.telepathy.model.FontTextView
+            <net.hardcodes.telepathy.views.FontTextView
                 android:id="@+id/mobile_selected_item"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -345,7 +344,7 @@
                 android:textColor="@android:color/white"
                 android:textSize="19sp" />
 
-            <net.hardcodes.telepathy.model.FontTextView
+            <net.hardcodes.telepathy.views.FontTextView
                 android:id="@+id/mobile_arrow_right"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
