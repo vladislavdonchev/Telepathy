@@ -165,9 +165,9 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             bitrateRatio = 0.03125f;
             showToast("2G connection detected - reducing support video stream quality.");
         } else if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_3G)){
-            bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_MOBILE, "1"));
+            bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_MOBILE, ".5"));
         } else {
-            bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_WIFI, "2"));
+            bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_WIFI, "1"));
         }
 
         mMediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, (int) (1024 * 1024 * bitrateRatio));
@@ -194,9 +194,9 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         deviceHeight = dm.heightPixels;
         float resolutionRatio;
         if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_WFI)) {
-            resolutionRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_WIFI, "2"));
+            resolutionRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_WIFI, "1"));
         } else {
-            resolutionRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_MOBILE, "0.25"));
+            resolutionRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_MOBILE, "0.5"));
         }
         mDisplay.getRealSize(resolution);
         resolution.x = (int) (resolution.x * resolutionRatio);
