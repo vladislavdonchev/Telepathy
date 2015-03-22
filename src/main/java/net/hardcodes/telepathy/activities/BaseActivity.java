@@ -69,7 +69,6 @@ public class BaseActivity extends Activity {
         super.onPause();
     }
 
-
     public void toggleService(View v) {
         Utils.toggleService(this);
     }
@@ -81,7 +80,7 @@ public class BaseActivity extends Activity {
         }
     }
 
-    private void checkServiceState() {
+    protected void checkServiceState() {
         if (Utils.isServiceRunning(this, RemoteControlService.class)) {
             FontButton serverControl = (FontButton) findViewById(R.id.server_control_button);
             serverControl.setText("service is running");

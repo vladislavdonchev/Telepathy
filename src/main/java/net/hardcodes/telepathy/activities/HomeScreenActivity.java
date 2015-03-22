@@ -9,11 +9,15 @@ import android.widget.ImageView;
 
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.dialogs.ConnectDialog;
+import net.hardcodes.telepathy.dialogs.LoginDialog;
 import net.hardcodes.telepathy.views.FontButton;
 
 public class HomeScreenActivity extends BaseActivity {
 
     private ConnectDialog connectDialog;
+    private LoginDialog loginDialog;
+    private FontButton userButton;
+    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,14 +28,14 @@ public class HomeScreenActivity extends BaseActivity {
     }
 
     private void initViews() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        FontButton userButton = (FontButton) findViewById(R.id.activity_home_screen_user_button);
-        userButton.setText(preferences.getString("uid", "111"));
+        userButton = (FontButton) findViewById(R.id.activity_home_screen_user_button);
+        userButton.setText(prefs.getString("uid", "111"));
         userButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO
+                loginDialog.show();
             }
         });
 
@@ -43,7 +47,7 @@ public class HomeScreenActivity extends BaseActivity {
             }
         });
 
-        ImageView settings = (ImageView) findViewById(R.id.activity_homne_screen_settings_button);
+        ImageView settings = (ImageView) findViewById(R.id.activity_home_screen_settings_button);
         settings.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -52,5 +56,12 @@ public class HomeScreenActivity extends BaseActivity {
         });
 
         connectDialog = new ConnectDialog(this);
+        loginDialog = new LoginDialog(this);
+    }
+
+    @Override
+    protected void checkServiceState() {
+        super.checkServiceState();
+        userButton.setText(prefs.getString("uid", "111"));
     }
 }

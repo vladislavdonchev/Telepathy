@@ -16,14 +16,17 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_centerInParent="true"
+        android:gravity="center"
         android:orientation="vertical">
 
         <net.hardcodes.telepathy.views.FontButton
             android:id="@+id/activity_home_screen_user_button"
             style="@style/button"
-            android:layout_width="match_parent"
+            android:drawableRight="@drawable/ic_login"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
+            android:drawablePadding="8dp"
             android:background="@android:color/transparent"
             android:shadowColor="#000000"
             android:shadowDx="8"
@@ -38,13 +41,11 @@
             android:background="@drawable/bg_connect_button" />
     </LinearLayout>
 
-
     <ImageView
-        android:id="@+id/activity_homne_screen_settings_button"
+        android:id="@+id/activity_home_screen_settings_button"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="60dp"
         android:src="@drawable/src_settings_button" />
 </RelativeLayout>

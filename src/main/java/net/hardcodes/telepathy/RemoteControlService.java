@@ -119,15 +119,18 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (preferences == null) {
+            preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            toastHandler = new Handler();
+            displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
+            myKM = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+            kl = myKM.newKeyguardLock("MyKeyguardLock");
+        }
+
         if (intent != null) {
             if (intent.getAction().equals(ACTION_START)) {
                 running = true;
-                preferences = PreferenceManager.getDefaultSharedPreferences(this);
-                displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
                 ConnectionManager.getInstance().acquireConnection(this, this);
-                toastHandler = new Handler();
-                myKM = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-                kl = myKM.newKeyguardLock("MyKeyguardLock");
             }
 
             if (intent.getAction().equals(ACTION_STOP)) {

@@ -3,6 +3,7 @@ package net.hardcodes.telepathy.dialogs;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.widget.EditText;
 
 import net.hardcodes.telepathy.R;
@@ -14,24 +15,26 @@ public class ConnectDialog extends BaseDialog {
     public static final String KEY_LAST_UID_PREF = "last_uid";
 
     private EditText uidInput;
+    private final SharedPreferences prefs;
 
     public ConnectDialog(Context context) {
         super(context);
-        setup("Please enter user ID:", R.layout.view_uid_input, "connect", "cancel");
-        uidInput = (EditText) contentContainer.findViewById(R.id.view_uid_input);
+        prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        setup("Please enter user ID:", R.layout.view_text_input, "connect", "cancel");
+        uidInput = (EditText) contentContainer.findViewById(R.id.view_text_input);
         uidInput.setTypeface(title.getTypeface());
+        uidInput.setText(prefs.getString(KEY_LAST_UID_PREF, ""));
     }
 
     @Override
     protected void onLeftButtonClick() {
-        String address = uidInput.getText().toString();
+        String uid = uidInput.getText().toString();
 
-        if (!address.equals("")) {
-            SharedPreferences prefs = getContext().getSharedPreferences("MAIN_PREFS", Context.MODE_PRIVATE);
+        if (!uid.equals("")) {
             Intent startIntent = new Intent(getContext(), RemoteControlActivity.class);
-            startIntent.putExtra(KEY_UID_EXTRA, address);
+            startIntent.putExtra(KEY_UID_EXTRA, uid);
             SharedPreferences.Editor editor = prefs.edit();
-            editor.putString(KEY_LAST_UID_PREF, address);
+            editor.putString(KEY_LAST_UID_PREF, uid);
             editor.commit();
             getContext().startActivity(startIntent);
             super.onLeftButtonClick();
