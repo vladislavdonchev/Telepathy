@@ -37,7 +37,7 @@
         <net.hardcodes.telepathy.views.FontButton
             android:id="@+id/activity_home_screen_connect_button"
             android:layout_width="wrap_content"
-            android:layout_height="192px"
+            android:layout_height="72dp"
             android:background="@drawable/bg_connect_button" />
     </LinearLayout>
 

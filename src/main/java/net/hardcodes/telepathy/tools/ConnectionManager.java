@@ -214,6 +214,9 @@ public class ConnectionManager {
     }
 
     private void startPingPong() {
+        if (pingPongTimer != null) {
+            stopPingPong();
+        }
         pingPongTimer = new Timer("keep_alive");
         pingPongTimer.scheduleAtFixedRate(new TimerTask() {
             @Override

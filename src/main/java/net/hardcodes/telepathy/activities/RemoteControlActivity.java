@@ -24,10 +24,10 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
 
-import net.hardcodes.telepathy.dialogs.ConnectDialog;
 import net.hardcodes.telepathy.R;
-import net.hardcodes.telepathy.model.TelepathyAPI;
+import net.hardcodes.telepathy.dialogs.ConnectDialog;
 import net.hardcodes.telepathy.model.InputEvent;
+import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.tools.CodecUtils;
 import net.hardcodes.telepathy.tools.ConnectionManager;
 
@@ -69,8 +69,8 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public void onError(int errorCode) {
-            showToast("Server error.");
-            finish();
+        showToast("Server error.");
+        finish();
     }
 
     @Override

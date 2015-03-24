@@ -43,10 +43,11 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     public static final String ACTION_START = "START";
     public static final String ACTION_STOP = "STOP";
-    public static final String VIRTUAL_DISPLAY_TAG = "ScreenRecorder";
+
+    private static final String VIRTUAL_DISPLAY_TAG = "ScreenRecorder";
     private static final String TAG = "StreamingServer";
-    KeyguardManager myKM;
-    KeyguardManager.KeyguardLock kl;
+    private KeyguardManager myKM;
+    private KeyguardManager.KeyguardLock kl;
     private SharedPreferences preferences;
     private Handler toastHandler;
     private DisplayManager displayManager;
@@ -197,6 +198,9 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             resolutionRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_WIFI, "1"));
         } else {
             resolutionRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_MOBILE, "0.5"));
+        }
+        if (resolutionRatio > 1) {
+            resolutionRatio = 1;
         }
         mDisplay.getRealSize(resolution);
         resolution.x = (int) (resolution.x * resolutionRatio);
