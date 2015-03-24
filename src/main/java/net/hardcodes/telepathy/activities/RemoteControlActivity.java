@@ -62,6 +62,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     private ImageButton buttonLockUnlock;
     private ImageButton buttonRecentApps;
     private GestureDetectorCompat mDetector;
+    private CountDownTimer hideControlsTimer;
 
     @Override
     public void onConnect() {
@@ -213,6 +214,15 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         buttonRecentApps.setOnClickListener(this);
 
         mDetector = new GestureDetectorCompat(this, this);
+
+        hideControlsTimer = new CountDownTimer(3000, 100) {
+            public void onFinish() {
+                hideButtonsContainer();
+            }
+            @Override
+            public void onTick(long millisUntilFinished) {
+            }
+        };
     }
 
     @Override
@@ -279,15 +289,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         if (v.getId() == R.id.arrow_show_hide_buttons) {
             buttonsContainer.setVisibility(View.VISIBLE);
             buttonShowHideButtons.setVisibility(View.GONE);
-
-            new CountDownTimer(3000, 100) {
-                public void onFinish() {
-                    hideButtonsContainer();
-                }
-                @Override
-                public void onTick(long millisUntilFinished) {
-                }
-            }.start();
         } else if (v.getId() == R.id.back_button) {
             sendInputAction(InputEvent.IMPUT_EVENT_TYPE_BACK_BUTTON, 0, 0, 0, 0);
         } else if (v.getId() == R.id.home_button) {
@@ -297,6 +298,8 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         } else if (v.getId() == R.id.lock_unlock_button) {
             sendInputAction(InputEvent.IMPUT_EVENT_TYPE_LOCK_UNLOCK_BUTTON, 0, 0, 0, 0);
         }
+
+        hideControlsTimer.start();
     }
 
     private void sendInputAction(int eventType, float x, float y, float x1, float y1) {
@@ -309,10 +312,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         event.setTouchEventY1(y1);
         String eventJson = gson.toJson(event);
         ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_INPUT + eventJson);
-
-        if(buttonsContainer.getVisibility() == View.VISIBLE) {
-            hideButtonsContainer();
-        }
     }
 
     private void hideButtonsContainer() {
