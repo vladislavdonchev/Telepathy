@@ -7,6 +7,7 @@ import android.graphics.Point;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.preference.PreferenceManager;
 import android.support.v4.view.GestureDetectorCompat;
 import android.util.DisplayMetrics;
@@ -24,10 +25,10 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
 
-import net.hardcodes.telepathy.dialogs.ConnectDialog;
 import net.hardcodes.telepathy.R;
-import net.hardcodes.telepathy.model.TelepathyAPI;
+import net.hardcodes.telepathy.dialogs.ConnectDialog;
 import net.hardcodes.telepathy.model.InputEvent;
+import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.tools.CodecUtils;
 import net.hardcodes.telepathy.tools.ConnectionManager;
 
@@ -69,8 +70,8 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public void onError(int errorCode) {
-            showToast("Server error.");
-            finish();
+        showToast("Server error.");
+        finish();
     }
 
     @Override
@@ -276,24 +277,25 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.arrow_show_hide_buttons) {
-            if (buttonsContainer.getVisibility() == View.GONE) {
-                buttonsContainer.setVisibility(View.VISIBLE);
-                buttonShowHideButtons.setImageResource(R.drawable.ic_action_hide);
-            } else {
-                hideButtonsContainer();
-            }
+            buttonsContainer.setVisibility(View.VISIBLE);
+            buttonShowHideButtons.setVisibility(View.GONE);
+
+            new CountDownTimer(3000, 100) {
+                public void onFinish() {
+                    hideButtonsContainer();
+                }
+                @Override
+                public void onTick(long millisUntilFinished) {
+                }
+            }.start();
         } else if (v.getId() == R.id.back_button) {
             sendInputAction(InputEvent.IMPUT_EVENT_TYPE_BACK_BUTTON, 0, 0, 0, 0);
-            hideButtonsContainer();
         } else if (v.getId() == R.id.home_button) {
             sendInputAction(InputEvent.IMPUT_EVENT_TYPE_HOME_BUTTON, 0, 0, 0, 0);
-            hideButtonsContainer();
         } else if (v.getId() == R.id.recent_apps_button) {
             sendInputAction(InputEvent.IMPUT_EVENT_TYPE_RECENT_BUTTON, 0, 0, 0, 0);
-            hideButtonsContainer();
         } else if (v.getId() == R.id.lock_unlock_button) {
             sendInputAction(InputEvent.IMPUT_EVENT_TYPE_LOCK_UNLOCK_BUTTON, 0, 0, 0, 0);
-            hideButtonsContainer();
         }
     }
 
@@ -307,11 +309,15 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         event.setTouchEventY1(y1);
         String eventJson = gson.toJson(event);
         ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_INPUT + eventJson);
+
+        if(buttonsContainer.getVisibility() == View.VISIBLE) {
+            hideButtonsContainer();
+        }
     }
 
     private void hideButtonsContainer() {
         buttonsContainer.setVisibility(View.GONE);
-        buttonShowHideButtons.setImageResource(R.drawable.ic_action_show);
+        buttonShowHideButtons.setVisibility(View.VISIBLE);
     }
 
     @Override
