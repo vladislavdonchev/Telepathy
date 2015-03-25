@@ -69,7 +69,6 @@
                 android:value=".activities.HomeScreenActivity" />
         </activity>
 
-
     </application>
 
 </manifest>

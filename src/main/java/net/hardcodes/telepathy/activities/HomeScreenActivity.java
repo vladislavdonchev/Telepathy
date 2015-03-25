@@ -7,9 +7,12 @@ import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.ImageView;
 
+import com.splunk.mint.Mint;
+
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.dialogs.ConnectDialog;
 import net.hardcodes.telepathy.dialogs.LoginDialog;
+import net.hardcodes.telepathy.tools.Utils;
 import net.hardcodes.telepathy.views.FontButton;
 
 public class HomeScreenActivity extends BaseActivity {
@@ -22,6 +25,7 @@ public class HomeScreenActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Utils.splunk(this);
         setContents(R.layout.activity_home_screen);
         showDeploymentDialog(true);
         initViews();

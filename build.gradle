@@ -35,4 +35,6 @@ dependencies {
     compile project(':AndroidAsync')
     compile project(':libsuperuser')
     compile files('libs/gson-2.2.3.jar')
+    compile files('libs/splunk-mint-4.1.jar')
+    compile files('libs/splunk-mint-4.1-javadoc.jar')
 }

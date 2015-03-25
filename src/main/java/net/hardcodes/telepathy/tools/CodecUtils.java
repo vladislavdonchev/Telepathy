@@ -3,6 +3,8 @@ package net.hardcodes.telepathy.tools;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 
+import java.nio.ByteBuffer;
+
 public class CodecUtils {
 
     public static final int WIDTH = 1080 / 4;

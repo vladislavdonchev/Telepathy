@@ -6,7 +6,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.Log;
+
+import com.splunk.mint.Mint;
 
 import net.hardcodes.telepathy.dialogs.InstallUninstallDialog;
 import net.hardcodes.telepathy.R;
@@ -129,5 +132,11 @@ public class Utils {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean(pref, value);
         editor.commit();
+    }
+
+    public static void splunk(Context context) {
+        if (TextUtils.isEmpty(Mint.getSessionId())) {
+            Mint.initAndStartSession(context, "48f4134d");
+        }
     }
 }

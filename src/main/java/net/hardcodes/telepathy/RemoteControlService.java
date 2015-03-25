@@ -16,6 +16,7 @@ import android.media.MediaFormat;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -25,6 +26,8 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
+import com.koushikdutta.async.Util;
+import com.splunk.mint.Mint;
 
 import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.model.TelepathyAPI;
@@ -32,6 +35,7 @@ import net.hardcodes.telepathy.tools.CodecUtils;
 import net.hardcodes.telepathy.tools.ConnectionManager;
 import net.hardcodes.telepathy.tools.NetworkUtil;
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
+import net.hardcodes.telepathy.tools.Utils;
 
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
@@ -119,6 +123,12 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     }
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+        Utils.splunk(this);
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (preferences == null) {
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -172,10 +182,9 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         }
 
         mMediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, (int) (1024 * 1024 * bitrateRatio));
-        mMediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 5);
+        mMediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
         mMediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         mMediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-        mMediaFormat.setInteger(MediaFormat.KEY_CAPTURE_RATE, 5);
 
         Log.i(TAG, "Starting encoder");
         encoder = MediaCodec.createEncoderByType(CodecUtils.MIME_TYPE);
