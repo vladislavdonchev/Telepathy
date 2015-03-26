@@ -166,7 +166,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
             Log.d(TAG, "decoder output format changed: " + decoderOutputFormat);
         } else if (decoderStatus < 0) {
             //TODO: fail
-            showToast("Something wrong with the decoder. Need to stop everything.");
+            showToast("Decoder error.");
         } else {
             if (info.size == 0) {
                 Log.d(TAG, "got empty frame");
@@ -241,6 +241,10 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     @Override
     protected void onDestroy() {
         ConnectionManager.getInstance().releaseConnection(this);
+        if (decoder != null) {
+            decoder.stop();
+            decoder.release();
+        }
         super.onDestroy();
     }
 
