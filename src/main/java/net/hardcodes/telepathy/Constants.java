@@ -11,6 +11,9 @@ public class Constants {
     public static String PREFERENCE_CONNECTION_RQ = "pref_connection_request";
     public static String PREFERENCE_REMOTE_CONTROL_RQ = "pref_remote_control_request";
     public static String PREFERENCE_SCREEN_LOCK_UNLOCK = "pref_screen_lock_unlock";
+    public static String PREFERENCE_SERVER_NAME = "pref_server_name";
+    public static String PREFERENCE_SERVER_ADDRESS = "pref_server_address";
+    public static String PREFERENCE_USE_TLS = "pref_use_tls";
 
     public static String CONSTANT_NETWORK_2G = "constant_2g";
     public static String CONSTANT_NETWORK_3G = "constant_3g";

@@ -1,10 +1,12 @@
 package net.hardcodes.telepathy.activities;
 
+import android.content.SharedPreferences;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ImageView;
@@ -13,6 +15,7 @@ import android.widget.RadioGroup;
 
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
+import net.hardcodes.telepathy.dialogs.ServerDialog;
 import net.hardcodes.telepathy.views.FontTextView;
 import net.hardcodes.telepathy.tools.Utils;
 
@@ -39,6 +42,7 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
     private RadioGroup radioGroupScreen;
     private ImageView settingsTitle;
     private FontTextView systemServiceStatus;
+    private FontTextView serverConfiguration;
 
     private EditTextPreference portNumberPref;
     private ListPreference bitratePref;
@@ -46,10 +50,13 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
     private int selectedBitRateWiFi = 2;
     private int selectedBitRateMobile = 1;
 
+    private SharedPreferences prefs;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContents(R.layout.activity_settings);
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         radioGroupConnection = (RadioGroup) findViewById(R.id.radio_group_connection);
         radioGroupRemoteControl = (RadioGroup) findViewById(R.id.radio_group_remote_control);
@@ -77,6 +84,16 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
 
         checkBoxStartServer.setTypeface(custom_font);
         checkBoxLoginAuto.setTypeface(custom_font);
+
+        serverConfiguration = (FontTextView) findViewById(R.id.view_server_configuration);
+        serverConfiguration.setText(prefs.getString(Constants.PREFERENCE_SERVER_NAME, "EUR-BM0"));
+        serverConfiguration.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                new ServerDialog(SettingsActivity.this).show();
+                return false;
+            }
+        });
 
         radioGroupConnection.setOnCheckedChangeListener(this);
         radioGroupRemoteControl.setOnCheckedChangeListener(this);

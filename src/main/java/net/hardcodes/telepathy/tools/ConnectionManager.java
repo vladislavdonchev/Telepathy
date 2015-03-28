@@ -12,6 +12,7 @@ import com.koushikdutta.async.callback.DataCallback;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.WebSocket;
 
+import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.model.TelepathyAPI;
 
@@ -133,8 +134,8 @@ public class ConnectionManager {
 
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
 
-        boolean secureConnection = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("useTLS", false);
-        String address = PreferenceManager.getDefaultSharedPreferences(context).getString("server", "46.238.53.83:8021/tp");
+        boolean secureConnection = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Constants.PREFERENCE_USE_TLS, false);
+        String address = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREFERENCE_SERVER_ADDRESS, "46.238.53.83:8021/tp");
         String protocol = "ws://";
 
         if (secureConnection) {
