@@ -23,9 +23,9 @@ import net.hardcodes.telepathy.tools.Utils;
  * Created by StereoPor on 22.3.2015 г..
  */
 public class BaseActivity extends Activity {
-    private final static int DEPLOYMENT_STATE_NOT_INSTALLED = 0;
-    private final static int DEPLOYMENT_STATE_NEEDS_UPDATE = 1;
-    private final static int DEPLOYMENT_STATE_UP_TO_DATE = 2;
+    protected final static int DEPLOYMENT_STATE_NOT_INSTALLED = 0;
+    protected final static int DEPLOYMENT_STATE_NEEDS_UPDATE = 1;
+    protected final static int DEPLOYMENT_STATE_UP_TO_DATE = 2;
 
     private ServiceStateChangeReceiver serviceStateChangeReceiver;
 
@@ -89,6 +89,7 @@ public class BaseActivity extends Activity {
             startService.setText("click to start service");
         }
     }
+
     protected int checkDeploymentState(String installedVersion) {
         boolean isAppDeployedInSystem = !TextUtils.isEmpty(installedVersion);
 

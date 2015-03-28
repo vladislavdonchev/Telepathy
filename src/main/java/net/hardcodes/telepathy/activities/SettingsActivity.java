@@ -1,5 +1,6 @@
 package net.hardcodes.telepathy.activities;
 
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
@@ -19,9 +20,9 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
     private static final String[] bitrateOptions = {"Low (256 Kbps)", "Medium (512 Kbps)", "High (1 Mbps)", "Very High (2 Mbps)"};
     private static final String[] bitrateValues = {"0.25", "0.5", "1", "2"};
 
-    private FontTextView btnSystem;
-    private FontTextView btnPermissions;
-    private FontTextView btnNetwork;
+    private ImageView systemSettingsTitle;
+    private ImageView permissionSettingsTitle;
+    private ImageView networkSettingsTitle;
     private LinearLayout systemSettings;
     private LinearLayout permissionsSettings;
     private LinearLayout networkSettings;
@@ -37,7 +38,7 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
     private RadioGroup radioGroupRemoteControl;
     private RadioGroup radioGroupScreen;
     private ImageView settingsTitle;
-    private FontTextView uninstall;
+    private FontTextView systemServiceStatus;
 
     private EditTextPreference portNumberPref;
     private ListPreference bitratePref;
@@ -65,14 +66,14 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
         permissionsSettings = (LinearLayout) findViewById(R.id.permissions_layout);
         networkSettings = (LinearLayout) findViewById(R.id.network_layout);
 
-        btnSystem = (FontTextView) findViewById(R.id.system_textview);
-        btnPermissions = (FontTextView) findViewById(R.id.permissions_textview);
-        btnNetwork = (FontTextView) findViewById(R.id.network_textview);
+        systemSettingsTitle = (ImageView) findViewById(R.id.system_settings_title);
+        permissionSettingsTitle = (ImageView) findViewById(R.id.permissions_settings_title);
+        networkSettingsTitle = (ImageView) findViewById(R.id.network_settings_title);
 
         checkBoxStartServer = (CheckBox) findViewById(R.id.checkbox_start_server_boot);
         checkBoxLoginAuto = (CheckBox) findViewById(R.id.checkbox_login_auto);
-        settingsTitle = (ImageView) findViewById(R.id.settings_titel);
-        uninstall = (FontTextView) findViewById(R.id.textview_uninstall);
+        settingsTitle = (ImageView) findViewById(R.id.settings_title);
+        systemServiceStatus = (FontTextView) findViewById(R.id.textview_uninstall);
 
         checkBoxStartServer.setTypeface(custom_font);
         checkBoxLoginAuto.setTypeface(custom_font);
@@ -81,7 +82,7 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
         radioGroupRemoteControl.setOnCheckedChangeListener(this);
         radioGroupScreen.setOnCheckedChangeListener(this);
 
-        uninstall.setOnClickListener(new View.OnClickListener() {
+        systemServiceStatus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showDeploymentDialog(false);
@@ -95,7 +96,7 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
             }
         });
 
-        btnSystem.setOnClickListener(new View.OnClickListener() {
+        systemSettingsTitle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 systemSettings.setVisibility(View.VISIBLE);
@@ -105,7 +106,7 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
         });
 
 
-        btnPermissions.setOnClickListener(new View.OnClickListener() {
+        permissionSettingsTitle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 systemSettings.setVisibility(View.GONE);
@@ -115,7 +116,7 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
         });
 
 
-        btnNetwork.setOnClickListener(new View.OnClickListener() {
+        networkSettingsTitle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 systemSettings.setVisibility(View.GONE);
@@ -164,6 +165,22 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
                 Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_BITRATE_MOBILE, bitrateValues[selectedBitRateMobile]);
             }
         });
+
+        String installedVersion = Utils.getInstallationDetailsFromFile(this);
+        int deploymentState = checkDeploymentState(installedVersion);
+        systemServiceStatus.setPaintFlags(systemServiceStatus.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+
+        switch (deploymentState) {
+            case DEPLOYMENT_STATE_NOT_INSTALLED:
+                systemServiceStatus.setText("n/a (click to install)");
+                break;
+            case DEPLOYMENT_STATE_NEEDS_UPDATE:
+                systemServiceStatus.setText(installedVersion + " (click to update)");
+                break;
+            case DEPLOYMENT_STATE_UP_TO_DATE:
+                systemServiceStatus.setText("up-to-date (click to uninstall)");
+                break;
+        }
     }
 
     public void onCheckboxClicked(View v) {

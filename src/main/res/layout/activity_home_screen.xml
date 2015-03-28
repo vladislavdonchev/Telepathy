@@ -28,10 +28,6 @@
             android:layout_margin="16dp"
             android:drawablePadding="8dp"
             android:background="@android:color/transparent"
-            android:shadowColor="#000000"
-            android:shadowDx="8"
-            android:shadowDy="8"
-            android:shadowRadius="8"
             android:textColor="#FFFFFF" />
 
         <net.hardcodes.telepathy.views.FontButton
@@ -47,5 +43,5 @@
         android:layout_height="64dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:src="@drawable/src_settings_button" />
+        android:src="@drawable/ic_settings_button" />
 </RelativeLayout>

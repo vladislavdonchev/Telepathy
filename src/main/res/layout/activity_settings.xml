@@ -5,50 +5,55 @@
     android:orientation="vertical">
 
     <ImageView
-        android:id="@+id/settings_titel"
+        android:id="@+id/settings_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:src="@drawable/telepathy_settings" />
+        android:src="@drawable/src_settings_title_button" />
 
-    <net.hardcodes.telepathy.views.FontTextView
-        android:id="@+id/system_textview"
-        android:layout_width="fill_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="10dp"
-        android:background="@android:color/white"
+    <ImageView
+        android:id="@+id/system_settings_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:clickable="true"
-        android:gravity="center"
-        android:text="system"
-        android:textSize="@dimen/activity_settings_title" />
+        android:src="@drawable/bg_system_default" />
 
     <LinearLayout
         android:id="@+id/system_layout"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
         android:orientation="vertical"
         android:paddingLeft="20dp"
-        android:paddingTop="20dp">
+        android:paddingRight="20dp">
+
+        <net.hardcodes.telepathy.views.FontTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="Automation:"
+            android:textColor="@android:color/white"
+            android:textSize="22sp" />
 
         <CheckBox
             android:id="@+id/checkbox_start_server_boot"
+            style="@style/checkbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="onCheckboxClicked"
-            android:text="start server on boot"
-            android:textColor="@android:color/white"
-            android:textSize="@dimen/activity_settings_textviews" />
+            android:text="start service on boot"
+            android:textColor="@android:color/white" />
 
         <CheckBox
             android:id="@+id/checkbox_login_auto"
+            style="@style/checkbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="onCheckboxClicked"
             android:text="login automatically"
-            android:textColor="@android:color/white"
-            android:textSize="@dimen/activity_settings_textviews" />
+            android:textColor="@android:color/white" />
 
         <net.hardcodes.telepathy.views.FontTextView
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
             android:gravity="center"
@@ -58,12 +63,12 @@
 
         <net.hardcodes.telepathy.views.FontTextView
             android:id="@+id/textview_uninstall"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:gravity="center"
-            android:text="@string/string_uninstall"
-            android:textColor="@android:color/holo_red_dark"
+            android:text="Checking..."
+            android:textColor="@android:color/holo_blue_light"
             android:textSize="@dimen/activity_settings_textviews" />
 
         <net.hardcodes.telepathy.views.FontTextView
@@ -72,37 +77,34 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
             android:gravity="center"
-            android:text="v 0.1"
+            android:text="@string/app_version"
             android:textColor="@android:color/white"
             android:textSize="@dimen/activity_settings_textviews" />
 
     </LinearLayout>
 
-    <net.hardcodes.telepathy.views.FontTextView
-        android:id="@+id/permissions_textview"
-        android:layout_width="fill_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="10dp"
-        android:background="@android:color/white"
-        android:gravity="center"
-        android:text="permissions"
-        android:textSize="@dimen/activity_settings_title" />
+    <ImageView
+        android:id="@+id/permissions_settings_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:src="@drawable/bg_permissions_default" />
 
     <LinearLayout
         android:id="@+id/permissions_layout"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
         android:orientation="vertical"
         android:paddingLeft="20dp"
-        android:paddingTop="20dp"
         android:visibility="gone">
 
         <net.hardcodes.telepathy.views.FontTextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="connection request:"
+            android:text="Connection requests:"
             android:textColor="@android:color/white"
-            android:textSize="18sp" />
+            android:textSize="22sp" />
 
         <RadioGroup
             android:id="@+id/radio_group_connection"
@@ -145,9 +147,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="remote control request:"
+            android:text="Remote control requests:"
             android:textColor="@android:color/white"
-            android:textSize="18sp" />
+            android:textSize="22sp" />
 
         <RadioGroup
             android:id="@+id/radio_group_remote_control"
@@ -191,9 +193,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="screen lock / unlock:"
+            android:text="Screen lock / unlock:"
             android:textColor="@android:color/white"
-            android:textSize="18sp" />
+            android:textSize="22sp" />
 
         <RadioGroup
             android:id="@+id/radio_group_screen"
@@ -233,15 +235,12 @@
         </RadioGroup>
     </LinearLayout>
 
-    <net.hardcodes.telepathy.views.FontTextView
-        android:id="@+id/network_textview"
-        android:layout_width="fill_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="10dp"
-        android:background="@android:color/white"
-        android:gravity="center"
-        android:text="network"
-        android:textSize="@dimen/activity_settings_title" />
+    <ImageView
+        android:id="@+id/network_settings_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:src="@drawable/bg_network_default" />
 
     <LinearLayout
         android:id="@+id/network_layout"
@@ -249,14 +248,13 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingLeft="20dp"
-        android:paddingTop="20dp"
         android:visibility="gone">
 
         <net.hardcodes.telepathy.views.FontTextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="streaming video quality:"
+            android:text="Streaming video quality:"
             android:textColor="@android:color/white"
             android:textSize="@dimen/activity_settings_textviews" />
 
@@ -288,18 +286,19 @@
 
             <net.hardcodes.telepathy.views.FontTextView
                 android:id="@+id/wifi_selected_item"
-                android:layout_width="wrap_content"
+                android:layout_width="170dp"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="20dp"
+                android:layout_marginLeft="10dp"
+                android:gravity="center"
                 android:text="High (1 MBps)"
                 android:textColor="@android:color/white"
-                android:textSize="19sp" />
+                android:textSize="20sp" />
 
             <net.hardcodes.telepathy.views.FontTextView
                 android:id="@+id/wifi_arrow_right"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="20dp"
+                android:layout_marginLeft="10dp"
                 android:paddingBottom="5dp"
                 android:paddingLeft="10dp"
                 android:paddingRight="10dp"
@@ -318,7 +317,7 @@
             <net.hardcodes.telepathy.views.FontTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="mobile"
+                android:text="Mobile"
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/activity_settings_textviews" />
 
@@ -337,18 +336,19 @@
 
             <net.hardcodes.telepathy.views.FontTextView
                 android:id="@+id/mobile_selected_item"
-                android:layout_width="wrap_content"
+                android:layout_width="170dp"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="20dp"
+                android:layout_marginLeft="10dp"
+                android:gravity="center"
                 android:text="Medium (512 KBps)"
                 android:textColor="@android:color/white"
-                android:textSize="19sp" />
+                android:textSize="20sp" />
 
             <net.hardcodes.telepathy.views.FontTextView
                 android:id="@+id/mobile_arrow_right"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="20dp"
+                android:layout_marginLeft="10dp"
                 android:paddingBottom="5dp"
                 android:paddingLeft="10dp"
                 android:paddingRight="10dp"
