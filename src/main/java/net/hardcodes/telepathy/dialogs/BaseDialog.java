@@ -1,6 +1,7 @@
 package net.hardcodes.telepathy.dialogs;
 
 import android.app.ActionBar;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
@@ -9,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
@@ -47,9 +49,9 @@ public class BaseDialog extends Dialog {
 
     protected BaseDialog(Context context) {
         super(context);
-
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
 
         inflater = getLayoutInflater();
         RelativeLayout dialogLayout = (RelativeLayout) inflater.inflate(R.layout.view_dialog_base, null);

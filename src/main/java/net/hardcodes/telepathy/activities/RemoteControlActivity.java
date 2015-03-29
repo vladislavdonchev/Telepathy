@@ -71,7 +71,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public void onError(int errorCode) {
-        showToast("Server error.");
         finish();
     }
 
@@ -84,10 +83,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
         } else if (message.startsWith(TelepathyAPI.MESSAGE_BIND_FAILED)) {
             showToast("User " + remoteUID + " not logged in. Please try again later.");
-            finish();
-
-        } else if (message.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
-            showToast("Server: " + message);
             finish();
 
         } else if (message.startsWith(TelepathyAPI.MESSAGE_VIDEO_METADATA)) {

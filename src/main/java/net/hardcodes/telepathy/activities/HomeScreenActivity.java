@@ -9,6 +9,7 @@ import android.widget.ImageView;
 
 import com.splunk.mint.Mint;
 
+import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.dialogs.ConnectDialog;
 import net.hardcodes.telepathy.dialogs.LoginDialog;
@@ -35,7 +36,7 @@ public class HomeScreenActivity extends BaseActivity {
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         userButton = (FontButton) findViewById(R.id.activity_home_screen_user_button);
-        userButton.setText(prefs.getString("uid", "111"));
+        userButton.setText(prefs.getString(Constants.PREFERENCE_UID, "click to log in"));
         userButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -66,6 +67,6 @@ public class HomeScreenActivity extends BaseActivity {
     @Override
     protected void checkServiceState() {
         super.checkServiceState();
-        userButton.setText(prefs.getString("uid", "111"));
+        userButton.setText(prefs.getString(Constants.PREFERENCE_UID, "click to log in"));
     }
 }

@@ -16,7 +16,6 @@ import android.media.MediaFormat;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -26,8 +25,6 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
-import com.koushikdutta.async.Util;
-import com.splunk.mint.Mint;
 
 import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.model.TelepathyAPI;
@@ -69,13 +66,18 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     @Override
     public void onConnect() {
-        showToast("Connected to support server.");
     }
 
     @Override
     public void onError(int errorCode) {
-        if (running) {
-            reconnectAfterError("Support server not available. Attempting to reconnect...");
+        if (errorCode == ConnectionManager.WebSocketConnectionListener.ERROR_CODE_SERVER_UNAVAILABLE && running) {
+            reconnectAfterError("Attempting to reconnect...");
+        } else if (errorCode == TelepathyAPI.ERROR_USER_AUTHENTICATION_FAILED) {
+            running = false;
+            disconnect();
+            stopSelf();
+        } else {
+            stopEncodingVirtualDisplay();
         }
     }
 
@@ -93,10 +95,6 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             }
 
         } else if (message.startsWith(TelepathyAPI.MESSAGE_DISBAND)) {
-            stopEncodingVirtualDisplay();
-
-        } else if (message.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
-            showToast("Server: " + message);
             stopEncodingVirtualDisplay();
 
         } else if (message.startsWith(TelepathyAPI.MESSAGE_INPUT)) {
@@ -140,6 +138,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
         if (intent != null) {
             if (intent.getAction().equals(ACTION_START)) {
+                //showToast("Remote control service started.");
                 running = true;
                 ConnectionManager.getInstance().acquireConnection(this, this);
             }
@@ -175,7 +174,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_2G)) {
             bitrateRatio = 0.03125f;
             showToast("2G connection detected - reducing support video stream quality.");
-        } else if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_3G)){
+        } else if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_3G)) {
             bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_MOBILE, ".5"));
         } else {
             bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_WIFI, "1"));
@@ -330,7 +329,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             disconnect();
         }
         sendBroadcast(new Intent(ACTION_SERVICE_STATE_CHANGED));
-        showToast("Support service stopped.");
+        //showToast("Remote control service stopped.");
         super.onDestroy();
     }
 

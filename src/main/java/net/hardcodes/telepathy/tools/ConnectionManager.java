@@ -1,9 +1,13 @@
 package net.hardcodes.telepathy.tools;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.koushikdutta.async.ByteBufferList;
 import com.koushikdutta.async.DataEmitter;
@@ -14,6 +18,8 @@ import com.koushikdutta.async.http.WebSocket;
 
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
+import net.hardcodes.telepathy.Telepathy;
+import net.hardcodes.telepathy.dialogs.LoginDialog;
 import net.hardcodes.telepathy.model.TelepathyAPI;
 
 import java.security.KeyStore;
@@ -34,13 +40,18 @@ import javax.net.ssl.X509TrustManager;
  */
 public class ConnectionManager {
 
+    public static final String ACTION_CONNECTION_STATE_CHANGE = "connStateChange";
+
     private static ConnectionManager instance;
+    private static Handler uiHandler;
     private SharedPreferences preferences;
 
     private static ConcurrentHashMap<Context, WebSocketConnectionListener> connectionListeners = new ConcurrentHashMap<>();
 
     public WebSocket webSocket;
     private Timer pingPongTimer;
+
+    private boolean connectedAndAuthenticated = false;
 
     private AsyncHttpClient.WebSocketConnectCallback connectCallback = new AsyncHttpClient.WebSocketConnectCallback() {
         @Override
@@ -52,6 +63,7 @@ public class ConnectionManager {
             if (webSocket == null) {
                 for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
                     webSocketConnectionListener.onError(WebSocketConnectionListener.ERROR_CODE_SERVER_UNAVAILABLE);
+                    setConnectedAndAuthenticated(false);
                 }
                 Log.d("WSFAIL", "Socket NULL.");
             } else {
@@ -80,13 +92,42 @@ public class ConnectionManager {
                 webSocketConnectionListener.onDisconnect();
             }
             stopPingPong();
+            setConnectedAndAuthenticated(false);
         }
     };
     private WebSocket.StringCallback stringCallback = new WebSocket.StringCallback() {
         @Override
         public void onStringAvailable(String s) {
             for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
-                webSocketConnectionListener.onTextMessage(s);
+                if (s.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
+                    int errorCode = Integer.parseInt(s.substring(s.length() - 1));
+                    webSocketConnectionListener.onError(errorCode);
+
+                    switch (errorCode) {
+                        case TelepathyAPI.ERROR_USER_AUTHENTICATION_FAILED:
+                            showToast("User authentication failed!");
+                            uiHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    new LoginDialog(Telepathy.getContext(), true).show();
+                                }
+                            });
+                            break;
+                        case TelepathyAPI.ERROR_USER_ID_TAKEN:
+                            showToast("An user with this name already exists!");
+                            break;
+                        case TelepathyAPI.ERROR_SERVER_OVERLOADED:
+                            showToast("The server is overloaded. Please try again later.");
+                            break;
+                        case TelepathyAPI.ERROR_OTHER_END_HUNG_UP_UNEXPECTEDLY:
+                            showToast("The connection has been interrupted unexpectedly.");
+                            break;
+                    }
+                } else if (s.startsWith(TelepathyAPI.MESSAGE_LOGIN_SUCCESS)) {
+                    setConnectedAndAuthenticated(true);
+                } else {
+                    webSocketConnectionListener.onTextMessage(s);
+                }
             }
         }
     };
@@ -105,13 +146,23 @@ public class ConnectionManager {
     public static ConnectionManager getInstance() {
         if (instance == null) {
             instance = new ConnectionManager();
+            uiHandler = new Handler();
         }
         return instance;
     }
 
+    public boolean isConnectedAndAuthenticated() {
+        return connectedAndAuthenticated;
+    }
+
+    private void setConnectedAndAuthenticated(boolean connectedAndAuthenticated) {
+        this.connectedAndAuthenticated = connectedAndAuthenticated;
+        Intent connectionStateChangeIntent = new Intent(ACTION_CONNECTION_STATE_CHANGE);
+        Telepathy.getContext().sendBroadcast(connectionStateChangeIntent);
+    }
+
     public interface WebSocketConnectionListener {
-        public static final int ERROR_CODE_SERVER_UNAVAILABLE = 0;
-        public static final int ERROR_CODE_SERVER_CONNECTION_LOST = 1;
+        public static final int ERROR_CODE_SERVER_UNAVAILABLE = 100;
 
         public void onConnect();
 
@@ -133,6 +184,12 @@ public class ConnectionManager {
         }
 
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
+
+        String uid = preferences.getString(Constants.PREFERENCE_UID, "");
+        if (TextUtils.isEmpty(uid)) {
+            new LoginDialog(context).show();
+            return;
+        }
 
         boolean secureConnection = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Constants.PREFERENCE_USE_TLS, false);
         String address = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREFERENCE_SERVER_ADDRESS, "46.238.53.83:8021/tp");
@@ -168,8 +225,9 @@ public class ConnectionManager {
     }
 
     private void login() {
-        String uid = preferences.getString("uid", "111");
-        sendTextMessage(TelepathyAPI.MESSAGE_LOGIN + uid);
+        String uid = preferences.getString(Constants.PREFERENCE_UID, "");
+        String pass = preferences.getString(Constants.PREFERENCE_PASS, "");
+        sendTextMessage(TelepathyAPI.MESSAGE_LOGIN + uid + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + pass);
     }
 
     public void releaseConnection(Context context) {
@@ -254,6 +312,23 @@ public class ConnectionManager {
     private class DodgyHostnameVerifier implements HostnameVerifier {
         public boolean verify(String hostname, SSLSession session) {
             return true;
+        }
+    }
+
+    private void showToast(String message) {
+        uiHandler.post(new ToastRunnable(message));
+    }
+
+    private class ToastRunnable implements Runnable {
+        String mText;
+
+        public ToastRunnable(String text) {
+            mText = text;
+        }
+
+        @Override
+        public void run() {
+            Toast.makeText(Telepathy.getContext(), mText, Toast.LENGTH_SHORT).show();
         }
     }
 }

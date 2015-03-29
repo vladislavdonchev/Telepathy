@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -15,6 +16,7 @@ import android.widget.Toast;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.RemoteControlService;
 import net.hardcodes.telepathy.dialogs.InstallUninstallDialog;
+import net.hardcodes.telepathy.tools.ConnectionManager;
 import net.hardcodes.telepathy.views.FontButton;
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
 import net.hardcodes.telepathy.tools.Utils;
@@ -29,10 +31,14 @@ public class BaseActivity extends Activity {
 
     private ServiceStateChangeReceiver serviceStateChangeReceiver;
 
+    private BroadcastReceiver connectionStateChangeReceiver;
+    private FontButton serviceAndConnectionStatus;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_base);
+        serviceAndConnectionStatus = (FontButton) findViewById(R.id.server_control_button);
     }
 
     protected void setContents(int contentsResource) {
@@ -60,12 +66,19 @@ public class BaseActivity extends Activity {
         IntentFilter intentFilter = new IntentFilter(RemoteControlService.ACTION_SERVICE_STATE_CHANGED);
         registerReceiver(serviceStateChangeReceiver, intentFilter);
         checkServiceState();
+        if (connectionStateChangeReceiver == null) {
+            connectionStateChangeReceiver = new ConnectionStateChangeReceiver();
+        }
+        intentFilter = new IntentFilter(ConnectionManager.ACTION_CONNECTION_STATE_CHANGE);
+        registerReceiver(connectionStateChangeReceiver, intentFilter);
+        checkConnectionState();
         super.onResume();
     }
 
     @Override
     protected void onPause() {
         unregisterReceiver(serviceStateChangeReceiver);
+        unregisterReceiver(connectionStateChangeReceiver);
         super.onPause();
     }
 
@@ -80,13 +93,26 @@ public class BaseActivity extends Activity {
         }
     }
 
+    private class ConnectionStateChangeReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            checkConnectionState();
+        }
+    }
+
     protected void checkServiceState() {
         if (Utils.isServiceRunning(this, RemoteControlService.class)) {
-            FontButton serverControl = (FontButton) findViewById(R.id.server_control_button);
-            serverControl.setText("service is running");
+            serviceAndConnectionStatus.setText("service is running");
         } else {
-            FontButton startService = (FontButton) findViewById(R.id.server_control_button);
-            startService.setText("click to start service");
+            serviceAndConnectionStatus.setText("click to start service");
+        }
+    }
+
+    protected void checkConnectionState() {
+        if (ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
+            serviceAndConnectionStatus.setTextColor(getResources().getColor(android.R.color.holo_green_light));
+        } else {
+            serviceAndConnectionStatus.setTextColor(Color.parseColor("#FFFFFF"));
         }
     }
 
