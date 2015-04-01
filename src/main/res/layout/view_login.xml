@@ -66,4 +66,26 @@
         android:textSize="16sp"
         android:visibility="gone"
         android:textColor="#FFFFFF"/>
+
+    <net.hardcodes.telepathy.views.FontTextView
+        android:id="@+id/view_register_account"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/view_authentication_error"
+        android:text="@string/create_account"
+        android:layout_alignParentLeft="true"
+        android:layout_marginTop="20dp"
+        android:textSize="18sp"
+        android:textColor="#FFFFFF"/>
+
+    <net.hardcodes.telepathy.views.FontTextView
+        android:id="@+id/view_login_options"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/view_authentication_error"
+        android:text="@string/need_help"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="20dp"
+        android:textSize="18sp"
+        android:textColor="#FFFFFF"/>
 </RelativeLayout>

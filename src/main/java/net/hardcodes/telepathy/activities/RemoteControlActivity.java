@@ -66,6 +66,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public void onConnect() {
+        ConnectionManager.getInstance().login();
         ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_BIND + remoteUID);
     }
 

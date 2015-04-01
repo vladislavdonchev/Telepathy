@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:id="@+id/view_connection_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <net.hardcodes.telepathy.views.FontTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Contacting server..."
+            android:textColor="#FFFFFF"
+            android:textSize="26sp" />
+
+        <ProgressBar
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_marginTop="10dp" />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/view_registration_form"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone">
+
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/view_registration_error"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:gravity="center"
+            android:text="The requested username is not available."
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:visibility="gone" />
+
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/view_uid_label"
+            android:layout_width="72dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/view_registration_error"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="10dp"
+            android:text="User"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp" />
+
+        <EditText
+            android:id="@+id/view_uid_input"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@id/view_registration_error"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="16dp"
+            android:layout_toRightOf="@id/view_uid_label"
+            android:background="@drawable/textfield_activated_telepathy"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/white"
+            android:textSize="26sp" />
+
+
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/view_pass_label"
+            android:layout_width="72dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/view_uid_input"
+            android:layout_marginTop="10dp"
+            android:text="Pass"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp" />
+
+        <EditText
+            android:id="@+id/view_pass_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@id/view_uid_input"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="16dp"
+            android:layout_toRightOf="@id/view_pass_label"
+            android:background="@drawable/textfield_activated_telepathy"
+            android:gravity="center"
+            android:inputType="textPassword"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/white"
+            android:textSize="26sp" />
+
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/view_pass_confirm_label"
+            android:layout_width="72dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/view_pass_input"
+            android:layout_marginTop="10dp"
+            android:text="Confirm"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp" />
+
+        <EditText
+            android:id="@+id/view_pass_confirm_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@id/view_pass_input"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="16dp"
+            android:layout_toRightOf="@id/view_pass_confirm_label"
+            android:background="@drawable/textfield_activated_telepathy"
+            android:gravity="center"
+            android:inputType="textPassword"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/white"
+            android:textSize="26sp" />
+
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/view_email_label"
+            android:layout_width="72dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/view_pass_confirm_input"
+            android:layout_marginTop="10dp"
+            android:text="E-Mail"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp" />
+
+        <EditText
+            android:id="@+id/view_email_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@id/view_pass_confirm_input"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="16dp"
+            android:layout_toRightOf="@id/view_pass_confirm_label"
+            android:background="@drawable/textfield_activated_telepathy"
+            android:gravity="center"
+            android:inputType="textEmailAddress"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/white"
+            android:textSize="26sp" />
+
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/view_email_information"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/view_email_label"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="Providing an e-mail is not mandatory, but required for restoring lost usernames and passwords.\nYou can always add an e-mail address later on from the 'login options' menu."
+            android:textColor="#FFFFFF"
+            android:textSize="16sp" />
+    </RelativeLayout>
+
+</RelativeLayout>

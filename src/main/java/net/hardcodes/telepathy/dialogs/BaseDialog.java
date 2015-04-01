@@ -113,6 +113,12 @@ public class BaseDialog extends Dialog {
         rightButton.setText(rightButtonText);
     }
 
+    protected void toggleFrame(boolean visible) {
+        leftButton.setVisibility(visible ? View.VISIBLE : View.GONE);
+        rightButton.setVisibility(visible ? View.VISIBLE : View.GONE);
+        title.setVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
     protected void onLeftButtonClick() {
         dismiss();
     }

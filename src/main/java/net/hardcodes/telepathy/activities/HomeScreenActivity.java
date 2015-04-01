@@ -11,6 +11,7 @@ import com.splunk.mint.Mint;
 
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
+import net.hardcodes.telepathy.Telepathy;
 import net.hardcodes.telepathy.dialogs.ConnectDialog;
 import net.hardcodes.telepathy.dialogs.LoginDialog;
 import net.hardcodes.telepathy.tools.Utils;
@@ -19,7 +20,6 @@ import net.hardcodes.telepathy.views.FontButton;
 public class HomeScreenActivity extends BaseActivity {
 
     private ConnectDialog connectDialog;
-    private LoginDialog loginDialog;
     private FontButton userButton;
     private SharedPreferences prefs;
 
@@ -40,7 +40,7 @@ public class HomeScreenActivity extends BaseActivity {
         userButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                loginDialog.show();
+                Telepathy.showLoginDialog(false);
             }
         });
 
@@ -61,7 +61,6 @@ public class HomeScreenActivity extends BaseActivity {
         });
 
         connectDialog = new ConnectDialog(this);
-        loginDialog = new LoginDialog(this);
     }
 
     @Override

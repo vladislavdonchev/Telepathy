@@ -9,6 +9,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
 import com.koushikdutta.async.DataEmitter;
 import com.koushikdutta.async.callback.CompletedCallback;
@@ -21,6 +22,7 @@ import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.Telepathy;
 import net.hardcodes.telepathy.dialogs.LoginDialog;
 import net.hardcodes.telepathy.model.TelepathyAPI;
+import net.hardcodes.telepathy.model.User;
 
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
@@ -43,7 +45,6 @@ public class ConnectionManager {
     public static final String ACTION_CONNECTION_STATE_CHANGE = "connStateChange";
 
     private static ConnectionManager instance;
-    private static Handler uiHandler;
     private SharedPreferences preferences;
 
     private static ConcurrentHashMap<Context, WebSocketConnectionListener> connectionListeners = new ConcurrentHashMap<>();
@@ -72,7 +73,6 @@ public class ConnectionManager {
                 webSocket.setDataCallback(dataCallback);
                 ConnectionManager.this.webSocket = webSocket;
 
-                login();
                 startPingPong();
 
                 for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
@@ -105,22 +105,17 @@ public class ConnectionManager {
 
                     switch (errorCode) {
                         case TelepathyAPI.ERROR_USER_AUTHENTICATION_FAILED:
-                            showToast("User authentication failed!");
-                            uiHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    new LoginDialog(Telepathy.getContext(), true).show();
-                                }
-                            });
+                            Telepathy.showLongToast("User authentication failed!");
+                            Telepathy.showLoginDialog(true);
                             break;
                         case TelepathyAPI.ERROR_USER_ID_TAKEN:
-                            showToast("An user with this name already exists!");
+                            Telepathy.showLongToast("Account registration failed!");
                             break;
                         case TelepathyAPI.ERROR_SERVER_OVERLOADED:
-                            showToast("The server is overloaded. Please try again later.");
+                            Telepathy.showLongToast("The server is overloaded. Please try again later.");
                             break;
                         case TelepathyAPI.ERROR_OTHER_END_HUNG_UP_UNEXPECTEDLY:
-                            showToast("The connection has been interrupted unexpectedly.");
+                            Telepathy.showLongToast("The connection has been interrupted unexpectedly.");
                             break;
                     }
                 } else if (s.startsWith(TelepathyAPI.MESSAGE_LOGIN_SUCCESS)) {
@@ -146,7 +141,6 @@ public class ConnectionManager {
     public static ConnectionManager getInstance() {
         if (instance == null) {
             instance = new ConnectionManager();
-            uiHandler = new Handler();
         }
         return instance;
     }
@@ -177,6 +171,7 @@ public class ConnectionManager {
 
     public void acquireConnection(Context context, WebSocketConnectionListener connectionListener) {
         connectionListeners.put(context, connectionListener);
+        Log.d("LISTENERS", "ADD: " + context + " " + connectionListener);
 
         if (webSocket != null && webSocket.isOpen()) {
             connectionListener.onConnect();
@@ -224,15 +219,19 @@ public class ConnectionManager {
         AsyncHttpClient.getDefaultInstance().websocket(protocol + address, null, connectCallback);
     }
 
-    private void login() {
+    public void login() {
         String uid = preferences.getString(Constants.PREFERENCE_UID, "");
         String pass = preferences.getString(Constants.PREFERENCE_PASS, "");
-        sendTextMessage(TelepathyAPI.MESSAGE_LOGIN + uid + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + pass);
+        sendTextMessage(TelepathyAPI.MESSAGE_LOGIN + uid + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + Utils.sha256(pass));
     }
 
     public void releaseConnection(Context context) {
         logout(false);
         unregisterListener(context);
+    }
+
+    public void registerAccount(User user) {
+        sendTextMessage(TelepathyAPI.MESSAGE_REGISTER + new Gson().toJson(user));
     }
 
     public void reconnect(final Context context) {
@@ -255,9 +254,11 @@ public class ConnectionManager {
         }
     }
 
-
     public void unregisterListener(Context context) {
-        connectionListeners.remove(context);
+        if (connectionListeners.containsKey(context)) {
+            Log.d("LISTENERS", "REMOVE: " + context + " " + connectionListeners.get(context));
+            connectionListeners.remove(context);
+        }
     }
 
     public void sendTextMessage(String message) {
@@ -313,10 +314,6 @@ public class ConnectionManager {
         public boolean verify(String hostname, SSLSession session) {
             return true;
         }
-    }
-
-    private void showToast(String message) {
-        uiHandler.post(new ToastRunnable(message));
     }
 
     private class ToastRunnable implements Runnable {

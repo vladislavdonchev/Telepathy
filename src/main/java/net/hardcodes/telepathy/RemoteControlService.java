@@ -50,7 +50,6 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     private KeyguardManager myKM;
     private KeyguardManager.KeyguardLock kl;
     private SharedPreferences preferences;
-    private Handler toastHandler;
     private DisplayManager displayManager;
     private Surface encoderInputSurface = null;
     private VirtualDisplay virtualDisplay = null;
@@ -66,6 +65,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     @Override
     public void onConnect() {
+        ConnectionManager.getInstance().login();
     }
 
     @Override
@@ -88,7 +88,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         if (message.startsWith(TelepathyAPI.MESSAGE_BIND)) {
             String remoteUID = message.split(TelepathyAPI.MESSAGE_UID_DELIMITER)[1];
             ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_BIND_ACCEPTED + remoteUID);
-            showToast("User " + remoteUID + " has connected.");
+            Telepathy.showShortToast("User " + remoteUID + " has connected.");
             //Start rendering display on the surface and set up the encoder.
             if (encoderThread == null) {
                 startEncodingVirtualDisplay();
@@ -116,7 +116,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             reconnectAfterError("Disconnected from support server. Attempting to reconnect...");
         } else {
             ConnectionManager.getInstance().unregisterListener(this);
-            showToast("Support service stopped.");
+            Telepathy.showShortToast("Support service stopped.");
         }
     }
 
@@ -130,7 +130,6 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (preferences == null) {
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            toastHandler = new Handler();
             displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
             myKM = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
             kl = myKM.newKeyguardLock("MyKeyguardLock");
@@ -139,8 +138,10 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         if (intent != null) {
             if (intent.getAction().equals(ACTION_START)) {
                 //showToast("Remote control service started.");
-                running = true;
-                ConnectionManager.getInstance().acquireConnection(this, this);
+                if (!running) {
+                    running = true;
+                    ConnectionManager.getInstance().acquireConnection(this, this);
+                }
             }
 
             if (intent.getAction().equals(ACTION_STOP)) {
@@ -173,7 +174,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
         if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_2G)) {
             bitrateRatio = 0.03125f;
-            showToast("2G connection detected - reducing support video stream quality.");
+            Telepathy.showLongToast("2G connection detected - reducing support video stream quality.");
         } else if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_3G)) {
             bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_MOBILE, ".5"));
         } else {
@@ -343,10 +344,6 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         return null;
     }
 
-    private void showToast(final String message) {
-        toastHandler.post(new ToastRunnable(message));
-    }
-
     private void updateNotification(String message) {
         Intent intent = new Intent(this, RemoteControlService.class);
         intent.setAction("STOP");
@@ -360,18 +357,6 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         startForeground(6000, mBuilder.build());
     }
 
-    private class ToastRunnable implements Runnable {
-        String mText;
-
-        public ToastRunnable(String text) {
-            mText = text;
-        }
-
-        @Override
-        public void run() {
-            Toast.makeText(getApplicationContext(), mText, Toast.LENGTH_SHORT).show();
-        }
-    }
 
     private class EncoderWorker implements Runnable {
 
