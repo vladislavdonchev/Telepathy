@@ -21,7 +21,7 @@ import net.hardcodes.telepathy.views.FontTextView;
 public class LoginDialog extends BaseDialog implements View.OnClickListener, ConnectionManager.WebSocketConnectionListener, DialogInterface.OnDismissListener {
 
     private View connectionProgress;
-    private View registrationForm;
+    private View loginForm;
 
     private EditText uidInput;
     private EditText passInput;
@@ -31,6 +31,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
     private SharedPreferences prefs;
 
     private RegisterDialog registerDialog;
+    private boolean previousAuthenticationFailed;
 
     public LoginDialog(Context context) {
         super(context);
@@ -41,7 +42,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
         setup("Enter login credentials:", R.layout.view_login, "login", "cancel");
 
         connectionProgress = findViewById(R.id.view_connection_progress);
-        registrationForm = findViewById(R.id.view_login_form);
+        loginForm = findViewById(R.id.view_login_form);
 
         uidInput = (EditText) contentContainer.findViewById(R.id.view_uid_input);
         uidInput.setTypeface(title.getTypeface());
@@ -60,15 +61,15 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
         setOnDismissListener(this);
     }
 
-    @Override
-    public void show() {
+    public void show(boolean previousAuthenticationFailed) {
         super.show();
+        this.previousAuthenticationFailed = previousAuthenticationFailed;
         ConnectionManager.getInstance().acquireConnection(getContext(), this);
-        setAuthenticationFailed(false);
         prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         uidInput.setText(prefs.getString(Constants.PREFERENCE_UID, ""));
         passInput.setText(prefs.getString(Constants.PREFERENCE_PASS, ""));
         passSaveCheckbox.setChecked(prefs.getBoolean(Constants.PREFERENCE_SAVE_PASSWORD, false));
+        findViewById(R.id.view_authentication_error).setVisibility(previousAuthenticationFailed ? View.VISIBLE : View.GONE);
 
         if (ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
             setTitle("User details:");
@@ -77,10 +78,6 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
             setTitle("Enter login credentials:");
             setLeftButtonText("login");
         }
-    }
-
-    public void setAuthenticationFailed(boolean authenticationFailed) {
-        findViewById(R.id.view_authentication_error).setVisibility(authenticationFailed ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -108,6 +105,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
             }
         } else {
             ConnectionManager.getInstance().logout();
+            prefs.edit().putString(Constants.PREFERENCE_PASS, "").commit();
         }
     }
 
@@ -126,22 +124,28 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
 
     @Override
     public void onConnect() {
+        final boolean isConnectedAndAuthenticated = ConnectionManager.getInstance().isConnectedAndAuthenticated();
+
         Telepathy.runOnUIThread(new Runnable() {
             @Override
             public void run() {
                 toggleFrame(true);
                 connectionProgress.setVisibility(View.GONE);
-                registrationForm.setVisibility(View.VISIBLE);
+
+                if (!isConnectedAndAuthenticated) {
+                    loginForm.setVisibility(View.VISIBLE);
+                } else {
+                    loginForm.setVisibility(View.GONE);
+                }
             }
         });
-        if (!ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
+
+        if (!isConnectedAndAuthenticated && !previousAuthenticationFailed) {
             boolean autoLogin = prefs.getBoolean(Constants.PREFERENCE_LOGIN_AUTO, false);
             if (autoLogin && !TextUtils.isEmpty(prefs.getString(Constants.PREFERENCE_PASS, ""))) {
                 ConnectionManager.getInstance().login(getContext());
                 dismiss();
             }
-        } else {
-            //Set logout mode.
         }
     }
 
@@ -151,9 +155,6 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
             case ConnectionManager.WebSocketConnectionListener.ERROR_CODE_SERVER_UNAVAILABLE:
                 Telepathy.showLongToast("The server is not available! Please try again later.");
                 dismiss();
-                break;
-            case TelepathyAPI.ERROR_USER_AUTHENTICATION_FAILED:
-                setAuthenticationFailed(true);
                 break;
         }
     }

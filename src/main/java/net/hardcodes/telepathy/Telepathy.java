@@ -3,6 +3,7 @@ package net.hardcodes.telepathy;
 import android.app.Application;
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.Toast;
 
 import net.hardcodes.telepathy.dialogs.LoginDialog;
@@ -28,18 +29,18 @@ public class Telepathy extends Application {
     }
 
     public static void attemptLogin(final boolean previousAuthenticationFailed) {
-        if (!loginDialog.isShowing()) {
+        if (!loginDialog.isShowing() || previousAuthenticationFailed) {
             runOnUIThread(new Runnable() {
                 @Override
                 public void run() {
-                    loginDialog.show();
-                    loginDialog.setAuthenticationFailed(previousAuthenticationFailed);
+                    loginDialog.show(previousAuthenticationFailed);
                 }
             });
         }
     }
 
     public static void runOnUIThread(Runnable runnable) {
+        Log.d("TPT", "run on UI: " + runnable.toString());
         uiHandler.post(runnable);
     }
 

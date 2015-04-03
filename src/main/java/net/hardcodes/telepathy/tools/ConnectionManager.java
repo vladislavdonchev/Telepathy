@@ -124,6 +124,7 @@ public class ConnectionManager {
                 }
             }
             for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
+                Log.d("WS", "redirectToListener: " + webSocketConnectionListener + " -> " + s);
                 if (isError) {
                     webSocketConnectionListener.onError(errorCode);
                 } else {
