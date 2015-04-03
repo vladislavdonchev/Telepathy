@@ -139,6 +139,7 @@ public class ConnectionManager {
             for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
                 webSocketConnectionListener.onBinaryMessage(bb);
             }
+            bb.recycle();
         }
     };
 

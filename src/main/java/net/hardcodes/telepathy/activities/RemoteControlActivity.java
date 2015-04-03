@@ -235,6 +235,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     protected void onDestroy() {
+        ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_DISBAND);
         ConnectionManager.getInstance().releaseConnection(this);
         if (decoder != null) {
             decoder.stop();
