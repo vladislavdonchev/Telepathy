@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -96,6 +95,7 @@ public class ConnectionManager {
     private WebSocket.StringCallback stringCallback = new WebSocket.StringCallback() {
         @Override
         public void onStringAvailable(String s) {
+            Log.d("WS", "receive -> " + s);
             boolean isError = s.startsWith(TelepathyAPI.MESSAGE_ERROR);
             int errorCode = -1;
             if (isError) {
@@ -103,7 +103,7 @@ public class ConnectionManager {
                 switch (errorCode) {
                     case TelepathyAPI.ERROR_USER_AUTHENTICATION_FAILED:
                         Telepathy.showLongToast("User authentication failed!");
-                        Telepathy.showLoginDialog(true);
+                        Telepathy.attemptLogin(true);
                         setConnectedAndAuthenticated(false);
                         break;
                     case TelepathyAPI.ERROR_USER_ID_TAKEN:
@@ -119,6 +119,9 @@ public class ConnectionManager {
             }
             if (s.startsWith(TelepathyAPI.MESSAGE_LOGIN_SUCCESS)) {
                 setConnectedAndAuthenticated(true);
+                if (!Utils.isServiceRunning(RemoteControlService.class)) {
+                    Utils.startService();
+                }
             }
             for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
                 if (isError) {
@@ -153,6 +156,7 @@ public class ConnectionManager {
     }
 
     private void setConnectedAndAuthenticated(boolean connectedAndAuthenticated) {
+        Log.d("WS", "set caa: " + connectedAndAuthenticated);
         this.connectedAndAuthenticated = connectedAndAuthenticated;
         Intent connectionStateChangeIntent = new Intent(ACTION_CONNECTION_STATE_CHANGE);
         Telepathy.getContext().sendBroadcast(connectionStateChangeIntent);
@@ -174,7 +178,7 @@ public class ConnectionManager {
 
     public void acquireConnection(Context context, WebSocketConnectionListener connectionListener) {
         connectionListeners.put(context, connectionListener);
-        Log.d("LISTENERS", "ADD: " + context + " " + connectionListener);
+        Log.d("WS LISTENERS", "ADD: " + context + " " + connectionListener);
 
         if (webSocket != null && webSocket.isOpen()) {
             connectionListener.onConnect();
@@ -220,32 +224,18 @@ public class ConnectionManager {
         sendTextMessage(TelepathyAPI.MESSAGE_REGISTER + new Gson().toJson(user));
     }
 
-    public void autoLogin(Context context) {
-        if (!connectedAndAuthenticated) {
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-            boolean autoLogin = preferences.getBoolean(Constants.PREFERENCE_LOGIN_AUTO, false);
-            if (autoLogin && !TextUtils.isEmpty(preferences.getString(Constants.PREFERENCE_PASS, ""))) {
-                login(context);
-            } else {
-                Telepathy.showLoginDialog(false);
-            }
-        }
-    }
-
     public void login(Context context) {
-        Log.d("CONN", "connected and authenticated: " + connectedAndAuthenticated);
+        Log.d("CONN", "login caa: " + connectedAndAuthenticated);
         if (!connectedAndAuthenticated) {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
             String uid = preferences.getString(Constants.PREFERENCE_UID, "");
             String pass = preferences.getString(Constants.PREFERENCE_PASS, "");
             sendTextMessage(TelepathyAPI.MESSAGE_LOGIN + uid + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + Utils.sha256(pass));
         }
-        if (!Utils.isServiceRunning(context, RemoteControlService.class)) {
-            Utils.startService(context);
-        }
     }
 
     public void logout() {
+        Log.d("WS", "logout");
         sendTextMessage(TelepathyAPI.MESSAGE_DISBAND);
         // Logout if no other services / activities use the connection.
         sendTextMessage(TelepathyAPI.MESSAGE_LOGOUT);
@@ -254,7 +244,7 @@ public class ConnectionManager {
 
     public void releaseConnection(Context context) {
         if (connectionListeners.containsKey(context)) {
-            Log.d("LISTENERS", "REMOVE: " + context + " " + connectionListeners.get(context));
+            Log.d("WS LISTENERS", "REMOVE: " + context + " " + connectionListeners.get(context));
             connectionListeners.remove(context);
         }
 
@@ -265,6 +255,7 @@ public class ConnectionManager {
     }
 
     public void sendTextMessage(String message) {
+        Log.d("WS", "send text -> " + message);
         if (webSocket != null && webSocket.isOpen()) {
             webSocket.send(message);
         }
@@ -277,6 +268,7 @@ public class ConnectionManager {
     }
 
     private void startPingPong() {
+        Log.d("WS", "start ping");
         if (pingPongTimer != null) {
             stopPingPong();
         }
@@ -287,9 +279,9 @@ public class ConnectionManager {
                 if (webSocket != null) {
                     try {
                         webSocket.ping(TelepathyAPI.MESSAGE_HEARTBEAT);
-                        Log.d("WEBSOCKPING", "ping");
+                        Log.d("WS", "ping");
                     } catch (Exception e) {
-                        Log.d("WEBSOCKPING", e.toString(), e);
+                        Log.d("WS", e.toString(), e);
                     }
                 }
             }
@@ -297,6 +289,7 @@ public class ConnectionManager {
     }
 
     private void stopPingPong() {
+        Log.d("WS", "stop ping");
         pingPongTimer.cancel();
         pingPongTimer.purge();
     }

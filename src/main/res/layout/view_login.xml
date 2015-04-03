@@ -3,99 +3,128 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <net.hardcodes.telepathy.views.FontTextView
-        android:id="@+id/view_uid_label"
-        android:layout_width="64dp"
-        android:layout_height="wrap_content"
-        android:text="User:"
-        android:layout_marginBottom="10dp"
-        android:layout_marginTop="10dp"
-        android:textSize="26sp"
-        android:textColor="#FFFFFF"/>
-
-    <EditText
-        android:id="@+id/view_uid_input"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_toRightOf="@id/view_uid_label"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="8dp"
-        android:background="@drawable/textfield_activated_telepathy"
-        android:gravity="center"
-        android:textColor="@android:color/white"
-        android:textColorHint="@android:color/white"
-        android:textSize="26sp" />
-
-
-    <net.hardcodes.telepathy.views.FontTextView
-        android:id="@+id/view_pass_label"
-        android:layout_width="64dp"
-        android:layout_height="wrap_content"
-        android:text="Pass:"
-        android:textSize="26sp"
-        android:layout_marginTop="10dp"
-        android:layout_below="@id/view_uid_label"
-        android:textColor="#FFFFFF" />
-
-    <EditText
-        android:id="@+id/view_pass_input"
+    <LinearLayout
+        android:id="@+id/view_connection_progress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_toRightOf="@id/view_pass_label"
-        android:layout_below="@id/view_uid_label"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="8dp"
-        android:inputType="textPassword"
-        android:background="@drawable/textfield_activated_telepathy"
         android:gravity="center"
-        android:textColor="@android:color/white"
-        android:textColorHint="@android:color/white"
-        android:textSize="26sp" />
+        android:orientation="vertical"
+        android:padding="10dp">
 
-    <CheckBox
-        android:id="@+id/view_login_save_password"
-        style="@style/checkboxSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="remember password"
-        android:layout_below="@id/view_pass_input"
-        android:layout_alignLeft="@id/view_pass_input"
-        android:textColor="@android:color/white" />
+        <net.hardcodes.telepathy.views.FontTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Contacting server..."
+            android:textColor="#FFFFFF"
+            android:textSize="26sp" />
 
-    <net.hardcodes.telepathy.views.FontTextView
-        android:id="@+id/view_authentication_error"
+        <ProgressBar
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_marginTop="10dp" />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/view_login_form"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/view_login_save_password"
-        android:text="Authentication failed. Please try again."
-        android:gravity="center"
-        android:layout_marginBottom="10dp"
-        android:layout_marginTop="16dp"
-        android:textSize="16sp"
-        android:visibility="gone"
-        android:textColor="#FFFFFF"/>
+        android:visibility="gone">
 
-    <net.hardcodes.telepathy.views.FontTextView
-        android:id="@+id/view_register_account"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/view_authentication_error"
-        android:text="@string/create_account"
-        android:layout_alignParentLeft="true"
-        android:layout_marginTop="20dp"
-        android:textSize="18sp"
-        android:textColor="#FFFFFF"/>
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/view_authentication_error"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:gravity="center"
+            android:text="Authentication failed. Please try again."
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:visibility="gone" />
 
-    <net.hardcodes.telepathy.views.FontTextView
-        android:id="@+id/view_login_options"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/view_authentication_error"
-        android:text="@string/need_help"
-        android:layout_alignParentRight="true"
-        android:layout_marginTop="20dp"
-        android:textSize="18sp"
-        android:textColor="#FFFFFF"/>
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/view_uid_label"
+            android:layout_width="64dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/view_authentication_error"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="10dp"
+            android:text="User:"
+            android:textColor="#FFFFFF"
+            android:textSize="26sp" />
+
+        <EditText
+            android:id="@+id/view_uid_input"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@id/view_authentication_error"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="8dp"
+            android:layout_toRightOf="@id/view_uid_label"
+            android:background="@drawable/textfield_activated_telepathy"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/white"
+            android:textSize="26sp" />
+
+
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/view_pass_label"
+            android:layout_width="64dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/view_uid_label"
+            android:layout_marginTop="10dp"
+            android:text="Pass:"
+            android:textColor="#FFFFFF"
+            android:textSize="26sp" />
+
+        <EditText
+            android:id="@+id/view_pass_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@id/view_uid_label"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="8dp"
+            android:layout_toRightOf="@id/view_pass_label"
+            android:background="@drawable/textfield_activated_telepathy"
+            android:gravity="center"
+            android:inputType="textPassword"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/white"
+            android:textSize="26sp" />
+
+        <CheckBox
+            android:id="@+id/view_login_save_password"
+            style="@style/checkboxSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@id/view_pass_input"
+            android:layout_below="@id/view_pass_input"
+            android:text="remember password"
+            android:textColor="@android:color/white" />
+
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/view_register_account"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@id/view_login_save_password"
+            android:layout_marginTop="20dp"
+            android:text="@string/create_account"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp" />
+
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/view_login_options"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@id/view_login_save_password"
+            android:layout_marginTop="20dp"
+            android:text="@string/need_help"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp" />
+    </RelativeLayout>
 </RelativeLayout>

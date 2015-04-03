@@ -20,6 +20,9 @@ import net.hardcodes.telepathy.views.FontTextView;
 
 public class LoginDialog extends BaseDialog implements View.OnClickListener, ConnectionManager.WebSocketConnectionListener, DialogInterface.OnDismissListener {
 
+    private View connectionProgress;
+    private View registrationForm;
+
     private EditText uidInput;
     private EditText passInput;
     private CheckBox passSaveCheckbox;
@@ -36,6 +39,10 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
 
     private void init(Context context) {
         setup("Enter login credentials:", R.layout.view_login, "login", "cancel");
+
+        connectionProgress = findViewById(R.id.view_connection_progress);
+        registrationForm = findViewById(R.id.view_login_form);
+
         uidInput = (EditText) contentContainer.findViewById(R.id.view_uid_input);
         uidInput.setTypeface(title.getTypeface());
         passInput = (EditText) contentContainer.findViewById(R.id.view_pass_input);
@@ -49,6 +56,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
 
         registerDialog = new RegisterDialog(context);
 
+        toggleFrame(false);
         setOnDismissListener(this);
     }
 
@@ -61,6 +69,14 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
         uidInput.setText(prefs.getString(Constants.PREFERENCE_UID, ""));
         passInput.setText(prefs.getString(Constants.PREFERENCE_PASS, ""));
         passSaveCheckbox.setChecked(prefs.getBoolean(Constants.PREFERENCE_SAVE_PASSWORD, false));
+
+        if (ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
+            setTitle("User details:");
+            setLeftButtonText("logout");
+        } else {
+            setTitle("Enter login credentials:");
+            setLeftButtonText("login");
+        }
     }
 
     public void setAuthenticationFailed(boolean authenticationFailed) {
@@ -69,26 +85,29 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
 
     @Override
     protected void onLeftButtonClick() {
-        String uid = uidInput.getText().toString();
-        String pass = passInput.getText().toString();
+        if (!ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
+            String uid = uidInput.getText().toString();
+            String pass = passInput.getText().toString();
 
-        if (!TextUtils.isEmpty(uid)) {
-            if (!TextUtils.isEmpty(pass)) {
-                prefs.edit().putString(Constants.PREFERENCE_UID, uid).commit();
-                prefs.edit().putString(Constants.PREFERENCE_PASS, pass).commit();
-                ConnectionManager.getInstance().login(getContext());
-                dismiss();
-                if (!passSaveCheckbox.isChecked()) {
+            if (!TextUtils.isEmpty(uid)) {
+                if (!TextUtils.isEmpty(pass)) {
+                    prefs.edit().putString(Constants.PREFERENCE_UID, uid).commit();
+                    prefs.edit().putString(Constants.PREFERENCE_PASS, pass).commit();
+                    ConnectionManager.getInstance().login(getContext());
+                    if (!passSaveCheckbox.isChecked()) {
+                        prefs.edit().putString(Constants.PREFERENCE_PASS, "").commit();
+                    }
+                } else {
                     prefs.edit().putString(Constants.PREFERENCE_PASS, "").commit();
+                    passSaveCheckbox.setChecked(false);
+                    Telepathy.showLongToast("The password field cannot be empty!");
                 }
+                prefs.edit().putBoolean(Constants.PREFERENCE_SAVE_PASSWORD, passSaveCheckbox.isChecked()).commit();
             } else {
-                prefs.edit().putString(Constants.PREFERENCE_PASS, "").commit();
-                passSaveCheckbox.setChecked(false);
-                Telepathy.showLongToast("The password field cannot be empty!");
+                Telepathy.showLongToast("The username field cannot be empty!");
             }
-            prefs.edit().putBoolean(Constants.PREFERENCE_SAVE_PASSWORD, passSaveCheckbox.isChecked()).commit();
         } else {
-            Telepathy.showLongToast("The username field cannot be empty!");
+            ConnectionManager.getInstance().logout();
         }
     }
 
@@ -96,7 +115,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.view_register_account:
-                    registerDialog.show();
+                registerDialog.show();
                 break;
             case R.id.view_login_options:
 
@@ -107,6 +126,23 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
 
     @Override
     public void onConnect() {
+        Telepathy.runOnUIThread(new Runnable() {
+            @Override
+            public void run() {
+                toggleFrame(true);
+                connectionProgress.setVisibility(View.GONE);
+                registrationForm.setVisibility(View.VISIBLE);
+            }
+        });
+        if (!ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
+            boolean autoLogin = prefs.getBoolean(Constants.PREFERENCE_LOGIN_AUTO, false);
+            if (autoLogin && !TextUtils.isEmpty(prefs.getString(Constants.PREFERENCE_PASS, ""))) {
+                ConnectionManager.getInstance().login(getContext());
+                dismiss();
+            }
+        } else {
+            //Set logout mode.
+        }
     }
 
     @Override
@@ -116,11 +152,17 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
                 Telepathy.showLongToast("The server is not available! Please try again later.");
                 dismiss();
                 break;
+            case TelepathyAPI.ERROR_USER_AUTHENTICATION_FAILED:
+                setAuthenticationFailed(true);
+                break;
         }
     }
 
     @Override
     public void onTextMessage(String message) {
+        if (message.startsWith(TelepathyAPI.MESSAGE_LOGIN_SUCCESS) || message.startsWith(TelepathyAPI.MESSAGE_LOGOUT_SUCCESS)) {
+            dismiss();
+        }
     }
 
     @Override
@@ -130,6 +172,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
 
     @Override
     public void onDisconnect() {
+        dismiss();
     }
 
     @Override

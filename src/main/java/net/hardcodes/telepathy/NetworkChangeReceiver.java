@@ -18,18 +18,18 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(final Context context, final Intent intent) {
         int status = NetworkUtil.getConnectivityStatus(context);
-        boolean isServiceRunnning = Utils.isServiceRunning(context, RemoteControlService.class);
+        boolean isServiceRunnning = Utils.isServiceRunning(RemoteControlService.class);
         boolean isServiceAutostartEnabled = PreferenceManager.getDefaultSharedPreferences(context)
                 .getBoolean(Constants.PREFERENCE_AUTOSTART_SERVICE, false);
         Log.d("NETLISTENER", status + "");
         if (isServiceAutostartEnabled) {
             if (status != NetworkUtil.NO_CONNECTIVITY) {
                 if (!isServiceRunnning) {
-                    Utils.startService(context);
+                    Telepathy.attemptLogin(false);
                 }
             } else {
                 if (isServiceRunnning) {
-                    Utils.stopService(context);
+                    Utils.stopService();
                 }
             }
         }

@@ -63,7 +63,9 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     @Override
     public void onConnect() {
-        ConnectionManager.getInstance().autoLogin(this);
+        if (!ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
+            Telepathy.attemptLogin(false);
+        }
     }
 
     @Override
@@ -101,6 +103,9 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             InputEvent inputEventObject = gson.fromJson(messagePayload, InputEvent.class);
             decodeInputEvent(inputEventObject);
 
+        } else if (message.startsWith(TelepathyAPI.MESSAGE_LOGOUT_SUCCESS)) {
+            disconnect();
+            stopSelf();
         }
     }
 

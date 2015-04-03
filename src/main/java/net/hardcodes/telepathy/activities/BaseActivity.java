@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.RemoteControlService;
+import net.hardcodes.telepathy.Telepathy;
 import net.hardcodes.telepathy.dialogs.InstallUninstallDialog;
 import net.hardcodes.telepathy.tools.ConnectionManager;
 import net.hardcodes.telepathy.views.FontButton;
@@ -83,10 +84,10 @@ public class BaseActivity extends Activity {
     }
 
     public void toggleService(View v) {
-        if (Utils.isServiceRunning(this, RemoteControlService.class) && ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
-            Utils.stopService(this);
+        if (Utils.isServiceRunning(RemoteControlService.class) && ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
+            Utils.stopService();
         } else {
-            Utils.startService(this);
+            Telepathy.attemptLogin(false);
         }
     }
 
@@ -105,7 +106,7 @@ public class BaseActivity extends Activity {
     }
 
     protected void checkServiceState() {
-        if (Utils.isServiceRunning(this, RemoteControlService.class)) {
+        if (Utils.isServiceRunning(RemoteControlService.class)) {
             serviceAndConnectionStatus.setText("service is running");
         } else {
             serviceAndConnectionStatus.setText("click to start service");

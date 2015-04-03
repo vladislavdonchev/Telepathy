@@ -27,18 +27,24 @@ public class Telepathy extends Application {
         return context;
     }
 
-    public static void showLoginDialog(final boolean authenticationFailed) {
-        runOnUIThread(new Runnable() {
-            @Override
-            public void run() {
-                loginDialog.show();
-                loginDialog.setAuthenticationFailed(authenticationFailed);
-            }
-        });
+    public static void attemptLogin(final boolean previousAuthenticationFailed) {
+        if (!loginDialog.isShowing()) {
+            runOnUIThread(new Runnable() {
+                @Override
+                public void run() {
+                    loginDialog.show();
+                    loginDialog.setAuthenticationFailed(previousAuthenticationFailed);
+                }
+            });
+        }
     }
 
     public static void runOnUIThread(Runnable runnable) {
         uiHandler.post(runnable);
+    }
+
+    public static void runOnUIThread(Runnable runnable, long delay) {
+        uiHandler.postDelayed(runnable, delay);
     }
 
     public static void showLongToast(String text) {

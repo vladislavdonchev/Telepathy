@@ -123,7 +123,7 @@ public class RegisterDialog extends BaseDialog implements ConnectionManager.WebS
             prefs.edit().putString(Constants.PREFERENCE_UID, uidInput.getText().toString()).commit();
             prefs.edit().putString(Constants.PREFERENCE_PASS, "").commit();
             Telepathy.showLongToast("Account created successfully!");
-            Telepathy.showLoginDialog(false);
+            Telepathy.attemptLogin(false);
             dismiss();
         }
     }

@@ -11,6 +11,7 @@ import android.util.Log;
 
 import com.splunk.mint.Mint;
 
+import net.hardcodes.telepathy.Telepathy;
 import net.hardcodes.telepathy.dialogs.InstallUninstallDialog;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.RemoteControlService;
@@ -107,20 +108,23 @@ public class Utils {
         }
     }
 
-    public static void startService(Context context) {
+    public static void startService() {
+        Context context = Telepathy.getContext();
         Intent serverIntent = new Intent(context, RemoteControlService.class);
         serverIntent.setAction(RemoteControlService.ACTION_START);
         context.startService(serverIntent);
     }
 
-    public static void stopService(Context context) {
+    public static void stopService() {
+        Context context = Telepathy.getContext();
         Intent serverIntent = new Intent(context, RemoteControlService.class);
         serverIntent.setAction(RemoteControlService.ACTION_STOP);
         context.startService(serverIntent);
         context.stopService(serverIntent);
     }
 
-    public static boolean isServiceRunning(Context context, Class<?> serviceClass) {
+    public static boolean isServiceRunning(Class<?> serviceClass) {
+        Context context = Telepathy.getContext();
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if (serviceClass.getName().equals(service.service.getClassName())) {

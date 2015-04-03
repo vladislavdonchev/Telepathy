@@ -24,6 +24,7 @@ public final class TelepathyAPI {
     public static final String MESSAGE_BROADCAST = "broadcast" + MESSAGE_PAYLOAD_DELIMITER;
     public static final String MESSAGE_ERROR = "error" + MESSAGE_PAYLOAD_DELIMITER;
     public static final String MESSAGE_LOGOUT = "releaseConnection" + MESSAGE_UID_DELIMITER;
+    public static final String MESSAGE_LOGOUT_SUCCESS = "releaseConnectionSuccess" + MESSAGE_UID_DELIMITER;
 
     public static final int ERROR_USER_ID_TAKEN = 0x0;
     public static final int ERROR_USER_AUTHENTICATION_FAILED = 0x1;
