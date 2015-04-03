@@ -251,7 +251,9 @@ public class ConnectionManager {
 
         if (connectionListeners.size() == 0) {
             logout();
-            webSocket.close();
+            if (webSocket != null && webSocket.isOpen()) {
+                webSocket.close();
+            }
         }
     }
 
