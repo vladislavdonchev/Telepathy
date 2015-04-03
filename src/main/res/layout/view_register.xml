@@ -64,6 +64,8 @@
             android:layout_toRightOf="@id/view_uid_label"
             android:background="@drawable/textfield_activated_telepathy"
             android:gravity="center"
+            android:inputType="textPersonName"
+            android:maxLength="20"
             android:textColor="@android:color/white"
             android:textColorHint="@android:color/white"
             android:textSize="26sp" />
@@ -91,6 +93,7 @@
             android:background="@drawable/textfield_activated_telepathy"
             android:gravity="center"
             android:inputType="textPassword"
+            android:maxLength="20"
             android:textColor="@android:color/white"
             android:textColorHint="@android:color/white"
             android:textSize="26sp" />
@@ -117,6 +120,7 @@
             android:background="@drawable/textfield_activated_telepathy"
             android:gravity="center"
             android:inputType="textPassword"
+            android:maxLength="20"
             android:textColor="@android:color/white"
             android:textColorHint="@android:color/white"
             android:textSize="26sp" />

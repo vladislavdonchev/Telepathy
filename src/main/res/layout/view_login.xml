@@ -64,6 +64,8 @@
             android:layout_toRightOf="@id/view_uid_label"
             android:background="@drawable/textfield_activated_telepathy"
             android:gravity="center"
+            android:inputType="textPersonName"
+            android:maxLength="20"
             android:textColor="@android:color/white"
             android:textColorHint="@android:color/white"
             android:textSize="26sp" />
@@ -86,6 +88,7 @@
             android:layout_alignParentRight="true"
             android:layout_below="@id/view_uid_label"
             android:layout_marginLeft="16dp"
+            android:maxLength="20"
             android:layout_marginRight="8dp"
             android:layout_toRightOf="@id/view_pass_label"
             android:background="@drawable/textfield_activated_telepathy"
