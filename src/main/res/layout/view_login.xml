@@ -20,7 +20,7 @@
         android:layout_alignParentRight="true"
         android:layout_toRightOf="@id/view_uid_label"
         android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
+        android:layout_marginRight="8dp"
         android:background="@drawable/textfield_activated_telepathy"
         android:gravity="center"
         android:textColor="@android:color/white"
@@ -46,7 +46,7 @@
         android:layout_toRightOf="@id/view_pass_label"
         android:layout_below="@id/view_uid_label"
         android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
+        android:layout_marginRight="8dp"
         android:inputType="textPassword"
         android:background="@drawable/textfield_activated_telepathy"
         android:gravity="center"
@@ -54,11 +54,21 @@
         android:textColorHint="@android:color/white"
         android:textSize="26sp" />
 
+    <CheckBox
+        android:id="@+id/view_login_save_password"
+        style="@style/checkboxSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="remember password"
+        android:layout_below="@id/view_pass_input"
+        android:layout_alignLeft="@id/view_pass_input"
+        android:textColor="@android:color/white" />
+
     <net.hardcodes.telepathy.views.FontTextView
         android:id="@+id/view_authentication_error"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/view_pass_input"
+        android:layout_below="@id/view_login_save_password"
         android:text="Authentication failed. Please try again."
         android:gravity="center"
         android:layout_marginBottom="10dp"

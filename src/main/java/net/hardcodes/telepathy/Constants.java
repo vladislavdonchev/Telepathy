@@ -7,7 +7,8 @@ public class Constants {
     public static String PREFERENCE_BITRATE_WIFI = "pref_bitrate_wifi";
     public static String PREFERENCE_BITRATE_MOBILE = "pref_bitrate_mobile";
     public static String PREFERENCE_LOGIN_AUTO = "pref_login_auto";
-    public static String PREFERENCE_START_SERVER_ON_BOOT = "pref_start_server_on_boot";
+    public static String PREFERENCE_SAVE_PASSWORD = "pref_save_password";
+    public static String PREFERENCE_AUTOSTART_SERVICE = "pref_start_server_on_boot";
     public static String PREFERENCE_CONNECTION_RQ = "pref_connection_request";
     public static String PREFERENCE_REMOTE_CONTROL_RQ = "pref_remote_control_request";
     public static String PREFERENCE_SCREEN_LOCK_UNLOCK = "pref_screen_lock_unlock";

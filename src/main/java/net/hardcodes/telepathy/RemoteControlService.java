@@ -13,7 +13,6 @@ import android.hardware.display.VirtualDisplay;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
-import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
@@ -21,7 +20,6 @@ import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
@@ -65,7 +63,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     @Override
     public void onConnect() {
-        ConnectionManager.getInstance().login();
+        ConnectionManager.getInstance().autoLogin(this);
     }
 
     @Override
@@ -115,7 +113,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         if (running) {
             reconnectAfterError("Disconnected from support server. Attempting to reconnect...");
         } else {
-            ConnectionManager.getInstance().unregisterListener(this);
+            ConnectionManager.getInstance().releaseConnection(this);
             Telepathy.showShortToast("Support service stopped.");
         }
     }

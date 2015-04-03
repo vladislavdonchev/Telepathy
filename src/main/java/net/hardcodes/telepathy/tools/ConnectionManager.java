@@ -3,7 +3,6 @@ package net.hardcodes.telepathy.tools;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -19,8 +18,8 @@ import com.koushikdutta.async.http.WebSocket;
 
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
+import net.hardcodes.telepathy.RemoteControlService;
 import net.hardcodes.telepathy.Telepathy;
-import net.hardcodes.telepathy.dialogs.LoginDialog;
 import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.model.User;
 
@@ -45,7 +44,6 @@ public class ConnectionManager {
     public static final String ACTION_CONNECTION_STATE_CHANGE = "connStateChange";
 
     private static ConnectionManager instance;
-    private SharedPreferences preferences;
 
     private static ConcurrentHashMap<Context, WebSocketConnectionListener> connectionListeners = new ConcurrentHashMap<>();
 
@@ -98,28 +96,33 @@ public class ConnectionManager {
     private WebSocket.StringCallback stringCallback = new WebSocket.StringCallback() {
         @Override
         public void onStringAvailable(String s) {
+            boolean isError = s.startsWith(TelepathyAPI.MESSAGE_ERROR);
+            int errorCode = -1;
+            if (isError) {
+                errorCode = Integer.parseInt(s.substring(s.length() - 1));
+                switch (errorCode) {
+                    case TelepathyAPI.ERROR_USER_AUTHENTICATION_FAILED:
+                        Telepathy.showLongToast("User authentication failed!");
+                        Telepathy.showLoginDialog(true);
+                        setConnectedAndAuthenticated(false);
+                        break;
+                    case TelepathyAPI.ERROR_USER_ID_TAKEN:
+                        Telepathy.showLongToast("Account registration failed!");
+                        break;
+                    case TelepathyAPI.ERROR_SERVER_OVERLOADED:
+                        Telepathy.showLongToast("The server is overloaded. Please try again later.");
+                        break;
+                    case TelepathyAPI.ERROR_OTHER_END_HUNG_UP_UNEXPECTEDLY:
+                        Telepathy.showLongToast("The connection has been interrupted unexpectedly.");
+                        break;
+                }
+            }
+            if (s.startsWith(TelepathyAPI.MESSAGE_LOGIN_SUCCESS)) {
+                setConnectedAndAuthenticated(true);
+            }
             for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
-                if (s.startsWith(TelepathyAPI.MESSAGE_ERROR)) {
-                    int errorCode = Integer.parseInt(s.substring(s.length() - 1));
+                if (isError) {
                     webSocketConnectionListener.onError(errorCode);
-
-                    switch (errorCode) {
-                        case TelepathyAPI.ERROR_USER_AUTHENTICATION_FAILED:
-                            Telepathy.showLongToast("User authentication failed!");
-                            Telepathy.showLoginDialog(true);
-                            break;
-                        case TelepathyAPI.ERROR_USER_ID_TAKEN:
-                            Telepathy.showLongToast("Account registration failed!");
-                            break;
-                        case TelepathyAPI.ERROR_SERVER_OVERLOADED:
-                            Telepathy.showLongToast("The server is overloaded. Please try again later.");
-                            break;
-                        case TelepathyAPI.ERROR_OTHER_END_HUNG_UP_UNEXPECTEDLY:
-                            Telepathy.showLongToast("The connection has been interrupted unexpectedly.");
-                            break;
-                    }
-                } else if (s.startsWith(TelepathyAPI.MESSAGE_LOGIN_SUCCESS)) {
-                    setConnectedAndAuthenticated(true);
                 } else {
                     webSocketConnectionListener.onTextMessage(s);
                 }
@@ -178,14 +181,6 @@ public class ConnectionManager {
             return;
         }
 
-        preferences = PreferenceManager.getDefaultSharedPreferences(context);
-
-        String uid = preferences.getString(Constants.PREFERENCE_UID, "");
-        if (TextUtils.isEmpty(uid)) {
-            new LoginDialog(context).show();
-            return;
-        }
-
         boolean secureConnection = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Constants.PREFERENCE_USE_TLS, false);
         String address = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREFERENCE_SERVER_ADDRESS, "46.238.53.83:8021/tp");
         String protocol = "ws://";
@@ -216,48 +211,56 @@ public class ConnectionManager {
             AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setConnectAllAddresses(true);
         }
 
+        Log.d("WS", "connecting to " + protocol + address);
         AsyncHttpClient.getDefaultInstance().websocket(protocol + address, null, connectCallback);
     }
 
-    public void login() {
-        String uid = preferences.getString(Constants.PREFERENCE_UID, "");
-        String pass = preferences.getString(Constants.PREFERENCE_PASS, "");
-        sendTextMessage(TelepathyAPI.MESSAGE_LOGIN + uid + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + Utils.sha256(pass));
-    }
-
-    public void releaseConnection(Context context) {
-        logout(false);
-        unregisterListener(context);
-    }
 
     public void registerAccount(User user) {
         sendTextMessage(TelepathyAPI.MESSAGE_REGISTER + new Gson().toJson(user));
     }
 
-    public void reconnect(final Context context) {
-        if (webSocket != null && webSocket.isOpen()) {
-            Utils.stopService(context);
-        }
-        new android.os.Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Utils.startService(context);
+    public void autoLogin(Context context) {
+        if (!connectedAndAuthenticated) {
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+            boolean autoLogin = preferences.getBoolean(Constants.PREFERENCE_LOGIN_AUTO, false);
+            if (autoLogin && !TextUtils.isEmpty(preferences.getString(Constants.PREFERENCE_PASS, ""))) {
+                login(context);
+            } else {
+                Telepathy.showLoginDialog(false);
             }
-        }, 1000);
+        }
     }
 
-    private void logout(boolean forceful) {
+    public void login(Context context) {
+        Log.d("CONN", "connected and authenticated: " + connectedAndAuthenticated);
+        if (!connectedAndAuthenticated) {
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+            String uid = preferences.getString(Constants.PREFERENCE_UID, "");
+            String pass = preferences.getString(Constants.PREFERENCE_PASS, "");
+            sendTextMessage(TelepathyAPI.MESSAGE_LOGIN + uid + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + Utils.sha256(pass));
+        }
+        if (!Utils.isServiceRunning(context, RemoteControlService.class)) {
+            Utils.startService(context);
+        }
+    }
+
+    public void logout() {
         sendTextMessage(TelepathyAPI.MESSAGE_DISBAND);
         // Logout if no other services / activities use the connection.
-        if (forceful || connectionListeners.size() == 1) {
-            sendTextMessage(TelepathyAPI.MESSAGE_LOGOUT);
-        }
+        sendTextMessage(TelepathyAPI.MESSAGE_LOGOUT);
+        setConnectedAndAuthenticated(false);
     }
 
-    public void unregisterListener(Context context) {
+    public void releaseConnection(Context context) {
         if (connectionListeners.containsKey(context)) {
             Log.d("LISTENERS", "REMOVE: " + context + " " + connectionListeners.get(context));
             connectionListeners.remove(context);
+        }
+
+        if (connectionListeners.size() == 0) {
+            logout();
+            webSocket.close();
         }
     }
 

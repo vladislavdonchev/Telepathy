@@ -16,8 +16,8 @@ import android.widget.RadioGroup;
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.dialogs.ServerDialog;
-import net.hardcodes.telepathy.views.FontTextView;
 import net.hardcodes.telepathy.tools.Utils;
+import net.hardcodes.telepathy.views.FontTextView;
 
 public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheckedChangeListener {
     private static final String[] bitrateOptions = {"Low (256 Kbps)", "Medium (512 Kbps)", "High (1 Mbps)", "Very High (2 Mbps)"};
@@ -84,6 +84,9 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
 
         checkBoxStartServer.setTypeface(custom_font);
         checkBoxLoginAuto.setTypeface(custom_font);
+
+        checkBoxStartServer.setChecked(prefs.getBoolean(Constants.PREFERENCE_AUTOSTART_SERVICE, false));
+        checkBoxLoginAuto.setChecked(prefs.getBoolean(Constants.PREFERENCE_LOGIN_AUTO, false));
 
         serverConfiguration = (FontTextView) findViewById(R.id.view_server_configuration);
         serverConfiguration.setText(prefs.getString(Constants.PREFERENCE_SERVER_NAME, "EUR-BM0"));
@@ -203,19 +206,11 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
     public void onCheckboxClicked(View v) {
         switch (v.getId()) {
             case R.id.checkbox_start_server_boot:
-                if (checkBoxStartServer.isChecked()) {
-                    Utils.setBooleanPref(SettingsActivity.this, Constants.PREFERENCE_START_SERVER_ON_BOOT, true);
-                } else {
-                    Utils.setBooleanPref(SettingsActivity.this, Constants.PREFERENCE_START_SERVER_ON_BOOT, false);
-                }
+                Utils.setBooleanPref(SettingsActivity.this, Constants.PREFERENCE_AUTOSTART_SERVICE, checkBoxStartServer.isChecked());
                 break;
 
             case R.id.checkbox_login_auto:
-                if (checkBoxLoginAuto.isChecked()) {
-                    Utils.setBooleanPref(SettingsActivity.this, Constants.PREFERENCE_LOGIN_AUTO, true);
-                } else {
-                    Utils.setBooleanPref(SettingsActivity.this, Constants.PREFERENCE_LOGIN_AUTO, false);
-                }
+                Utils.setBooleanPref(SettingsActivity.this, Constants.PREFERENCE_LOGIN_AUTO, checkBoxLoginAuto.isChecked());
                 break;
         }
     }

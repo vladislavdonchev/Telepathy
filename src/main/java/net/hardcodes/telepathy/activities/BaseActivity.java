@@ -83,7 +83,11 @@ public class BaseActivity extends Activity {
     }
 
     public void toggleService(View v) {
-        Utils.toggleService(this);
+        if (Utils.isServiceRunning(this, RemoteControlService.class) && ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
+            Utils.stopService(this);
+        } else {
+            Utils.startService(this);
+        }
     }
 
     private class ServiceStateChangeReceiver extends BroadcastReceiver {

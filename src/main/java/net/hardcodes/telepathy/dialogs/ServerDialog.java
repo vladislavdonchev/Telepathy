@@ -42,7 +42,7 @@ public class ServerDialog extends BaseDialog {
             prefs.edit().putString(Constants.PREFERENCE_SERVER_NAME, serverName).commit();
             prefs.edit().putString(Constants.PREFERENCE_SERVER_ADDRESS, serverAddress).commit();
             prefs.edit().putBoolean(Constants.PREFERENCE_USE_TLS, serverEncryption.isChecked()).commit();
-            ConnectionManager.getInstance().reconnect(getContext());
+
             super.onLeftButtonClick();
         }
     }

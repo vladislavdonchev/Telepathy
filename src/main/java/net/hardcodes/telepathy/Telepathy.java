@@ -31,8 +31,8 @@ public class Telepathy extends Application {
         runOnUIThread(new Runnable() {
             @Override
             public void run() {
-                loginDialog.setAuthenticationFailed(authenticationFailed);
                 loginDialog.show();
+                loginDialog.setAuthenticationFailed(authenticationFailed);
             }
         });
     }
