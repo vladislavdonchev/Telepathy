@@ -14,6 +14,7 @@ import com.koushikdutta.async.callback.CompletedCallback;
 import com.koushikdutta.async.callback.DataCallback;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.WebSocket;
+import com.splunk.mint.Mint;
 
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
@@ -261,13 +262,23 @@ public class ConnectionManager {
     public void sendTextMessage(String message) {
         Log.d("WS", "send text -> " + message);
         if (webSocket != null && webSocket.isOpen()) {
-            webSocket.send(message);
+            try {
+                webSocket.send(message);
+            } catch (Exception e) {
+                Log.d("WSSEND", e.toString(), e);
+                Mint.logException(e);
+            }
         }
     }
 
     public void sendBinaryMessage(byte[] message) {
         if (webSocket != null && webSocket.isOpen()) {
-            webSocket.send(message);
+            try {
+                webSocket.send(message);
+            } catch (Exception e) {
+                Log.d("WSSEND", e.toString(), e);
+                Mint.logException(e);
+            }
         }
     }
 
