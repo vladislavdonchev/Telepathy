@@ -7,13 +7,13 @@
     <ImageView
         android:id="@+id/settings_title"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="76dp"
         android:src="@drawable/src_settings_title_button" />
 
     <ImageView
         android:id="@+id/system_settings_title"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="62dp"
         android:clickable="true"
         android:src="@drawable/bg_system_default" />
 
@@ -86,7 +86,7 @@
     <ImageView
         android:id="@+id/permissions_settings_title"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="62dp"
         android:clickable="true"
         android:src="@drawable/bg_permissions_default" />
 
@@ -238,7 +238,7 @@
     <ImageView
         android:id="@+id/network_settings_title"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="62dp"
         android:clickable="true"
         android:src="@drawable/bg_network_default" />
 
