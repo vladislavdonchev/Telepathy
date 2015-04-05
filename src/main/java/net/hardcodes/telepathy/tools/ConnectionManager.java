@@ -202,8 +202,8 @@ public class ConnectionManager {
                 KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 
                 // TODO Key should not be saved in plain text.
-                ks.load(context.getResources().openRawResource(R.raw.test_512bit_keystore), "BCFFAAB67DF49E37C9E3DAD16A0F1A6F0F2BB93981D88BAC97CD7E293932E043".toCharArray());
-                kmf.init(ks, "BCFFAAB67DF49E37C9E3DAD16A0F1A6F0F2BB93981D88BAC97CD7E293932E043".toCharArray());
+                ks.load(context.getResources().openRawResource(R.raw.hardcodes), "C927F8D7624213BF8128B434DE471F1EA8F0EB7DD4AD82364689E7CFA759422E".toCharArray());
+                kmf.init(ks, "C927F8D7624213BF8128B434DE471F1EA8F0EB7DD4AD82364689E7CFA759422E".toCharArray());
 
                 sslContext = SSLContext.getInstance("TLSv1.2");
                 sslContext.init(kmf.getKeyManagers(), trustEveryone, null);
