@@ -102,19 +102,25 @@ public class ConnectionManager {
             if (isError) {
                 errorCode = Integer.parseInt(s.substring(s.length() - 1));
                 switch (errorCode) {
+                    case TelepathyAPI.ERROR_USER_ID_TAKEN:
+                        Telepathy.showLongToast("Account registration failed!");
+                        break;
                     case TelepathyAPI.ERROR_USER_AUTHENTICATION_FAILED:
                         Telepathy.showLongToast("User authentication failed!");
                         Telepathy.attemptLogin(true);
                         setConnectedAndAuthenticated(false);
                         break;
-                    case TelepathyAPI.ERROR_USER_ID_TAKEN:
-                        Telepathy.showLongToast("Account registration failed!");
+                    case TelepathyAPI.ERROR_OTHER_END_HUNG_UP_UNEXPECTEDLY:
+                        Telepathy.showLongToast("The connection has been interrupted unexpectedly.");
+                        break;
+                    case TelepathyAPI.ERROR_BIND_FAILED:
+                        Telepathy.showLongToast("The user you are trying to reach is not logged in.");
+                        break;
+                    case TelepathyAPI.ERROR_OTHER_USER_BUSY:
+                        Telepathy.showLongToast("The user you are trying to reach is busy.");
                         break;
                     case TelepathyAPI.ERROR_SERVER_OVERLOADED:
                         Telepathy.showLongToast("The server is overloaded. Please try again later.");
-                        break;
-                    case TelepathyAPI.ERROR_OTHER_END_HUNG_UP_UNEXPECTEDLY:
-                        Telepathy.showLongToast("The connection has been interrupted unexpectedly.");
                         break;
                 }
             }
@@ -181,7 +187,7 @@ public class ConnectionManager {
 
     public void acquireConnection(Context context, WebSocketConnectionListener connectionListener) {
         connectionListeners.put(context, connectionListener);
-        Log.d("WS LISTENERS", "ADD: " + context + " " + connectionListener);
+        Log.d("WS LISTENERS", "ADD: " + context + " " + connectionListener + " TOTAL: " + connectionListeners.size());
 
         if (webSocket != null && webSocket.isOpen()) {
             connectionListener.onConnect();
@@ -247,8 +253,8 @@ public class ConnectionManager {
 
     public void releaseConnection(Context context) {
         if (connectionListeners.containsKey(context)) {
-            Log.d("WS LISTENERS", "REMOVE: " + context + " " + connectionListeners.get(context));
             connectionListeners.remove(context);
+            Log.d("WS LISTENERS", "REMOVE: " + context + " " + connectionListeners.get(context) + " TOTAL: " + connectionListeners.size());
         }
 
         if (connectionListeners.size() == 0) {

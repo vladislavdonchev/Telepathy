@@ -81,10 +81,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         if (message.startsWith(TelepathyAPI.MESSAGE_BIND_ACCEPTED)) {
             showToast("Remote controlling user " + remoteUID);
 
-        } else if (message.startsWith(TelepathyAPI.MESSAGE_BIND_FAILED)) {
-            showToast("User " + remoteUID + " not logged in. Please try again later.");
-            finish();
-
         } else if (message.startsWith(TelepathyAPI.MESSAGE_VIDEO_METADATA)) {
             String messagePayload = message.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
             String[] parts = messagePayload.split(",");

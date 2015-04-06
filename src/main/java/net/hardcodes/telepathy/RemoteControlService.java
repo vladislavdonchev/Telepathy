@@ -245,7 +245,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     private void reconnectAfterError(String errorMessage) {
         stopEncodingVirtualDisplay();
         try {
-            Thread.sleep(20000);
+            Thread.sleep(2000);
         } catch (InterruptedException e) {
         }
         if (running) {
@@ -370,7 +370,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             boolean encoderDone = false;
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
             while (!encoderDone) {
-                int encoderStatus;
+                int encoderStatus = MediaCodec.INFO_TRY_AGAIN_LATER;
                 try {
                     encoderStatus = encoder.dequeueOutputBuffer(info, CodecUtils.TIMEOUT_USEC);
                 } catch (IllegalStateException e) {
@@ -390,7 +390,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                     MediaFormat newFormat = encoder.getOutputFormat();
                     Log.d(TAG, "encoder output format changed: " + newFormat);
                 } else if (encoderStatus < 0) {
-                    break;
+                    //break;
                 } else {
                     ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
                     if (encodedData == null) {
