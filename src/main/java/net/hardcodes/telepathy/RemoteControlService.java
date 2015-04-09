@@ -89,10 +89,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             String remoteUID = message.split(TelepathyAPI.MESSAGE_UID_DELIMITER)[1];
             ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_BIND_ACCEPTED + remoteUID);
             Telepathy.showShortToast("User " + remoteUID + " has connected.");
-            //Start rendering display on the surface and set up the encoder.
-            if (encoderThread == null) {
-                startEncodingVirtualDisplay();
-            }
+            startEncodingVirtualDisplay();
 
         } else if (message.startsWith(TelepathyAPI.MESSAGE_DISBAND)) {
             stopEncodingVirtualDisplay();
@@ -116,7 +113,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     @Override
     public void onDisconnect() {
         if (running) {
-            reconnectAfterError("Disconnected from support server. Attempting to reconnect...");
+            reconnectAfterError("Disconnected from server. Attempting to reconnect...");
         } else {
             ConnectionManager.getInstance().releaseConnection(this);
             Telepathy.showShortToast("Support service stopped.");
@@ -224,9 +221,6 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             if (encoder != null) {
                 encoder.signalEndOfInputStream();
             }
-            if (encoderThread != null) {
-                encoderThread = null;
-            }
 
             if (virtualDisplay != null) {
                 virtualDisplay.release();
@@ -245,7 +239,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     private void reconnectAfterError(String errorMessage) {
         stopEncodingVirtualDisplay();
         try {
-            Thread.sleep(2000);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
         }
         if (running) {
@@ -369,7 +363,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
             boolean encoderDone = false;
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-            while (!encoderDone) {
+            while (!encoderDone && encoder != null) {
                 int encoderStatus = MediaCodec.INFO_TRY_AGAIN_LATER;
                 try {
                     encoderStatus = encoder.dequeueOutputBuffer(info, CodecUtils.TIMEOUT_USEC);
@@ -415,20 +409,22 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                     } catch (BufferUnderflowException e) {
                         Log.d("ENCODER", e.toString(), e);
                     }
+                }
 
-                    encoderDone = (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
+                encoderDone = (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
 
-                    try {
+                try {
+                    if (encoderDone) {
+                        encoder.stop();
+                        encoder.release();
+                        encoder = null;
+                        break;
+                    } else {
                         encoder.releaseOutputBuffer(encoderStatus, false);
-                        if (encoderDone) {
-                            encoder.stop();
-                            encoder.release();
-                            encoder = null;
-                        }
-                    } catch (IllegalStateException e) {
-                        Log.d("ENCODER", e.toString(), e);
-                        continue;
                     }
+                } catch (IllegalStateException e) {
+                    Log.d("ENCODER", e.toString(), e);
+                    continue;
                 }
             }
         }

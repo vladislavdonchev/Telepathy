@@ -85,6 +85,7 @@ public class ConnectionManager {
             if (ex != null) {
                 Log.d("WSCLOSE", ex.toString(), ex);
             }
+            Log.d("WSCLOSE", "Socket closed.");
 
             for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
                 webSocketConnectionListener.onDisconnect();

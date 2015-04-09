@@ -6,11 +6,7 @@ import android.media.MediaCodecList;
 import java.nio.ByteBuffer;
 
 public class CodecUtils {
-
-    public static final int WIDTH = 1080 / 4;
-    public static final int HEIGHT = 1920 / 4;
-
-    public static final int TIMEOUT_USEC = 100000;
+    public static final int TIMEOUT_USEC = 1000000;
 
     //    public static final String MIME_TYPE = "video/x-vnd.on2.vp8";
     public static final String MIME_TYPE = "video/avc";
