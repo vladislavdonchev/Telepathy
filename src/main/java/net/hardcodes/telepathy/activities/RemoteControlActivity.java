@@ -9,7 +9,7 @@ import android.media.MediaFormat;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.preference.PreferenceManager;
-import android.support.v4.view.GestureDetectorCompat;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -31,6 +31,8 @@ import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.tools.CodecUtils;
 import net.hardcodes.telepathy.tools.ConnectionManager;
+
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.nio.BufferOverflowException;
@@ -61,7 +63,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     private ImageButton buttonBack;
     private ImageButton buttonLockUnlock;
     private ImageButton buttonRecentApps;
-    private GestureDetectorCompat mDetector;
+    private GestureDetector mDetector;
     private CountDownTimer hideControlsTimer;
 
     @Override
@@ -82,34 +84,42 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
             showToast("Remote controlling user " + remoteUID);
 
         } else if (message.startsWith(TelepathyAPI.MESSAGE_VIDEO_METADATA)) {
-            String messagePayload = message.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
-            String[] parts = messagePayload.split(",");
+            handleVideoMetadata(message);
+        }
+    }
 
-            try {
-                info.set(Integer.parseInt(parts[0]),
-                        Integer.parseInt(parts[1]),
-                        Long.parseLong(parts[2]),
-                        Integer.parseInt(parts[3]));
-                if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-                    videoResolution.x = Integer.parseInt(parts[4]);
-                    videoResolution.y = Integer.parseInt(parts[5]);
-                }
-            } catch (NumberFormatException e) {
-                Log.d(TAG, e.toString(), e);
-                //TODO: Need to stop the decoder or to skip the current decoder loop
-                showToast(e.getMessage());
+    private void handleVideoMetadata(String metadata) {
+        Log.d("VIDMETA", metadata);
+        String messagePayload = metadata.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
+        String[] parts = messagePayload.split(",");
+
+        try {
+            info.set(Integer.parseInt(parts[0]),
+                    Integer.parseInt(parts[1]),
+                    Long.parseLong(parts[2]),
+                    Integer.parseInt(parts[3]));
+            if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                videoResolution.x = Integer.parseInt(parts[4]);
+                videoResolution.y = Integer.parseInt(parts[5]);
             }
-
+        } catch (NumberFormatException e) {
+            Log.d(TAG, e.toString(), e);
+            //TODO: Need to stop the decoder or to skip the current decoder loop
+            showToast(e.getMessage());
         }
     }
 
     @Override
-    public void onBinaryMessage(ByteBufferList byteBufferList) {
-        ByteBuffer b = byteBufferList.getAll();
-        //b.position(info.offset);
-        b.position(0);
-        //b.limit(info.offset + info.size);
-        b.limit(info.size);
+    public void onBinaryMessage(ByteBufferList byteArray) {
+        ByteBuffer b = byteArray.getAll();
+
+        byte[] metadataBytes = new byte[CodecUtils.VIDEO_META_MAX_LEN];
+        b.get(metadataBytes);
+        String metadata = new String(metadataBytes).replace(";", "");
+        if (!TextUtils.isEmpty(metadata)) {
+            handleVideoMetadata(metadata);
+        }
+
         if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
             MediaFormat format =
                     MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
@@ -117,7 +127,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
             format.setByteBuffer("csd-0", b);
             decoder.configure(format, surfaceView.getHolder().getSurface(), null, 0);
             decoder.start();
-            byteBufferList.recycle();
             decoderInputBuffers = decoder.getInputBuffers();
             decoderConfigured = true;
             return;
@@ -134,7 +143,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
             } catch (BufferOverflowException e) {
                 showToast("Buffer Overflow = " + e.getMessage());
                 Log.d(TAG, "Input buff capacity = " + inputBuf.capacity() + " limit = " + inputBuf.limit() + " byte size = " + buff.length);
-                byteBufferList.recycle();
                 return;
             }
 
@@ -168,7 +176,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
             boolean doRender = (info.size != 0);
             decoder.releaseOutputBuffer(decoderStatus, doRender /*render*/);
         }
-        byteBufferList.recycle();
     }
 
     @Override
@@ -204,7 +211,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         buttonRecentApps = (ImageButton) findViewById(R.id.recent_apps_button);
         buttonRecentApps.setOnClickListener(this);
 
-        mDetector = new GestureDetectorCompat(this, this);
+        mDetector = new GestureDetector(this, this);
 
         hideControlsTimer = new CountDownTimer(3000, 100) {
             public void onFinish() {

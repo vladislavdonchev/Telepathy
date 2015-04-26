@@ -5,8 +5,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.Toast;
 
+import com.google.android.gms.security.ProviderInstaller;
 import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
 import com.koushikdutta.async.DataEmitter;
@@ -33,7 +33,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 /**
@@ -195,6 +195,14 @@ public class ConnectionManager {
             return;
         }
 
+        try {
+            ProviderInstaller.installIfNeeded(context.getApplicationContext());
+        } catch (Exception e) {
+            Telepathy.showLongToast(e.getMessage());
+            connectionListener.onDisconnect();
+            return;
+        }
+
         boolean secureConnection = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Constants.PREFERENCE_USE_TLS, false);
         String address = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREFERENCE_SERVER_ADDRESS, "46.238.53.83:8021/tp");
         String protocol = "ws://";
@@ -202,27 +210,32 @@ public class ConnectionManager {
         if (secureConnection) {
             protocol = "wss://";
             SSLContext sslContext = null;
-            TrustManager[] trustEveryone = new TrustManager[]{new DodgyTrustManager()};
+            TrustManagerFactory tmf = null;
 
             try {
+                tmf = TrustManagerFactory.getInstance("X509");
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance("X509");
                 KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-
                 // TODO Key should not be saved in plain text.
                 ks.load(context.getResources().openRawResource(R.raw.hardcodes), "C927F8D7624213BF8128B434DE471F1EA8F0EB7DD4AD82364689E7CFA759422E".toCharArray());
                 kmf.init(ks, "C927F8D7624213BF8128B434DE471F1EA8F0EB7DD4AD82364689E7CFA759422E".toCharArray());
+                tmf.init(ks);
 
                 sslContext = SSLContext.getInstance("TLSv1.2");
-                sslContext.init(kmf.getKeyManagers(), trustEveryone, null);
+                sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+                sslContext.getDefaultSSLParameters().setProtocols(new String[]{"TLSv1.2"});
+                sslContext.createSSLEngine().setEnabledProtocols(new String[]{"TLSv1.2"});
             } catch (Exception e) {
                 Log.d("SSLCONFIG", e.toString(), e);
+                Telepathy.showLongToast(e.getMessage());
+                connectionListener.onDisconnect();
+                return;
             }
 
             AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setSSLContext(sslContext);
-            AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setTrustManagers(trustEveryone);
+            AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setTrustManagers(tmf.getTrustManagers());
             // TODO Hostname validation should not be disabled!
             AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setHostnameVerifier(new DodgyHostnameVerifier());
-            AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setConnectAllAddresses(true);
         }
 
         Log.d("WS", "connecting to " + protocol + address);
@@ -316,34 +329,9 @@ public class ConnectionManager {
         pingPongTimer.purge();
     }
 
-    private class DodgyTrustManager implements X509TrustManager {
-        public void checkClientTrusted(X509Certificate[] chain, String authType) {
-        }
-
-        public void checkServerTrusted(X509Certificate[] chain, String authType) {
-        }
-
-        public X509Certificate[] getAcceptedIssuers() {
-            return new X509Certificate[]{};
-        }
-    }
-
     private class DodgyHostnameVerifier implements HostnameVerifier {
         public boolean verify(String hostname, SSLSession session) {
             return true;
-        }
-    }
-
-    private class ToastRunnable implements Runnable {
-        String mText;
-
-        public ToastRunnable(String text) {
-            mText = text;
-        }
-
-        @Override
-        public void run() {
-            Toast.makeText(Telepathy.getContext(), mText, Toast.LENGTH_SHORT).show();
         }
     }
 }

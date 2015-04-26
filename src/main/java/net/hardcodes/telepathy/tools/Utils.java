@@ -153,4 +153,13 @@ public class Utils {
             Mint.initAndStartSession(context, "48f4134d");
         }
     }
+
+    public static byte[] mergeByteArrays(byte[] a, byte[] b) {
+        int aLen = a.length;
+        int bLen = b.length;
+        byte[] c= new byte[aLen+bLen];
+        System.arraycopy(a, 0, c, 0, aLen);
+        System.arraycopy(b, 0, c, aLen, bLen);
+        return c;
+    }
 }
