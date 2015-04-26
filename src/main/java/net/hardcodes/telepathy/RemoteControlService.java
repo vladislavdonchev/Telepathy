@@ -174,7 +174,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
         if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_2G)) {
             bitrateRatio = 0.03125f;
-            Telepathy.showLongToast("2G connection detected - reducing support video stream quality.");
+            Telepathy.showLongToast("2G connection detected - reducing video stream quality.");
         } else if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_3G)) {
             bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_MOBILE, ".5"));
         } else {

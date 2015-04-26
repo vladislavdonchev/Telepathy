@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">Telepathy</string>
-    <string name="app_version">v0.1.8.1</string>
+    <string name="app_version">v0.1.8.2</string>
     <string name="action_settings">Settings</string>
     <string name="action_deployment">Application Deployment</string>
     <string name="title_activity_client">Remote Control Client</string>
