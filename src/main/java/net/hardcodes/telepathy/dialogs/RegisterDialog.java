@@ -9,8 +9,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.koushikdutta.async.ByteBufferList;
-
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.Telepathy;
@@ -129,7 +127,7 @@ public class RegisterDialog extends BaseDialog implements ConnectionManager.WebS
     }
 
     @Override
-    public void onBinaryMessage(ByteBufferList byteBufferList) {
+    public void onBinaryMessage(byte[] byteArray) {
 
     }
 

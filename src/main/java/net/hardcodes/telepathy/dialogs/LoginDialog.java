@@ -9,8 +9,6 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
-import com.koushikdutta.async.ByteBufferList;
-
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.Telepathy;
@@ -167,7 +165,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
     }
 
     @Override
-    public void onBinaryMessage(ByteBufferList byteBufferList) {
+    public void onBinaryMessage(byte[] byteArray) {
 
     }
 

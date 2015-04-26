@@ -22,7 +22,6 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 import com.google.gson.Gson;
-import com.koushikdutta.async.ByteBufferList;
 
 import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.model.TelepathyAPI;
@@ -107,7 +106,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     }
 
     @Override
-    public void onBinaryMessage(ByteBufferList byteBufferList) {
+    public void onBinaryMessage(byte[] byteArray) {
     }
 
     @Override
@@ -391,21 +390,30 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                         Log.d(TAG, "NULL... Breaking!");
                         return;
                     }
-
+                    String metadata = "";
                     if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
                         ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_VIDEO_METADATA + info.offset + "," + info.size + "," +
                                 info.presentationTimeUs + "," + info.flags + "," +
                                 resolution.x + "," + resolution.y);
                     } else {
-                        ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_VIDEO_METADATA + info.offset + "," + info.size + "," +
-                                info.presentationTimeUs + "," + info.flags);
+                        metadata = TelepathyAPI.MESSAGE_VIDEO_METADATA + info.offset + "," + info.size + "," +
+                                info.presentationTimeUs + "," + info.flags;
                     }
 
-                    byte[] b = new byte[info.size];
+                    byte[] meta = new byte[CodecUtils.VIDEO_META_MAX_LEN];
+                    for (int i = 0; i < meta.length; i++) {
+                        try {
+                            meta[i] = metadata.getBytes()[i];
+                        } catch (ArrayIndexOutOfBoundsException e) {
+                            meta[i] = ';';
+                        }
+                    }
+
+                    byte[] video = new byte[info.size];
                     try {
                         encodedData.position(info.offset);
-                        encodedData.get(b, info.offset, info.offset + info.size);
-                        ConnectionManager.getInstance().sendBinaryMessage(b);
+                        encodedData.get(video, info.offset, info.offset + info.size);
+                        ConnectionManager.getInstance().sendBinaryMessage(Utils.mergeByteArrays(meta, video));
                     } catch (BufferUnderflowException e) {
                         Log.d("ENCODER", e.toString(), e);
                     }
