@@ -8,7 +8,7 @@ import android.telephony.TelephonyManager;
 import net.hardcodes.telepathy.Constants;
 
 /**
- * Created by MnQko on 14.2.2015 г..
+ * Created by vladislav.donchev on 14.2.2015 г..
  */
 public class NetworkUtil {
 

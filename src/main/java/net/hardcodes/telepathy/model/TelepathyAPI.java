@@ -1,7 +1,7 @@
 package net.hardcodes.telepathy.model;
 
 /**
- * Created by MnQko on 25.1.2015 г..
+ * Created by vladislav.donchev on 25.1.2015 г..
  */
 public final class TelepathyAPI {
 

@@ -11,27 +11,21 @@ import net.hardcodes.telepathy.tools.NetworkUtil;
 import net.hardcodes.telepathy.tools.Utils;
 
 /**
- * Created by MnQko on 14.2.2015 г..
+ * Created by vladislav.donchev on 14.2.2015 г..
  */
 public class NetworkChangeReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(final Context context, final Intent intent) {
         int status = NetworkUtil.getConnectivityStatus(context);
-        boolean isServiceRunnning = Utils.isServiceRunning(RemoteControlService.class);
+        Log.d("NETLISTENER", status + "");
+
         boolean isServiceAutostartEnabled = PreferenceManager.getDefaultSharedPreferences(context)
                 .getBoolean(Constants.PREFERENCE_AUTOSTART_SERVICE, false);
-        Log.d("NETLISTENER", status + "");
-        if (isServiceAutostartEnabled) {
-            if (status != NetworkUtil.NO_CONNECTIVITY) {
-                if (!isServiceRunnning) {
-                    Telepathy.attemptLogin(false);
-                }
-            } else {
-                if (isServiceRunnning) {
-                    Utils.stopService();
-                }
-            }
+        boolean isConnectedAndAuthenticated = ConnectionManager.getInstance().isConnectedAndAuthenticated();
+
+        if (status != NetworkUtil.NO_CONNECTIVITY && isServiceAutostartEnabled && !isConnectedAndAuthenticated) {
+            Telepathy.attemptLogin(false);
         }
     }
 }

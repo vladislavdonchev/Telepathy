@@ -41,7 +41,7 @@ import java.nio.ByteBuffer;
 
 public class RemoteControlActivity extends Activity implements ConnectionManager.WebSocketConnectionListener, SurfaceHolder.Callback, GestureDetector.OnGestureListener, View.OnClickListener {
 
-    private static final String TAG = "RemoteControlActivity";
+    private static final String TAG = "DECODER";
 
     private SurfaceView surfaceView;
 
@@ -55,7 +55,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     private int deviceWidth;
     private int deviceHeight;
     private Point videoResolution = new Point();
-    private SharedPreferences preferences;
 
     private ImageButton buttonShowHideButtons;
     private LinearLayout buttonsContainer;
@@ -66,6 +65,8 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     private GestureDetector mDetector;
     private CountDownTimer hideControlsTimer;
 
+    private boolean bound = false;
+
     @Override
     public void onConnect() {
         ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_BIND + remoteUID);
@@ -73,6 +74,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public void onError(int errorCode) {
+        bound = false;
         finish();
     }
 
@@ -81,10 +83,8 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         Log.d("API", message);
 
         if (message.startsWith(TelepathyAPI.MESSAGE_BIND_ACCEPTED)) {
+            bound = true;
             showToast("Remote controlling user " + remoteUID);
-
-        } else if (message.startsWith(TelepathyAPI.MESSAGE_VIDEO_METADATA)) {
-            handleVideoMetadata(message);
         }
     }
 
@@ -115,66 +115,75 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
         byte[] metadataBytes = new byte[CodecUtils.VIDEO_META_MAX_LEN];
         b.get(metadataBytes);
-        String metadata = new String(metadataBytes).replace(";", "");
+        String metadataHolder = new String(metadataBytes);
+        String metadata = metadataHolder.substring(0, metadataHolder.indexOf(";"));
         if (!TextUtils.isEmpty(metadata)) {
             handleVideoMetadata(metadata);
         }
 
+        if (!b.hasRemaining()) {
+            return;
+        }
+
         if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-            MediaFormat format =
-                    MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
+            MediaFormat format = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
                             videoResolution.x, videoResolution.y);
             format.setByteBuffer("csd-0", b);
-            decoder.configure(format, surfaceView.getHolder().getSurface(), null, 0);
+            decoder.configure(format, surfaceView.getHolder().getSurface(), null, info.flags);
             decoder.start();
             decoderInputBuffers = decoder.getInputBuffers();
             decoderConfigured = true;
             return;
         }
-        int inputBufIndex = decoder.dequeueInputBuffer(CodecUtils.TIMEOUT_USEC);
-        if (inputBufIndex >= 0) {
-            ByteBuffer inputBuf = decoderInputBuffers[inputBufIndex];
-            inputBuf.clear();
-            inputBuf.limit(info.offset + info.size);
-            byte[] buff = new byte[info.size];
-            b.get(buff, 0, info.size);
-            try {
-                inputBuf.put(buff);
-            } catch (BufferOverflowException e) {
-                showToast("Buffer Overflow = " + e.getMessage());
-                Log.d(TAG, "Input buff capacity = " + inputBuf.capacity() + " limit = " + inputBuf.limit() + " byte size = " + buff.length);
-                return;
-            }
 
-            inputBuf.rewind();
-            decoder.queueInputBuffer(inputBufIndex, 0, info.size,
-                    info.presentationTimeUs, 0 /*flags*/);
-        }
-        int decoderStatus = decoder.dequeueOutputBuffer(info, CodecUtils.TIMEOUT_USEC);
-        if (decoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
-            // no output available yet
-            Log.d(TAG, "no output from decoder available");
-        } else if (decoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
-            // The storage associated with the direct ByteBuffer may already be unmapped,
-            // so attempting to access data through the old output buffer array could
-            // lead to a native crash.
-            Log.d(TAG, "decoder output buffers changed");
-        } else if (decoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-            // this happens before the first frame is returned
-            MediaFormat decoderOutputFormat = decoder.getOutputFormat();
-            Log.d(TAG, "decoder output format changed: " + decoderOutputFormat);
-        } else if (decoderStatus < 0) {
-            //TODO: fail
-            showToast("Decoder error.");
-        } else {
-            if (info.size == 0) {
-                Log.d(TAG, "got empty frame");
+        try {
+            int inputBufIndex = decoder.dequeueInputBuffer(CodecUtils.TIMEOUT_USEC);
+            if (inputBufIndex >= 0) {
+                ByteBuffer inputBuf = decoderInputBuffers[inputBufIndex];
+                inputBuf.clear();
+                inputBuf.limit(info.offset + info.size);
+                byte[] buff = new byte[info.size];
+                b.get(buff, 0, info.size);
+                try {
+                    inputBuf.put(buff);
+                } catch (BufferOverflowException e) {
+                    showToast("Buffer Overflow = " + e.getMessage());
+                    Log.d(TAG, "Input buff capacity = " + inputBuf.capacity() + " limit = " + inputBuf.limit() + " byte size = " + buff.length);
+                    return;
+                }
+
+                inputBuf.rewind();
+                decoder.queueInputBuffer(inputBufIndex, 0, info.size,
+                        info.presentationTimeUs, 0 /*flags*/);
             }
-            if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                Log.d(TAG, "output EOS");
+            int decoderStatus = decoder.dequeueOutputBuffer(info, CodecUtils.TIMEOUT_USEC);
+            if (decoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                // no output available yet
+                Log.d(TAG, "no output from decoder available");
+            } else if (decoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+                // The storage associated with the direct ByteBuffer may already be unmapped,
+                // so attempting to access data through the old output buffer array could
+                // lead to a native crash.
+                Log.d(TAG, "decoder output buffers changed");
+            } else if (decoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                // this happens before the first frame is returned
+                MediaFormat decoderOutputFormat = decoder.getOutputFormat();
+                Log.d(TAG, "decoder output format changed: " + decoderOutputFormat);
+            } else if (decoderStatus < 0) {
+                //TODO: fail
+                showToast("Decoder error.");
+            } else {
+                if (info.size == 0) {
+                    Log.d(TAG, "got empty frame");
+                }
+                if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                    Log.d(TAG, "output EOS");
+                }
+                boolean doRender = (info.size != 0);
+                decoder.releaseOutputBuffer(decoderStatus, doRender /*render*/);
             }
-            boolean doRender = (info.size != 0);
-            decoder.releaseOutputBuffer(decoderStatus, doRender /*render*/);
+        } catch (Exception e) {
+            Log.d(TAG, e.toString(), e);
         }
     }
 
@@ -192,7 +201,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
         initDisplayMetrics();
 
-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
         remoteUID = getIntent().getStringExtra(ConnectDialog.KEY_UID_EXTRA);
 
         surfaceView = (SurfaceView) findViewById(R.id.main_surface_view);
@@ -238,7 +246,9 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     protected void onDestroy() {
-        ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_DISBAND);
+        if (bound) {
+            ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_DISBAND);
+        }
         ConnectionManager.getInstance().releaseConnection(this);
         if (decoder != null) {
             decoder.stop();

@@ -50,7 +50,7 @@ public class Utils {
     public static void writeInstallationDetailsToFile(Context context) {
         OutputStreamWriter outputStreamWriter = null;
         try {
-            outputStreamWriter = new OutputStreamWriter(new FileOutputStream (new File(Environment.getExternalStorageDirectory(), InstallUninstallDialog.CONFIGURATION_FILE)));
+            outputStreamWriter = new OutputStreamWriter(new FileOutputStream(new File(Environment.getExternalStorageDirectory(), InstallUninstallDialog.CONFIGURATION_FILE)));
             outputStreamWriter.write(context.getString(R.string.app_version));
             outputStreamWriter.close();
         } catch (IOException e) {
@@ -157,7 +157,7 @@ public class Utils {
     public static byte[] mergeByteArrays(byte[] a, byte[] b) {
         int aLen = a.length;
         int bLen = b.length;
-        byte[] c= new byte[aLen+bLen];
+        byte[] c = new byte[aLen + bLen];
         System.arraycopy(a, 0, c, 0, aLen);
         System.arraycopy(b, 0, c, aLen, bLen);
         return c;

@@ -37,7 +37,7 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 /**
- * Created by MnQko on 1.2.2015 г..
+ * Created by vladislav.donchev on 1.2.2015 г..
  */
 public class ConnectionManager {
 
@@ -49,23 +49,16 @@ public class ConnectionManager {
 
     public WebSocket webSocket;
     private Timer pingPongTimer;
+    private String serverAddress;
 
+    private boolean userLogin = false;
+    private boolean connectionDrop = false;
     private boolean connectedAndAuthenticated = false;
 
     private AsyncHttpClient.WebSocketConnectCallback connectCallback = new AsyncHttpClient.WebSocketConnectCallback() {
         @Override
         public void onCompleted(Exception ex, WebSocket webSocket) {
-            if (ex != null) {
-                Log.d("WSFAIL", ex.toString() + ": " + ex.getCause(), ex);
-            }
-
-            if (webSocket == null) {
-                for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
-                    webSocketConnectionListener.onError(WebSocketConnectionListener.ERROR_CODE_SERVER_UNAVAILABLE);
-                    setConnectedAndAuthenticated(false);
-                }
-                Log.d("WSFAIL", "Socket NULL.");
-            } else {
+            if (webSocket != null) {
                 webSocket.setClosedCallback(closeCallback);
                 webSocket.setStringCallback(stringCallback);
                 webSocket.setDataCallback(dataCallback);
@@ -73,9 +66,28 @@ public class ConnectionManager {
 
                 startPingPong();
 
-                for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
-                    webSocketConnectionListener.onConnect();
+                if (connectionDrop) {
+                    connectionDrop = false;
+                    login(Telepathy.getContext());
+                } else {
+                    for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
+                        webSocketConnectionListener.onConnect();
+                    }
                 }
+            }
+
+            if (ex != null || webSocket == null) {
+                for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
+                    webSocketConnectionListener.onError(WebSocketConnectionListener.ERROR_CODE_SERVER_UNAVAILABLE);
+                    setConnectedAndAuthenticated(false);
+                }
+
+                try {
+                    Log.d("WSFAIL", ex.toString() + ": " + ex.getCause(), ex);
+                    return;
+                } catch (Exception e) {
+                }
+                Log.d("WSFAIL", "Socket NULL.");
             }
         }
     };
@@ -87,9 +99,15 @@ public class ConnectionManager {
             }
             Log.d("WSCLOSE", "Socket closed.");
 
-            for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
-                webSocketConnectionListener.onDisconnect();
+            if (NetworkUtil.getConnectivityStatus(Telepathy.getContext()) == NetworkUtil.NO_CONNECTIVITY) {
+                for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
+                    webSocketConnectionListener.onDisconnect();
+                }
+            } else if (userLogin) {
+                connectionDrop = true;
+                connect();
             }
+
             stopPingPong();
             setConnectedAndAuthenticated(false);
         }
@@ -130,7 +148,16 @@ public class ConnectionManager {
                 if (!Utils.isServiceRunning(RemoteControlService.class)) {
                     Utils.startService();
                 }
+            } else if (s.startsWith(TelepathyAPI.MESSAGE_LOGOUT_SUCCESS)) {
+                setConnectedAndAuthenticated(false);
+                if (Utils.isServiceRunning(RemoteControlService.class)) {
+                    Utils.stopService();
+                }
+                if (webSocket != null && webSocket.isOpen()) {
+                    webSocket.close();
+                }
             }
+
             for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
                 Log.d("WS", "redirectToListener: " + webSocketConnectionListener + " -> " + s);
                 if (isError) {
@@ -204,7 +231,7 @@ public class ConnectionManager {
         }
 
         boolean secureConnection = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Constants.PREFERENCE_USE_TLS, false);
-        String address = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREFERENCE_SERVER_ADDRESS, "46.238.53.83:8021/tp");
+        String address = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREFERENCE_SERVER_ADDRESS, "54.68.141.75:8021/tp");
         String protocol = "ws://";
 
         if (secureConnection) {
@@ -238,17 +265,22 @@ public class ConnectionManager {
             AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setHostnameVerifier(new DodgyHostnameVerifier());
         }
 
-        Log.d("WS", "connecting to " + protocol + address);
-        AsyncHttpClient.getDefaultInstance().websocket(protocol + address, null, connectCallback);
+        serverAddress = protocol + address;
+        connect();
     }
 
+    private void connect() {
+        Log.d("WS", "connecting to " + serverAddress);
+        AsyncHttpClient.getDefaultInstance().websocket(serverAddress, null, connectCallback);
+    }
 
     public void registerAccount(User user) {
         sendTextMessage(TelepathyAPI.MESSAGE_REGISTER + new Gson().toJson(user));
     }
 
     public void login(Context context) {
-        Log.d("CONN", "login caa: " + connectedAndAuthenticated);
+        Log.d("CONN", "login CAA: " + connectedAndAuthenticated + " UL: " + userLogin);
+        userLogin = true;
         if (!connectedAndAuthenticated) {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
             String uid = preferences.getString(Constants.PREFERENCE_UID, "");
@@ -259,10 +291,8 @@ public class ConnectionManager {
 
     public void logout() {
         Log.d("WS", "logout");
-        sendTextMessage(TelepathyAPI.MESSAGE_DISBAND);
-        // Logout if no other services / activities use the connection.
+        userLogin = false;
         sendTextMessage(TelepathyAPI.MESSAGE_LOGOUT);
-        setConnectedAndAuthenticated(false);
     }
 
     public void releaseConnection(Context context) {
@@ -273,9 +303,6 @@ public class ConnectionManager {
 
         if (connectionListeners.size() == 0) {
             logout();
-            if (webSocket != null && webSocket.isOpen()) {
-                webSocket.close();
-            }
         }
     }
 

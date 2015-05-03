@@ -10,7 +10,7 @@ import net.hardcodes.telepathy.tools.ShellCommandExecutor;
 import net.hardcodes.telepathy.tools.Utils;
 
 /**
- * Created by MnQko on 4.2.2015 г..
+ * Created by vladislav.donchev on 4.2.2015 г..
  */
 public class InstallUninstallDialog extends AlertDialog implements DialogInterface.OnClickListener {
 
