@@ -244,7 +244,8 @@ public class ConnectionManager {
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance("X509");
                 KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
                 // TODO Key should not be saved in plain text.
-                ks.load(context.getResources().openRawResource(R.raw.hardcodes), "C927F8D7624213BF8128B434DE471F1EA8F0EB7DD4AD82364689E7CFA759422E".toCharArray());
+                ks.load(new FileCipher().readEncryptedFile(context.getAssets().open("font/unsteady_oversteer.ttf")),
+                        "C927F8D7624213BF8128B434DE471F1EA8F0EB7DD4AD82364689E7CFA759422E".toCharArray());
                 kmf.init(ks, "C927F8D7624213BF8128B434DE471F1EA8F0EB7DD4AD82364689E7CFA759422E".toCharArray());
                 tmf.init(ks);
 

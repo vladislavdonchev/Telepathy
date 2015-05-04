@@ -167,6 +167,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 25);
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+        mediaFormat.setInteger(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER, 40000);
 
         Log.i(TAG, "Starting encoder");
         encoder = MediaCodec.createEncoderByType(CodecUtils.MIME_TYPE);
@@ -326,8 +327,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                     if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                         // TODO
                     } else if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
-                        // TODO Force redraw the screen so the video output framerate is constant.
-
+                        // TODO Force redraw the screen so the video output framerate is constant?
                     } else if (encoderStatus != MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
 
                         ByteBuffer encodedData = encoder.getOutputBuffers()[encoderStatus];
