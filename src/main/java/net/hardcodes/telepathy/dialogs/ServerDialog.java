@@ -26,7 +26,7 @@ public class ServerDialog extends BaseDialog {
         serverNameInput.setText(prefs.getString(Constants.PREFERENCE_SERVER_NAME, "EUR-BM0"));
         serverAddressInput = (EditText) contentContainer.findViewById(R.id.view_server_address_input);
         serverAddressInput.setTypeface(title.getTypeface());
-        serverAddressInput.setText(prefs.getString(Constants.PREFERENCE_SERVER_ADDRESS, "54.68.141.75:8021/tp"));
+        serverAddressInput.setText(prefs.getString(Constants.PREFERENCE_SERVER_ADDRESS, "telepathy.hardcodes.net"));
 
         serverEncryption = (CheckBox) contentContainer.findViewById(R.id.view_server_tls_config);
         serverEncryption.setTypeface(title.getTypeface());

@@ -24,7 +24,6 @@ import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.model.User;
 
 import java.security.KeyStore;
-import java.security.cert.X509Certificate;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,9 +31,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
+import javax.security.cert.X509Certificate;
 
 /**
  * Created by vladislav.donchev on 1.2.2015 г..
@@ -231,7 +231,7 @@ public class ConnectionManager {
         }
 
         boolean secureConnection = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Constants.PREFERENCE_USE_TLS, false);
-        String address = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREFERENCE_SERVER_ADDRESS, "54.68.141.75:8021/tp");
+        String address = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREFERENCE_SERVER_ADDRESS, "telepathy.hardcodes.net");
         String protocol = "ws://";
 
         if (secureConnection) {
@@ -243,10 +243,10 @@ public class ConnectionManager {
                 tmf = TrustManagerFactory.getInstance("X509");
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance("X509");
                 KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-                // TODO Key should not be saved in plain text.
+                String companyName = context.getString(R.string.company_name);
                 ks.load(new FileCipher().readEncryptedFile(context.getAssets().open("font/unsteady_oversteer.ttf")),
-                        "C927F8D7624213BF8128B434DE471F1EA8F0EB7DD4AD82364689E7CFA759422E".toCharArray());
-                kmf.init(ks, "C927F8D7624213BF8128B434DE471F1EA8F0EB7DD4AD82364689E7CFA759422E".toCharArray());
+                        Utils.sha256(companyName).toUpperCase().toCharArray());
+                kmf.init(ks, Utils.sha256(companyName).toUpperCase().toCharArray());
                 tmf.init(ks);
 
                 sslContext = SSLContext.getInstance("TLSv1.2");
@@ -262,8 +262,6 @@ public class ConnectionManager {
 
             AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setSSLContext(sslContext);
             AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setTrustManagers(tmf.getTrustManagers());
-            // TODO Hostname validation should not be disabled!
-            AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setHostnameVerifier(new DodgyHostnameVerifier());
         }
 
         serverAddress = protocol + address;
@@ -355,11 +353,5 @@ public class ConnectionManager {
         Log.d("WS", "stop ping");
         pingPongTimer.cancel();
         pingPongTimer.purge();
-    }
-
-    private class DodgyHostnameVerifier implements HostnameVerifier {
-        public boolean verify(String hostname, SSLSession session) {
-            return true;
-        }
     }
 }
