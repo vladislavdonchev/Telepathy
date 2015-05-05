@@ -23,7 +23,7 @@ public class ServerDialog extends BaseDialog {
         setup("Server Configuration:", R.layout.view_server_config, "save", "cancel");
         serverNameInput = (EditText) contentContainer.findViewById(R.id.view_server_name_input);
         serverNameInput.setTypeface(title.getTypeface());
-        serverNameInput.setText(prefs.getString(Constants.PREFERENCE_SERVER_NAME, "EUR-BM0"));
+        serverNameInput.setText(prefs.getString(Constants.PREFERENCE_SERVER_NAME, "US-WEST-0"));
         serverAddressInput = (EditText) contentContainer.findViewById(R.id.view_server_address_input);
         serverAddressInput.setTypeface(title.getTypeface());
         serverAddressInput.setText(prefs.getString(Constants.PREFERENCE_SERVER_ADDRESS, "telepathy.hardcodes.net"));

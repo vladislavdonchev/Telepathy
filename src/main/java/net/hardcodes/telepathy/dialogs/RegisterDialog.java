@@ -87,7 +87,7 @@ public class RegisterDialog extends BaseDialog implements ConnectionManager.WebS
     }
 
     @Override
-    public void onConnect() {
+    public void onConnectionAcquired() {
         Telepathy.runOnUIThread(new Runnable() {
             @Override
             public void run() {
@@ -101,8 +101,8 @@ public class RegisterDialog extends BaseDialog implements ConnectionManager.WebS
     @Override
     public void onError(int errorCode) {
         switch (errorCode) {
-            case ConnectionManager.WebSocketConnectionListener.ERROR_CODE_SERVER_UNAVAILABLE:
-                Telepathy.showLongToast("The server is not available! Please try again later.");
+            case ConnectionManager.ERROR_CODE_SERVER_UNAVAILABLE:
+            case ConnectionManager.ERROR_CODE_TLS_CONFIG_FAILED:
                 dismiss();
                 break;
             case TelepathyAPI.ERROR_USER_ID_TAKEN:
@@ -131,11 +131,6 @@ public class RegisterDialog extends BaseDialog implements ConnectionManager.WebS
     @Override
     public void onBinaryMessage(ByteBufferList byteBufferList) {
 
-    }
-
-    @Override
-    public void onDisconnect() {
-        dismiss();
     }
 
     @Override

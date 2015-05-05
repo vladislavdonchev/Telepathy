@@ -89,7 +89,7 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
         checkBoxLoginAuto.setChecked(prefs.getBoolean(Constants.PREFERENCE_LOGIN_AUTO, false));
 
         serverConfiguration = (FontTextView) findViewById(R.id.view_server_configuration);
-        serverConfiguration.setText(prefs.getString(Constants.PREFERENCE_SERVER_NAME, "EUR-BM0"));
+        serverConfiguration.setText(prefs.getString(Constants.PREFERENCE_SERVER_NAME, "US-WEST-0"));
         serverConfiguration.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {

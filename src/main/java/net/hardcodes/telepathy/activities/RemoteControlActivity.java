@@ -68,7 +68,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     private boolean bound = false;
 
     @Override
-    public void onConnect() {
+    public void onConnectionAcquired() {
         ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_BIND + remoteUID);
     }
 
@@ -185,11 +185,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         } catch (Exception e) {
             Log.d(TAG, e.toString(), e);
         }
-    }
-
-    @Override
-    public void onDisconnect() {
-        finish();
     }
 
     @Override

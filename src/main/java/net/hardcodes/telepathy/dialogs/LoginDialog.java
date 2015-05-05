@@ -123,7 +123,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
     }
 
     @Override
-    public void onConnect() {
+    public void onConnectionAcquired() {
         final boolean isConnectedAndAuthenticated = ConnectionManager.getInstance().isConnectedAndAuthenticated();
 
         Telepathy.runOnUIThread(new Runnable() {
@@ -152,8 +152,8 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
     @Override
     public void onError(int errorCode) {
         switch (errorCode) {
-            case ConnectionManager.WebSocketConnectionListener.ERROR_CODE_SERVER_UNAVAILABLE:
-                Telepathy.showLongToast("The server is not available! Please try again later.");
+            case ConnectionManager.ERROR_CODE_SERVER_UNAVAILABLE:
+            case ConnectionManager.ERROR_CODE_TLS_CONFIG_FAILED:
                 dismiss();
                 break;
         }
@@ -169,11 +169,6 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
     @Override
     public void onBinaryMessage(ByteBufferList byteBufferList) {
 
-    }
-
-    @Override
-    public void onDisconnect() {
-        dismiss();
     }
 
     @Override

@@ -28,18 +28,18 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManagerFactory;
-import javax.security.cert.X509Certificate;
 
 /**
  * Created by vladislav.donchev on 1.2.2015 г..
  */
 public class ConnectionManager {
+
+    public static final int ERROR_CODE_NO_INTERNET_CONNECTION = 101;
+    public static final int ERROR_CODE_TLS_CONFIG_FAILED = 401;
+    public static final int ERROR_CODE_SERVER_UNAVAILABLE = 408;
 
     public static final String ACTION_CONNECTION_STATE_CHANGE = "connStateChange";
 
@@ -54,6 +54,23 @@ public class ConnectionManager {
     private boolean userLogin = false;
     private boolean connectionDrop = false;
     private boolean connectedAndAuthenticated = false;
+
+    private void reportConnectionError(WebSocketConnectionListener connectionListener, int errorCode) {
+        String errorMessage = "Unidentified error?!";
+        switch (errorCode) {
+            case ERROR_CODE_NO_INTERNET_CONNECTION:
+                errorMessage = "No Internet connection available!";
+                break;
+            case ERROR_CODE_TLS_CONFIG_FAILED:
+                errorMessage = "TLS configuration failed! Please update the application.";
+                break;
+            case ERROR_CODE_SERVER_UNAVAILABLE:
+                errorMessage = "Server not available! Please try again later.";
+                break;
+        }
+        Telepathy.showLongToast(errorMessage);
+        connectionListener.onError(errorCode);
+    }
 
     private AsyncHttpClient.WebSocketConnectCallback connectCallback = new AsyncHttpClient.WebSocketConnectCallback() {
         @Override
@@ -71,14 +88,18 @@ public class ConnectionManager {
                     login(Telepathy.getContext());
                 } else {
                     for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
-                        webSocketConnectionListener.onConnect();
+                        webSocketConnectionListener.onConnectionAcquired();
                     }
                 }
             }
 
             if (ex != null || webSocket == null) {
                 for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
-                    webSocketConnectionListener.onError(WebSocketConnectionListener.ERROR_CODE_SERVER_UNAVAILABLE);
+                    int errorCode = ERROR_CODE_SERVER_UNAVAILABLE;
+                    if (NetworkUtil.getConnectivityStatus(Telepathy.getContext()) == NetworkUtil.NO_CONNECTIVITY) {
+                        errorCode = ERROR_CODE_NO_INTERNET_CONNECTION;
+                    }
+                    reportConnectionError(webSocketConnectionListener, errorCode);
                     setConnectedAndAuthenticated(false);
                 }
 
@@ -101,11 +122,15 @@ public class ConnectionManager {
 
             if (NetworkUtil.getConnectivityStatus(Telepathy.getContext()) == NetworkUtil.NO_CONNECTIVITY) {
                 for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
-                    webSocketConnectionListener.onDisconnect();
+                    reportConnectionError(webSocketConnectionListener, ERROR_CODE_NO_INTERNET_CONNECTION);
                 }
             } else if (userLogin) {
                 connectionDrop = true;
                 connect();
+            } else {
+                for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
+                    reportConnectionError(webSocketConnectionListener, ERROR_CODE_SERVER_UNAVAILABLE);
+                }
             }
 
             stopPingPong();
@@ -200,17 +225,14 @@ public class ConnectionManager {
     }
 
     public interface WebSocketConnectionListener {
-        public static final int ERROR_CODE_SERVER_UNAVAILABLE = 100;
 
-        public void onConnect();
+        void onConnectionAcquired();
 
-        public void onError(int errorCode);
+        void onError(int errorCode);
 
-        public void onTextMessage(String message);
+        void onTextMessage(String message);
 
-        public void onBinaryMessage(ByteBufferList byteBufferList);
-
-        public void onDisconnect();
+        void onBinaryMessage(ByteBufferList byteBufferList);
     }
 
     public void acquireConnection(Context context, WebSocketConnectionListener connectionListener) {
@@ -218,7 +240,7 @@ public class ConnectionManager {
         Log.d("WS LISTENERS", "ADD: " + context + " " + connectionListener + " TOTAL: " + connectionListeners.size());
 
         if (webSocket != null && webSocket.isOpen()) {
-            connectionListener.onConnect();
+            connectionListener.onConnectionAcquired();
             return;
         }
 
@@ -226,7 +248,7 @@ public class ConnectionManager {
             ProviderInstaller.installIfNeeded(context.getApplicationContext());
         } catch (Exception e) {
             Telepathy.showLongToast(e.getMessage());
-            connectionListener.onDisconnect();
+            reportConnectionError(connectionListener, ERROR_CODE_TLS_CONFIG_FAILED);
             return;
         }
 
@@ -256,7 +278,7 @@ public class ConnectionManager {
             } catch (Exception e) {
                 Log.d("SSLCONFIG", e.toString(), e);
                 Telepathy.showLongToast(e.getMessage());
-                connectionListener.onDisconnect();
+                reportConnectionError(connectionListener, ERROR_CODE_TLS_CONFIG_FAILED);
                 return;
             }
 

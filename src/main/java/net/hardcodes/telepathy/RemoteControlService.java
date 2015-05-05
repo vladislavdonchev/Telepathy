@@ -62,7 +62,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     private Point resolution = new Point();
 
     @Override
-    public void onConnect() {
+    public void onConnectionAcquired() {
         if (!ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
             Telepathy.attemptLogin(false);
         }
@@ -71,6 +71,12 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     @Override
     public void onError(int errorCode) {
         stopEncodingVirtualDisplay();
+        switch (errorCode) {
+            case ConnectionManager.ERROR_CODE_SERVER_UNAVAILABLE:
+            case ConnectionManager.ERROR_CODE_TLS_CONFIG_FAILED:
+                stopSelf();
+                break;
+        }
     }
 
     @Override
@@ -97,11 +103,6 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     @Override
     public void onBinaryMessage(ByteBufferList byteArray) {
-    }
-
-    @Override
-    public void onDisconnect() {
-        stopSelf();
     }
 
     @Override
