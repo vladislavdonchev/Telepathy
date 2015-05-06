@@ -3,8 +3,8 @@ package net.hardcodes.telepathy.tools;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 import com.google.android.gms.security.ProviderInstaller;
 import com.google.gson.Gson;
@@ -20,6 +20,7 @@ import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.RemoteControlService;
 import net.hardcodes.telepathy.Telepathy;
+import net.hardcodes.telepathy.dialogs.ProgressDialog;
 import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.model.User;
 
@@ -35,7 +36,7 @@ import javax.net.ssl.TrustManagerFactory;
 /**
  * Created by vladislav.donchev on 1.2.2015 г..
  */
-public class ConnectionManager {
+public class ConnectionManager implements ProviderInstaller.ProviderInstallListener {
 
     public static final int ERROR_CODE_NO_INTERNET_CONNECTION = 101;
     public static final int ERROR_CODE_TLS_CONFIG_FAILED = 401;
@@ -44,6 +45,8 @@ public class ConnectionManager {
     public static final String ACTION_CONNECTION_STATE_CHANGE = "connStateChange";
 
     private static ConnectionManager instance;
+    private static ProgressDialog progressDialog;
+
 
     private static ConcurrentHashMap<Context, WebSocketConnectionListener> connectionListeners = new ConcurrentHashMap<>();
 
@@ -55,7 +58,7 @@ public class ConnectionManager {
     private boolean connectionDrop = false;
     private boolean connectedAndAuthenticated = false;
 
-    private void reportConnectionError(WebSocketConnectionListener connectionListener, int errorCode) {
+    private static void reportConnectionError(WebSocketConnectionListener connectionListener, int errorCode) {
         String errorMessage = "Unidentified error?!";
         switch (errorCode) {
             case ERROR_CODE_NO_INTERNET_CONNECTION:
@@ -69,7 +72,14 @@ public class ConnectionManager {
                 break;
         }
         Telepathy.showLongToast(errorMessage);
-        connectionListener.onError(errorCode);
+
+        if (connectionListener != null) {
+            connectionListener.onError(errorCode);
+        } else {
+            for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
+                webSocketConnectionListener.onError(errorCode);
+            }
+        }
     }
 
     private AsyncHttpClient.WebSocketConnectCallback connectCallback = new AsyncHttpClient.WebSocketConnectCallback() {
@@ -104,11 +114,11 @@ public class ConnectionManager {
                 }
 
                 try {
-                    Log.d("WSFAIL", ex.toString() + ": " + ex.getCause(), ex);
+                    Logger.log("WSFAIL", ex.toString() + ": " + ex.getCause(), ex);
                     return;
                 } catch (Exception e) {
                 }
-                Log.d("WSFAIL", "Socket NULL.");
+                Logger.log("WSFAIL", "SOCKET NULL.");
             }
         }
     };
@@ -116,21 +126,20 @@ public class ConnectionManager {
         @Override
         public void onCompleted(Exception ex) {
             if (ex != null) {
-                Log.d("WSCLOSE", ex.toString(), ex);
+                Logger.log("WSCLOSE", ex.toString(), ex);
             }
-            Log.d("WSCLOSE", "Socket closed.");
+            Logger.log("WSCLOSE", "SOCKET CLOSED.");
 
             if (NetworkUtil.getConnectivityStatus(Telepathy.getContext()) == NetworkUtil.NO_CONNECTIVITY) {
-                for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
-                    reportConnectionError(webSocketConnectionListener, ERROR_CODE_NO_INTERNET_CONNECTION);
-                }
+                Logger.log("WS", "INTERNET DIED");
+                reportConnectionError(null, ERROR_CODE_NO_INTERNET_CONNECTION);
             } else if (userLogin) {
+                Logger.log("WS", "CONNECTION DROP");
                 connectionDrop = true;
                 connect();
             } else {
-                for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
-                    reportConnectionError(webSocketConnectionListener, ERROR_CODE_SERVER_UNAVAILABLE);
-                }
+                Logger.log("WS", "SERVER UNAVAILABLE");
+                reportConnectionError(null, ERROR_CODE_SERVER_UNAVAILABLE);
             }
 
             stopPingPong();
@@ -140,7 +149,7 @@ public class ConnectionManager {
     private WebSocket.StringCallback stringCallback = new WebSocket.StringCallback() {
         @Override
         public void onStringAvailable(String s) {
-            Log.d("WS", "receive -> " + s);
+            Logger.log("WS", "RECEIVE: " + s);
             boolean isError = s.startsWith(TelepathyAPI.MESSAGE_ERROR);
             int errorCode = -1;
             if (isError) {
@@ -184,7 +193,6 @@ public class ConnectionManager {
             }
 
             for (WebSocketConnectionListener webSocketConnectionListener : connectionListeners.values()) {
-                Log.d("WS", "redirectToListener: " + webSocketConnectionListener + " -> " + s);
                 if (isError) {
                     webSocketConnectionListener.onError(errorCode);
                 } else {
@@ -209,6 +217,7 @@ public class ConnectionManager {
     public static ConnectionManager getInstance() {
         if (instance == null) {
             instance = new ConnectionManager();
+            progressDialog = new ProgressDialog(Telepathy.getContext(), "Configuring security provider...");
         }
         return instance;
     }
@@ -218,7 +227,7 @@ public class ConnectionManager {
     }
 
     private void setConnectedAndAuthenticated(boolean connectedAndAuthenticated) {
-        Log.d("WS", "set caa: " + connectedAndAuthenticated);
+        Logger.log("WS", "SET CAA: " + connectedAndAuthenticated);
         this.connectedAndAuthenticated = connectedAndAuthenticated;
         Intent connectionStateChangeIntent = new Intent(ACTION_CONNECTION_STATE_CHANGE);
         Telepathy.getContext().sendBroadcast(connectionStateChangeIntent);
@@ -237,18 +246,10 @@ public class ConnectionManager {
 
     public void acquireConnection(Context context, WebSocketConnectionListener connectionListener) {
         connectionListeners.put(context, connectionListener);
-        Log.d("WS LISTENERS", "ADD: " + context + " " + connectionListener + " TOTAL: " + connectionListeners.size());
+        Logger.log("WS LISTENERS", "ADD: " + context + " " + connectionListener + " TOTAL: " + connectionListeners.size());
 
         if (webSocket != null && webSocket.isOpen()) {
             connectionListener.onConnectionAcquired();
-            return;
-        }
-
-        try {
-            ProviderInstaller.installIfNeeded(context.getApplicationContext());
-        } catch (Exception e) {
-            Telepathy.showLongToast(e.getMessage());
-            reportConnectionError(connectionListener, ERROR_CODE_TLS_CONFIG_FAILED);
             return;
         }
 
@@ -258,40 +259,61 @@ public class ConnectionManager {
 
         if (secureConnection) {
             protocol = "wss://";
-            SSLContext sslContext = null;
-            TrustManagerFactory tmf = null;
+            serverAddress = protocol + address;
 
+            progressDialog.show();
             try {
-                tmf = TrustManagerFactory.getInstance("X509");
-                KeyManagerFactory kmf = KeyManagerFactory.getInstance("X509");
-                KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-                String companyName = context.getString(R.string.company_name);
-                ks.load(new FileCipher().readEncryptedFile(context.getAssets().open("font/unsteady_oversteer.ttf")),
-                        Utils.sha256(companyName).toUpperCase().toCharArray());
-                kmf.init(ks, Utils.sha256(companyName).toUpperCase().toCharArray());
-                tmf.init(ks);
-
-                sslContext = SSLContext.getInstance("TLSv1.2");
-                sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-                sslContext.getDefaultSSLParameters().setProtocols(new String[]{"TLSv1.2"});
-                sslContext.createSSLEngine().setEnabledProtocols(new String[]{"TLSv1.2"});
+                ProviderInstaller.installIfNeededAsync(Telepathy.getContext(), this);
             } catch (Exception e) {
-                Log.d("SSLCONFIG", e.toString(), e);
-                Telepathy.showLongToast(e.getMessage());
+                Logger.log("SSLCONFIG", e.toString(), e);
                 reportConnectionError(connectionListener, ERROR_CODE_TLS_CONFIG_FAILED);
-                return;
             }
+        } else {
+            serverAddress = protocol + address;
+            connect();
+        }
+    }
+    @Override
+    public void onProviderInstalled() {
+        progressDialog.hide();
+        SSLContext sslContext;
+        TrustManagerFactory tmf;
 
-            AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setSSLContext(sslContext);
-            AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setTrustManagers(tmf.getTrustManagers());
+        try {
+            tmf = TrustManagerFactory.getInstance("X509");
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance("X509");
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            String companyName = Telepathy.getContext().getString(R.string.company_name);
+            ks.load(new FileCipher().readEncryptedFile(Telepathy.getContext().getAssets().open("font/unsteady_oversteer.ttf")),
+                    Utils.sha256(companyName).toUpperCase().toCharArray());
+            kmf.init(ks, Utils.sha256(companyName).toUpperCase().toCharArray());
+            tmf.init(ks);
+
+            sslContext = SSLContext.getInstance("TLSv1.2");
+            sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+            sslContext.getDefaultSSLParameters().setProtocols(new String[]{"TLSv1.2"});
+            sslContext.createSSLEngine().setEnabledProtocols(new String[]{"TLSv1.2"});
+        } catch (Exception e) {
+            Logger.log("SSLCONFIG", e.toString(), e);
+            reportConnectionError(null, ERROR_CODE_TLS_CONFIG_FAILED);
+            return;
         }
 
-        serverAddress = protocol + address;
+        AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setSSLContext(sslContext);
+        AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setTrustManagers(tmf.getTrustManagers());
+
         connect();
     }
 
+    @Override
+    public void onProviderInstallFailed(int i, Intent intent) {
+        progressDialog.hide();
+        Logger.log("SSLCONFIG", "Security provider installation failed: " + i);
+        reportConnectionError(null, ERROR_CODE_TLS_CONFIG_FAILED);
+    }
+
     private void connect() {
-        Log.d("WS", "connecting to " + serverAddress);
+        Logger.log("WS", "CONNECTING TO: " + serverAddress);
         AsyncHttpClient.getDefaultInstance().websocket(serverAddress, null, connectCallback);
     }
 
@@ -300,7 +322,7 @@ public class ConnectionManager {
     }
 
     public void login(Context context) {
-        Log.d("CONN", "login CAA: " + connectedAndAuthenticated + " UL: " + userLogin);
+        Logger.log("CONN", "LOGIN CAA: " + connectedAndAuthenticated + " UL: " + userLogin);
         userLogin = true;
         if (!connectedAndAuthenticated) {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
@@ -311,7 +333,7 @@ public class ConnectionManager {
     }
 
     public void logout() {
-        Log.d("WS", "logout");
+        Logger.log("WS", "LOGOUT.");
         userLogin = false;
         sendTextMessage(TelepathyAPI.MESSAGE_LOGOUT);
     }
@@ -319,7 +341,7 @@ public class ConnectionManager {
     public void releaseConnection(Context context) {
         if (connectionListeners.containsKey(context)) {
             connectionListeners.remove(context);
-            Log.d("WS LISTENERS", "REMOVE: " + context + " " + connectionListeners.get(context) + " TOTAL: " + connectionListeners.size());
+            Logger.log("WS LISTENERS", "REMOVE: " + context + " " + connectionListeners.get(context) + " TOTAL: " + connectionListeners.size());
         }
 
         if (connectionListeners.size() == 0) {
@@ -328,12 +350,12 @@ public class ConnectionManager {
     }
 
     public void sendTextMessage(String message) {
-        Log.d("WS", "send text -> " + message);
+        Logger.log("WS", "SEND TEXT: " + message);
         if (webSocket != null && webSocket.isOpen()) {
             try {
                 webSocket.send(message);
             } catch (Exception e) {
-                Log.d("WSSEND", e.toString(), e);
+                Logger.log("WSSEND", e.toString(), e);
                 Mint.logException(e);
             }
         }
@@ -344,14 +366,14 @@ public class ConnectionManager {
             try {
                 webSocket.send(message);
             } catch (Exception e) {
-                Log.d("WSSEND", e.toString(), e);
+                Logger.log("WSSEND", e.toString(), e);
                 Mint.logException(e);
             }
         }
     }
 
     private void startPingPong() {
-        Log.d("WS", "start ping");
+        Logger.log("WS", "START PING");
         if (pingPongTimer != null) {
             stopPingPong();
         }
@@ -362,9 +384,9 @@ public class ConnectionManager {
                 if (webSocket != null) {
                     try {
                         webSocket.ping(TelepathyAPI.MESSAGE_HEARTBEAT);
-                        Log.d("WS", "ping");
+                        Logger.log("WS", "PING");
                     } catch (Exception e) {
-                        Log.d("WS", e.toString(), e);
+                        Logger.log("WS", e.toString(), e);
                     }
                 }
             }
@@ -372,7 +394,7 @@ public class ConnectionManager {
     }
 
     private void stopPingPong() {
-        Log.d("WS", "stop ping");
+        Logger.log("WS", "STOP PING");
         pingPongTimer.cancel();
         pingPongTimer.purge();
     }

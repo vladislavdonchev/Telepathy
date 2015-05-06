@@ -1,17 +1,14 @@
 package net.hardcodes.telepathy.activities;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Point;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -31,8 +28,7 @@ import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.tools.CodecUtils;
 import net.hardcodes.telepathy.tools.ConnectionManager;
-
-import org.w3c.dom.Text;
+import net.hardcodes.telepathy.tools.Logger;
 
 import java.io.IOException;
 import java.nio.BufferOverflowException;
@@ -80,7 +76,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public void onTextMessage(String message) {
-        Log.d("API", message);
+        Logger.log("API", message);
 
         if (message.startsWith(TelepathyAPI.MESSAGE_BIND_ACCEPTED)) {
             bound = true;
@@ -89,7 +85,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     }
 
     private void handleVideoMetadata(String metadata) {
-        Log.d("VIDMETA", metadata);
+        Logger.log("VIDMETA", metadata);
         String messagePayload = metadata.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
         String[] parts = messagePayload.split(",");
 
@@ -103,7 +99,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
                 videoResolution.y = Integer.parseInt(parts[5]);
             }
         } catch (NumberFormatException e) {
-            Log.d(TAG, e.toString(), e);
+            Logger.log(TAG, e.toString(), e);
             //TODO: Need to stop the decoder or to skip the current decoder loop
             showToast(e.getMessage());
         }
@@ -148,7 +144,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
                     inputBuf.put(buff);
                 } catch (BufferOverflowException e) {
                     showToast("Buffer Overflow = " + e.getMessage());
-                    Log.d(TAG, "Input buff capacity = " + inputBuf.capacity() + " limit = " + inputBuf.limit() + " byte size = " + buff.length);
+                    Logger.log(TAG, "Input buff capacity = " + inputBuf.capacity() + " limit = " + inputBuf.limit() + " byte size = " + buff.length);
                     return;
                 }
 
@@ -159,31 +155,31 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
             int decoderStatus = decoder.dequeueOutputBuffer(info, CodecUtils.TIMEOUT_USEC);
             if (decoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                 // no output available yet
-                Log.d(TAG, "no output from decoder available");
+                Logger.log(TAG, "no output from decoder available");
             } else if (decoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                 // The storage associated with the direct ByteBuffer may already be unmapped,
                 // so attempting to access data through the old output buffer array could
                 // lead to a native crash.
-                Log.d(TAG, "decoder output buffers changed");
+                Logger.log(TAG, "decoder output buffers changed");
             } else if (decoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 // this happens before the first frame is returned
                 MediaFormat decoderOutputFormat = decoder.getOutputFormat();
-                Log.d(TAG, "decoder output format changed: " + decoderOutputFormat);
+                Logger.log(TAG, "decoder output format changed: " + decoderOutputFormat);
             } else if (decoderStatus < 0) {
                 //TODO: fail
                 showToast("Decoder error.");
             } else {
                 if (info.size == 0) {
-                    Log.d(TAG, "got empty frame");
+                    Logger.log(TAG, "got empty frame");
                 }
                 if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                    Log.d(TAG, "output EOS");
+                    Logger.log(TAG, "output EOS");
                 }
                 boolean doRender = (info.size != 0);
                 decoder.releaseOutputBuffer(decoderStatus, doRender /*render*/);
             }
         } catch (Exception e) {
-            Log.d(TAG, e.toString(), e);
+            Logger.log(TAG, e.toString(), e);
         }
     }
 

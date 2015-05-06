@@ -1,7 +1,6 @@
 package net.hardcodes.telepathy.dialogs;
 
 import android.app.ActionBar;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;

@@ -17,6 +17,7 @@ public class Constants {
     public static String PREFERENCE_USE_TLS = "pref_use_tls";
     public static String PREFERENCE_UID = "pref_uid";
     public static String PREFERENCE_PASS = "pref_pass";
+    public static String PREFERENCE_DEBUG_LOG = "pref_debug_log";
 
     public static String CONSTANT_NETWORK_2G = "constant_2g";
     public static String CONSTANT_NETWORK_3G = "constant_3g";

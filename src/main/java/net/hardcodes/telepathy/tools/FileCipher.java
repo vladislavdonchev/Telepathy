@@ -1,14 +1,12 @@
 package net.hardcodes.telepathy.tools;
 
 import android.util.Base64;
-import android.util.Log;
 
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.Telepathy;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.InputStream;
 
 import javax.crypto.Cipher;
@@ -27,7 +25,7 @@ public class FileCipher {
             InputStream secretKeyFile = Telepathy.getContext().getAssets().open("font/squared_display.ttf");
             initCipherWithKey(secretKeyFile);
         } catch (Exception e) {
-            Log.d("CIPHER", e.toString(), e);
+            Logger.log("CIPHER", e.toString(), e);
         }
     }
 

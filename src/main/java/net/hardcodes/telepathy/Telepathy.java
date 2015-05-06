@@ -3,10 +3,10 @@ package net.hardcodes.telepathy;
 import android.app.Application;
 import android.content.Context;
 import android.os.Handler;
-import android.util.Log;
 import android.widget.Toast;
 
 import net.hardcodes.telepathy.dialogs.LoginDialog;
+import net.hardcodes.telepathy.tools.Logger;
 
 /**
  * Created by StereoPor on 29.3.2015 г..
@@ -40,7 +40,7 @@ public class Telepathy extends Application {
     }
 
     public static void runOnUIThread(Runnable runnable) {
-        Log.d("TPT", "run on UI: " + runnable.toString());
+        Logger.log("TPT", "run on UI: " + runnable.toString());
         uiHandler.post(runnable);
     }
 

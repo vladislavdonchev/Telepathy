@@ -3,7 +3,6 @@ package net.hardcodes.telepathy.tools;
 import android.content.Intent;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -139,7 +138,7 @@ public class ShellCommandExecutor {
             openShell();
         }
 
-        Log.d("SHELL", " CODE: " + commandCode + " LISTENER: " + commandResultListener);
+        Logger.log("SHELL", " CODE: " + commandCode + " LISTENER: " + commandResultListener);
 
         if (commandResultListener == null) {
             commandResultListener = new Shell.OnCommandResultListener() {

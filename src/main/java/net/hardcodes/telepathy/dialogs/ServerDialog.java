@@ -8,7 +8,6 @@ import android.widget.EditText;
 
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
-import net.hardcodes.telepathy.tools.ConnectionManager;
 
 public class ServerDialog extends BaseDialog {
 

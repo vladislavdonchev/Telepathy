@@ -1,15 +1,11 @@
 package net.hardcodes.telepathy;
 
 import android.app.KeyguardManager;
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Canvas;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaCodec;
@@ -30,6 +26,7 @@ import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.tools.CodecUtils;
 import net.hardcodes.telepathy.tools.ConnectionManager;
+import net.hardcodes.telepathy.tools.Logger;
 import net.hardcodes.telepathy.tools.NetworkUtil;
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
 import net.hardcodes.telepathy.tools.Utils;
@@ -81,7 +78,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     @Override
     public void onTextMessage(String message) {
-        Log.d("API", message);
+        Logger.log("API", message);
 
         if (message.startsWith(TelepathyAPI.MESSAGE_BIND)) {
             String remoteUID = message.split(TelepathyAPI.MESSAGE_UID_DELIMITER)[1];
@@ -141,7 +138,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         try {
             encoderInputSurface = createDisplaySurface();
         } catch (IOException e) {
-            Log.d("ENCODER", e.toString(), e);
+            Logger.log("ENCODER", e.toString(), e);
         }
         virtualDisplay = displayManager.createVirtualDisplay(VIRTUAL_DISPLAY_TAG, resolution.x, resolution.y, 50,
                 encoderInputSurface, DisplayManager.VIRTUAL_DISPLAY_FLAG_SECURE | DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION
@@ -229,21 +226,21 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                 try {
                     ShellCommandExecutor.getInstance().runCommand("input keyevent 4");
                 } catch (Exception e) {
-                    Log.d("ENCODER", e.toString(), e);
+                    Logger.log("ENCODER", e.toString(), e);
                 }
                 break;
             case InputEvent.IMPUT_EVENT_TYPE_HOME_BUTTON:
                 try {
                     ShellCommandExecutor.getInstance().runCommand("input keyevent 3");
                 } catch (Exception e) {
-                    Log.d("ENCODER", e.toString(), e);
+                    Logger.log("ENCODER", e.toString(), e);
                 }
                 break;
             case InputEvent.IMPUT_EVENT_TYPE_RECENT_BUTTON:
                 try {
                     ShellCommandExecutor.getInstance().runCommand("input keyevent 187");
                 } catch (Exception e) {
-                    Log.d("ENCODER", e.toString(), e);
+                    Logger.log("ENCODER", e.toString(), e);
                 }
                 break;
             case InputEvent.IMPUT_EVENT_TYPE_LOCK_UNLOCK_BUTTON:
@@ -253,14 +250,14 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                     try {
                         ShellCommandExecutor.getInstance().runCommand("input keyevent 26");
                     } catch (Exception e) {
-                        Log.d("ENCODER", e.toString(), e);
+                        Logger.log("ENCODER", e.toString(), e);
                     }
                 } else {
                     kl.reenableKeyguard();
                     try {
                         ShellCommandExecutor.getInstance().runCommand("input keyevent 26");
                     } catch (Exception e) {
-                        Log.d("ENCODER", e.toString(), e);
+                        Logger.log("ENCODER", e.toString(), e);
                     }
                 }
                 break;
@@ -270,7 +267,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                     float y = event.getTouchEventY() * deviceHeight;
                     ShellCommandExecutor.getInstance().runCommand("input tap " + x + " " + y);
                 } catch (Exception e) {
-                    Log.d("ENCODER", e.toString(), e);
+                    Logger.log("ENCODER", e.toString(), e);
                 }
                 break;
             case InputEvent.IMPUT_EVENT_TYPE_LONG_PRESS:
@@ -279,7 +276,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                     float y = event.getTouchEventY() * deviceHeight;
                     ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x + " " + y + " " + InputEvent.IMPUT_EVENT_LONG_PRESS_DURATION);
                 } catch (Exception e) {
-                    Log.d("ENCODER", e.toString(), e);
+                    Logger.log("ENCODER", e.toString(), e);
                 }
                 break;
             case InputEvent.IMPUT_EVENT_TYPE_SWIPE:
@@ -290,7 +287,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                     float y1 = event.getTouchEventY1() * deviceHeight;
                     ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x1 + " " + y1 + " " + InputEvent.IMPUT_EVENT_FLING_DURATION);
                 } catch (Exception e) {
-                    Log.d("ENCODER", e.toString(), e);
+                    Logger.log("ENCODER", e.toString(), e);
                 }
                 break;
         }
@@ -350,7 +347,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                             encodedData.get(video, info.offset, info.offset + info.size);
                             ConnectionManager.getInstance().sendBinaryMessage(Utils.mergeByteArrays(meta, video));
                         } catch (BufferUnderflowException e) {
-                            Log.d("ENCODER", e.toString(), e);
+                            Logger.log("ENCODER", e.toString(), e);
                             continue;
                         }
 
@@ -366,7 +363,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                         break;
                     }
                 } catch (Exception e) {
-                    Log.d("ENCODER", e.toString(), e);
+                    Logger.log("ENCODER", e.toString(), e);
                 }
             }
         }

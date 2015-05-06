@@ -11,10 +11,10 @@ import android.util.Log;
 
 import com.splunk.mint.Mint;
 
-import net.hardcodes.telepathy.Telepathy;
-import net.hardcodes.telepathy.dialogs.InstallUninstallDialog;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.RemoteControlService;
+import net.hardcodes.telepathy.Telepathy;
+import net.hardcodes.telepathy.dialogs.InstallUninstallDialog;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;

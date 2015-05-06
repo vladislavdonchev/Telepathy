@@ -18,9 +18,9 @@ import net.hardcodes.telepathy.RemoteControlService;
 import net.hardcodes.telepathy.Telepathy;
 import net.hardcodes.telepathy.dialogs.InstallUninstallDialog;
 import net.hardcodes.telepathy.tools.ConnectionManager;
-import net.hardcodes.telepathy.views.FontButton;
 import net.hardcodes.telepathy.tools.ShellCommandExecutor;
 import net.hardcodes.telepathy.tools.Utils;
+import net.hardcodes.telepathy.views.FontButton;
 
 /**
  * Created by StereoPor on 22.3.2015 г..
