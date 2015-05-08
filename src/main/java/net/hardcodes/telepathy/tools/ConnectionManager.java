@@ -47,7 +47,6 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
     private static ConnectionManager instance;
     private static ProgressDialog progressDialog;
 
-
     private static ConcurrentHashMap<Context, WebSocketConnectionListener> connectionListeners = new ConcurrentHashMap<>();
 
     public WebSocket webSocket;
@@ -86,6 +85,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
         @Override
         public void onCompleted(Exception ex, WebSocket webSocket) {
             if (webSocket != null) {
+                Logger.log("WS", "CONNECTED");
                 webSocket.setClosedCallback(closeCallback);
                 webSocket.setStringCallback(stringCallback);
                 webSocket.setDataCallback(dataCallback);
@@ -114,11 +114,11 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
                 }
 
                 try {
-                    Logger.log("WSFAIL", ex.toString() + ": " + ex.getCause(), ex);
+                    Logger.log("WS", ex.toString() + ": " + ex.getCause(), ex);
                     return;
                 } catch (Exception e) {
                 }
-                Logger.log("WSFAIL", "SOCKET NULL.");
+                Logger.log("WS", "SOCKET NULL");
             }
         }
     };
@@ -126,9 +126,12 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
         @Override
         public void onCompleted(Exception ex) {
             if (ex != null) {
-                Logger.log("WSCLOSE", ex.toString(), ex);
+                Logger.log("WS", ex.toString(), ex);
             }
-            Logger.log("WSCLOSE", "SOCKET CLOSED.");
+            Logger.log("WS", "SOCKET CLOSED");
+
+            stopPingPong();
+            setConnectedAndAuthenticated(false);
 
             if (NetworkUtil.getConnectivityStatus(Telepathy.getContext()) == NetworkUtil.NO_CONNECTIVITY) {
                 Logger.log("WS", "INTERNET DIED");
@@ -141,9 +144,6 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
                 Logger.log("WS", "SERVER UNAVAILABLE");
                 reportConnectionError(null, ERROR_CODE_SERVER_UNAVAILABLE);
             }
-
-            stopPingPong();
-            setConnectedAndAuthenticated(false);
         }
     };
     private WebSocket.StringCallback stringCallback = new WebSocket.StringCallback() {
@@ -246,7 +246,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
 
     public void acquireConnection(Context context, WebSocketConnectionListener connectionListener) {
         connectionListeners.put(context, connectionListener);
-        Logger.log("WS LISTENERS", "ADD: " + context + " " + connectionListener + " TOTAL: " + connectionListeners.size());
+        Logger.log("WS", "ADD LISTENER: " + context + " " + connectionListener + " TOTAL: " + connectionListeners.size());
 
         if (webSocket != null && webSocket.isOpen()) {
             connectionListener.onConnectionAcquired();
@@ -254,7 +254,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
         }
 
         boolean secureConnection = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Constants.PREFERENCE_USE_TLS, false);
-        String address = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREFERENCE_SERVER_ADDRESS, "telepathy.hardcodes.net");
+        String address = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREFERENCE_SERVER_ADDRESS, "telepathy.hardcodes.net:8021/tp");
         String protocol = "ws://";
 
         if (secureConnection) {
@@ -314,6 +314,10 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
 
     private void connect() {
         Logger.log("WS", "CONNECTING TO: " + serverAddress);
+        if (webSocket != null && webSocket.isOpen()) {
+            webSocket.close();
+            webSocket = null;
+        }
         AsyncHttpClient.getDefaultInstance().websocket(serverAddress, null, connectCallback);
     }
 
@@ -322,7 +326,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
     }
 
     public void login(Context context) {
-        Logger.log("CONN", "LOGIN CAA: " + connectedAndAuthenticated + " UL: " + userLogin);
+        Logger.log("WS", "LOGIN ATTEMPT CAA: " + connectedAndAuthenticated + " UL: " + userLogin);
         userLogin = true;
         if (!connectedAndAuthenticated) {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
@@ -333,7 +337,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
     }
 
     public void logout() {
-        Logger.log("WS", "LOGOUT.");
+        Logger.log("WS", "LOGOUT");
         userLogin = false;
         sendTextMessage(TelepathyAPI.MESSAGE_LOGOUT);
     }
@@ -350,10 +354,10 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
     }
 
     public void sendTextMessage(String message) {
-        Logger.log("WS", "SEND TEXT: " + message);
         if (webSocket != null && webSocket.isOpen()) {
             try {
                 webSocket.send(message);
+                Logger.log("WS", "SEND TEXT: " + message);
             } catch (Exception e) {
                 Logger.log("WSSEND", e.toString(), e);
                 Mint.logException(e);
@@ -374,9 +378,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
 
     private void startPingPong() {
         Logger.log("WS", "START PING");
-        if (pingPongTimer != null) {
-            stopPingPong();
-        }
+
         pingPongTimer = new Timer("keep_alive");
         pingPongTimer.scheduleAtFixedRate(new TimerTask() {
             @Override

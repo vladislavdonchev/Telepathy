@@ -16,6 +16,7 @@ import android.widget.RadioGroup;
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.dialogs.ServerDialog;
+import net.hardcodes.telepathy.tools.Logger;
 import net.hardcodes.telepathy.tools.Utils;
 import net.hardcodes.telepathy.views.FontTextView;
 
@@ -93,7 +94,9 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
         serverConfiguration.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                new ServerDialog(SettingsActivity.this).show();
+                if (Logger.DEBUG) {
+                    new ServerDialog(SettingsActivity.this).show();
+                }
                 return false;
             }
         });

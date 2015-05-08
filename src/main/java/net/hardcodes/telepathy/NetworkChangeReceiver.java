@@ -17,11 +17,12 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(final Context context, final Intent intent) {
         int status = NetworkUtil.getConnectivityStatus(context);
-        Logger.log("NETLISTENER", status + "");
 
         boolean isServiceAutostartEnabled = PreferenceManager.getDefaultSharedPreferences(context)
                 .getBoolean(Constants.PREFERENCE_AUTOSTART_SERVICE, false);
         boolean isConnectedAndAuthenticated = ConnectionManager.getInstance().isConnectedAndAuthenticated();
+
+        Logger.log("NETLISTENER", status + " SAE: " + isServiceAutostartEnabled + " CAA: " + isConnectedAndAuthenticated);
 
         if (status != NetworkUtil.NO_CONNECTIVITY && isServiceAutostartEnabled && !isConnectedAndAuthenticated) {
             Telepathy.attemptLogin(false);

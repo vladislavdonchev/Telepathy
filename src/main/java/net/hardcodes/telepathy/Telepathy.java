@@ -40,7 +40,6 @@ public class Telepathy extends Application {
     }
 
     public static void runOnUIThread(Runnable runnable) {
-        Logger.log("TPT", "run on UI: " + runnable.toString());
         uiHandler.post(runnable);
     }
 

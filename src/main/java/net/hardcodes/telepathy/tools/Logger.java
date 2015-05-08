@@ -42,7 +42,7 @@ public class Logger {
             SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
             String timestamp = dateFormat.format(now);
             String currentLog = prefs.getString(Constants.PREFERENCE_DEBUG_LOG, "");
-            if (currentLog.length() > 4096) {
+            if (currentLog.length() > 16384) {
                 currentLog = currentLog.substring(2, currentLog.length());
                 currentLog = currentLog.substring(0, currentLog.indexOf("\n"));
             }

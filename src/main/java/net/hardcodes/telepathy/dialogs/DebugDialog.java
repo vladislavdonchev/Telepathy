@@ -39,7 +39,7 @@ public class DebugDialog extends BaseDialog implements SharedPreferences.OnShare
 
     private void updateLog() {
         String currentLog = prefs.getString(Constants.PREFERENCE_DEBUG_LOG, "");
-        debugText.setText(currentLog);
+        debugText.setText(currentLog + "\n");
     }
 
     @Override

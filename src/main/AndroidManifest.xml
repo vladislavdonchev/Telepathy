@@ -40,6 +40,7 @@
         <activity
             android:name=".activities.HomeScreenActivity"
             android:label="@string/app_name"
+            android:launchMode="singleInstance"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -50,6 +51,7 @@
         <activity
             android:name=".activities.RemoteControlActivity"
             android:label="@string/title_activity_client"
+            android:launchMode="singleInstance"
             android:screenOrientation="portrait">
 
             <meta-data
@@ -65,6 +67,7 @@
         <activity
             android:name=".activities.SettingsActivity"
             android:label="Settings"
+            android:launchMode="singleInstance"
             android:parentActivityName=".activities.HomeScreenActivity"
             android:screenOrientation="portrait">
             <meta-data
