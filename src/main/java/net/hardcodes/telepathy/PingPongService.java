@@ -3,6 +3,7 @@ package net.hardcodes.telepathy;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 
 import net.hardcodes.telepathy.model.TelepathyAPI;
@@ -14,7 +15,7 @@ public class PingPongService extends Service {
     public final static String ACTION_START = "start";
     public final static String ACTION_STOP = "stop";
 
-    //private HandlerThread pingPongThread;
+    private HandlerThread pingPongThread;
     private Handler pingPongHandler;
     private Runnable pingPongRunnable;
 
@@ -23,10 +24,9 @@ public class PingPongService extends Service {
 
         if (intent.getAction().equals(ACTION_START)) {
             Logger.log("WS", "START PING");
-            //pingPongThread = new HandlerThread("PingPongThread");
-            //pingPongThread.start();
-            //pingPongHandler = new Handler(pingPongThread.getLooper());
-            pingPongHandler = new Handler();
+            pingPongThread = new HandlerThread("PingPongThread");
+            pingPongThread.start();
+            pingPongHandler = new Handler(pingPongThread.getLooper());
             pingPongRunnable = new Runnable() {
                 @Override
                 public void run() {
@@ -47,8 +47,8 @@ public class PingPongService extends Service {
             Logger.log("WS", "STOP PING");
             pingPongHandler.removeCallbacks(pingPongRunnable);
             pingPongHandler = null;
-            //pingPongThread.quitSafely();
-            //pingPongThread = null;
+            pingPongThread.quitSafely();
+            pingPongThread = null;
         }
 
         return super.onStartCommand(intent, flags, startId);
