@@ -1,8 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.hardcodes.telepathy"
     android:permission="android.permission.RECEIVE_BOOT_COMPLETED"
     android:versionCode="012"
-    android:versionName="@string/app_version">
+    android:versionName="@string/app_version" >
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
@@ -17,21 +18,21 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
-        android:name="net.hardcodes.telepathy.Telepathy"
+        android:name=".Telepathy"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme" >
 
-        <!--<receiver android:name="net.hardcodes.telepathy.BootReceiver">-->
-        <!--<intent-filter>-->
-        <!--<action android:name="android.intent.action.BOOT_COMPLETED" />-->
-        <!--</intent-filter>-->
-        <!--</receiver>-->
+        <!-- <receiver android:name="net.hardcodes.telepathy.BootReceiver"> -->
+        <!-- <intent-filter> -->
+        <!-- <action android:name="android.intent.action.BOOT_COMPLETED" /> -->
+        <!-- </intent-filter> -->
+        <!-- </receiver> -->
 
         <receiver
-            android:name="net.hardcodes.telepathy.NetworkChangeReceiver"
-            android:label="NetworkChangeReceiver">
+            android:name=".NetworkChangeReceiver"
+            android:label="NetworkChangeReceiver" >
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
@@ -41,7 +42,7 @@
             android:name=".activities.HomeScreenActivity"
             android:label="@string/app_name"
             android:launchMode="singleInstance"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -52,8 +53,7 @@
             android:name=".activities.RemoteControlActivity"
             android:label="@string/title_activity_client"
             android:launchMode="singleInstance"
-            android:screenOrientation="portrait">
-
+            android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.HomeScreenActivity" />
@@ -62,14 +62,14 @@
         <service
             android:name=".RemoteControlService"
             android:exported="true"
-            android:label="@string/title_activity_server"></service>
+            android:label="@string/title_activity_server" />
 
         <activity
             android:name=".activities.SettingsActivity"
             android:label="Settings"
             android:launchMode="singleInstance"
             android:parentActivityName=".activities.HomeScreenActivity"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.HomeScreenActivity" />
@@ -79,6 +79,11 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
+        <service
+            android:name=".PingPongService"
+            android:enabled="true"
+            android:exported="true" >
+        </service>
     </application>
 
 </manifest>

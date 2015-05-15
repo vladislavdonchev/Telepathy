@@ -10,12 +10,14 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.gson.Gson;
 
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.Telepathy;
 import net.hardcodes.telepathy.dialogs.ConnectDialog;
 import net.hardcodes.telepathy.dialogs.DebugDialog;
+import net.hardcodes.telepathy.model.User;
 import net.hardcodes.telepathy.tools.ConnectionManager;
 import net.hardcodes.telepathy.tools.Logger;
 import net.hardcodes.telepathy.tools.Utils;

@@ -3,7 +3,8 @@ package net.hardcodes.telepathy.tools;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.preference.PreferenceManager;
 
 import com.google.android.gms.security.ProviderInstaller;
@@ -17,6 +18,7 @@ import com.koushikdutta.async.http.WebSocket;
 import com.splunk.mint.Mint;
 
 import net.hardcodes.telepathy.Constants;
+import net.hardcodes.telepathy.PingPongService;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.RemoteControlService;
 import net.hardcodes.telepathy.Telepathy;
@@ -25,8 +27,6 @@ import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.model.User;
 
 import java.security.KeyStore;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -45,19 +45,18 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
     public static final String ACTION_CONNECTION_STATE_CHANGE = "connStateChange";
 
     private static ConnectionManager instance;
-    private static ProgressDialog progressDialog;
+    private ProgressDialog progressDialog;
 
-    private static ConcurrentHashMap<Context, WebSocketConnectionListener> connectionListeners = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Context, WebSocketConnectionListener> connectionListeners = new ConcurrentHashMap<>();
 
-    public WebSocket webSocket;
-    private Timer pingPongTimer;
     private String serverAddress;
+    private WebSocket webSocket;
 
     private boolean userLogin = false;
     private boolean connectionDrop = false;
     private boolean connectedAndAuthenticated = false;
 
-    private static void reportConnectionError(WebSocketConnectionListener connectionListener, int errorCode) {
+    private void reportConnectionError(WebSocketConnectionListener connectionListener, int errorCode) {
         String errorMessage = "Unidentified error?!";
         switch (errorCode) {
             case ERROR_CODE_NO_INTERNET_CONNECTION:
@@ -212,12 +211,12 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
     };
 
     private ConnectionManager() {
+        progressDialog = new ProgressDialog(Telepathy.getContext(), "Configuring security provider...");
     }
 
     public static ConnectionManager getInstance() {
         if (instance == null) {
             instance = new ConnectionManager();
-            progressDialog = new ProgressDialog(Telepathy.getContext(), "Configuring security provider...");
         }
         return instance;
     }
@@ -273,6 +272,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
             connect();
         }
     }
+
     @Override
     public void onProviderInstalled() {
         progressDialog.hide();
@@ -322,6 +322,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
     }
 
     public void registerAccount(User user) {
+        Logger.log("WTF", "register" + new Gson().toJson(user));
         sendTextMessage(TelepathyAPI.MESSAGE_REGISTER + new Gson().toJson(user));
     }
 
@@ -376,28 +377,22 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
         }
     }
 
-    private void startPingPong() {
-        Logger.log("WS", "START PING");
+    public void ping(String message) {
+        webSocket.ping(message);
+    }
 
-        pingPongTimer = new Timer("keep_alive");
-        pingPongTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                if (webSocket != null) {
-                    try {
-                        webSocket.ping(TelepathyAPI.MESSAGE_HEARTBEAT);
-                        Logger.log("WS", "PING");
-                    } catch (Exception e) {
-                        Logger.log("WS", e.toString(), e);
-                    }
-                }
-            }
-        }, 0, 10 * 1000);
+    private void startPingPong() {
+        Context context = Telepathy.getContext();
+        Intent pingPongIntent = new Intent(context, PingPongService.class);
+        pingPongIntent.setAction(PingPongService.ACTION_START);
+        context.startService(pingPongIntent);
     }
 
     private void stopPingPong() {
-        Logger.log("WS", "STOP PING");
-        pingPongTimer.cancel();
-        pingPongTimer.purge();
+        Context context = Telepathy.getContext();
+        Intent pingPongIntent = new Intent(context, PingPongService.class);
+        pingPongIntent.setAction(PingPongService.ACTION_STOP);
+        context.startService(pingPongIntent);
+        context.stopService(pingPongIntent);
     }
 }
