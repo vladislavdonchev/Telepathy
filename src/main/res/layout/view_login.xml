@@ -37,9 +37,12 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
             android:gravity="center"
-            android:text="Authentication failed. Please try again."
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
+            android:shadowDx="2"
+            android:shadowDy="2"
+            android:shadowRadius="2"
+            android:text="user authentication failed.\nPlease try again."
+            android:textColor="#FFAAAA"
+            android:textSize="20sp"
             android:visibility="gone" />
 
         <net.hardcodes.telepathy.views.FontTextView
@@ -88,12 +91,12 @@
             android:layout_alignParentRight="true"
             android:layout_below="@id/view_uid_label"
             android:layout_marginLeft="16dp"
-            android:maxLength="20"
             android:layout_marginRight="8dp"
             android:layout_toRightOf="@id/view_pass_label"
             android:background="@drawable/textfield_activated_telepathy"
             android:gravity="center"
             android:inputType="textPassword"
+            android:maxLength="20"
             android:textColor="@android:color/white"
             android:textColorHint="@android:color/white"
             android:textSize="26sp" />

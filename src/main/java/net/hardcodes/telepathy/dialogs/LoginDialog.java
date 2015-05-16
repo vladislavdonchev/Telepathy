@@ -63,6 +63,8 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
 
     public void show(boolean previousAuthenticationFailed) {
         super.show();
+        setProcessingState(true);
+
         this.previousAuthenticationFailed = previousAuthenticationFailed;
         ConnectionManager.getInstance().acquireConnection(getContext(), this);
         prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
@@ -90,6 +92,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
                 if (!TextUtils.isEmpty(pass)) {
                     prefs.edit().putString(Constants.PREFERENCE_UID, uid).commit();
                     prefs.edit().putString(Constants.PREFERENCE_PASS, pass).commit();
+                    setProcessingState(true);
                     ConnectionManager.getInstance().login(getContext());
                     if (!passSaveCheckbox.isChecked()) {
                         prefs.edit().putString(Constants.PREFERENCE_PASS, "").commit();
@@ -116,29 +119,35 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
                 registerDialog.show();
                 break;
             case R.id.view_login_options:
-
+                Telepathy.showLongToast("Not implemented yet.");
                 break;
         }
         dismiss();
     }
 
-    @Override
-    public void onConnectionAcquired() {
+    private void setProcessingState(final boolean inProgress) {
         final boolean isConnectedAndAuthenticated = ConnectionManager.getInstance().isConnectedAndAuthenticated();
 
         Telepathy.runOnUIThread(new Runnable() {
             @Override
             public void run() {
-                toggleFrame(true);
-                connectionProgress.setVisibility(View.GONE);
+                toggleFrame(!inProgress);
+                connectionProgress.setVisibility(inProgress ? View.VISIBLE : View.GONE);
 
-                if (!isConnectedAndAuthenticated) {
+                if (!isConnectedAndAuthenticated && !inProgress) {
                     loginForm.setVisibility(View.VISIBLE);
                 } else {
                     loginForm.setVisibility(View.GONE);
                 }
             }
         });
+    }
+
+    @Override
+    public void onConnectionAcquired() {
+        setProcessingState(false);
+
+        boolean isConnectedAndAuthenticated = ConnectionManager.getInstance().isConnectedAndAuthenticated();
 
         if (!isConnectedAndAuthenticated && !previousAuthenticationFailed) {
             boolean autoLogin = prefs.getBoolean(Constants.PREFERENCE_LOGIN_AUTO, false);

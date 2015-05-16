@@ -3,6 +3,7 @@ package net.hardcodes.telepathy.tools;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 
 import com.google.android.gms.security.ProviderInstaller;
@@ -52,12 +53,16 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
 
     private final static int USER_LOGIN_PREPARE = 0;
     private final static int USER_LOGIN_REQUEST = 1;
-    private final static int USER_LOGIN_REQUEST_FAILED = -1; //TODO Why does this happen?
+    private final static int USER_LOGIN_REQUEST_PROCESSED_BY_SERVER = 10; //TODO Why does this occasionally fail to happen?
     private final static int USER_LOGOUT_REQUEST = 2;
 
     private int userLogin = USER_LOGIN_PREPARE;
     private boolean connectionDrop = false;
     private boolean connectedAndAuthenticated = false;
+
+    //TODO Related to the login request server processing issue...
+    private Handler loginRequestRetryHandler;
+    private Runnable loginRequestRetryRunnable;
 
     private void reportConnectionError(WebSocketConnectionListener connectionListener, int errorCode) {
         String errorMessage = "Unidentified error?!";
@@ -138,7 +143,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
             if (NetworkUtil.getConnectivityStatus(Telepathy.getContext()) == NetworkUtil.NO_CONNECTIVITY) {
                 Logger.log("WS", "INTERNET DIED");
                 reportConnectionError(null, ERROR_CODE_NO_INTERNET_CONNECTION);
-            } else if (userLogin == USER_LOGIN_REQUEST) {
+            } else if (userLogin == USER_LOGIN_REQUEST_PROCESSED_BY_SERVER) {
                 Logger.log("WS", "CONNECTION DROP");
                 connectionDrop = true;
                 connect();
@@ -164,6 +169,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
                         Telepathy.showLongToast("User authentication failed!");
                         Telepathy.attemptLogin(true);
                         setConnectedAndAuthenticated(false);
+                        userLogin = USER_LOGIN_PREPARE;
                         break;
                     case TelepathyAPI.ERROR_OTHER_END_HUNG_UP_UNEXPECTEDLY:
                         Telepathy.showLongToast("The connection has been interrupted unexpectedly.");
@@ -181,6 +187,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
             }
             if (s.startsWith(TelepathyAPI.MESSAGE_LOGIN_SUCCESS)) {
                 setConnectedAndAuthenticated(true);
+                userLogin = USER_LOGIN_REQUEST_PROCESSED_BY_SERVER;
                 if (!Utils.isServiceRunning(RemoteControlService.class)) {
                     Utils.startService();
                 }
@@ -217,6 +224,14 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
 
     private ConnectionManager() {
         progressDialog = new ProgressDialog(Telepathy.getContext(), "Configuring security provider...");
+        loginRequestRetryHandler = new Handler();
+        loginRequestRetryRunnable = new Runnable() {
+            @Override
+            public void run() {
+                Logger.log("WS", "Server failed to acknowledge login request. Possible network issue?");
+                login(Telepathy.getContext());
+            }
+        };
     }
 
     public static ConnectionManager getInstance() {
@@ -233,6 +248,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
     private void setConnectedAndAuthenticated(boolean connectedAndAuthenticated) {
         Logger.log("WS", "SET CAA: " + connectedAndAuthenticated);
         this.connectedAndAuthenticated = connectedAndAuthenticated;
+        loginRequestRetryHandler.removeCallbacks(loginRequestRetryRunnable);
         Intent connectionStateChangeIntent = new Intent(ACTION_CONNECTION_STATE_CHANGE);
         Telepathy.getContext().sendBroadcast(connectionStateChangeIntent);
     }
@@ -341,12 +357,13 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
     public void login(Context context) {
         Logger.log("WS", "LOGIN ATTEMPT CAA: " + connectedAndAuthenticated + " UL: " + userLogin);
         userLogin = USER_LOGIN_REQUEST;
-        if (!connectedAndAuthenticated) {
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-            String uid = preferences.getString(Constants.PREFERENCE_UID, "");
-            String pass = preferences.getString(Constants.PREFERENCE_PASS, "");
-            sendTextMessage(TelepathyAPI.MESSAGE_LOGIN + uid + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + Utils.sha256(pass));
-        }
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String uid = preferences.getString(Constants.PREFERENCE_UID, "");
+        String pass = preferences.getString(Constants.PREFERENCE_PASS, "");
+        sendTextMessage(TelepathyAPI.MESSAGE_LOGIN + uid + TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER + Utils.sha256(pass));
+
+        loginRequestRetryHandler.postDelayed(loginRequestRetryRunnable, 2 * 1000);
     }
 
     public void logout() {
