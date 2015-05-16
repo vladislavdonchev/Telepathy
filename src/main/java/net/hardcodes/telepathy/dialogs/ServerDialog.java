@@ -29,7 +29,7 @@ public class ServerDialog extends BaseDialog {
 
         serverEncryption = (CheckBox) contentContainer.findViewById(R.id.view_server_tls_config);
         serverEncryption.setTypeface(title.getTypeface());
-        serverEncryption.setChecked(prefs.getBoolean(Constants.PREFERENCE_USE_TLS, false));
+        serverEncryption.setChecked(prefs.getBoolean(Constants.PREFERENCE_USE_TLS, true));
     }
 
     @Override

@@ -253,8 +253,9 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
             return;
         }
 
-        boolean secureConnection = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Constants.PREFERENCE_USE_TLS, false);
-        String address = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREFERENCE_SERVER_ADDRESS, "telepathy.hardcodes.net:8021/tp");
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        boolean secureConnection = preferences.getBoolean(Constants.PREFERENCE_USE_TLS, true);
+        String address = preferences.getString(Constants.PREFERENCE_SERVER_ADDRESS, "telepathy.hardcodes.net:8021/tp");
         String protocol = "ws://";
 
         if (secureConnection) {
@@ -277,33 +278,39 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
     @Override
     public void onProviderInstalled() {
         progressDialog.hide();
-        SSLContext sslContext;
-        TrustManagerFactory tmf;
 
-        try {
-            tmf = TrustManagerFactory.getInstance("X509");
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance("X509");
-            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-            String companyName = Telepathy.getContext().getString(R.string.company_name);
-            ks.load(new FileCipher().readEncryptedFile(Telepathy.getContext().getAssets().open("font/unsteady_oversteer.ttf")),
-                    Utils.sha256(companyName).toUpperCase().toCharArray());
-            kmf.init(ks, Utils.sha256(companyName).toUpperCase().toCharArray());
-            tmf.init(ks);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                SSLContext sslContext;
+                TrustManagerFactory tmf;
 
-            sslContext = SSLContext.getInstance("TLSv1.2");
-            sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-            sslContext.getDefaultSSLParameters().setProtocols(new String[]{"TLSv1.2"});
-            sslContext.createSSLEngine().setEnabledProtocols(new String[]{"TLSv1.2"});
-        } catch (Exception e) {
-            Logger.log("SSLCONFIG", e.toString(), e);
-            reportConnectionError(null, ERROR_CODE_TLS_CONFIG_FAILED);
-            return;
-        }
+                try {
+                    tmf = TrustManagerFactory.getInstance("X509");
+                    KeyManagerFactory kmf = KeyManagerFactory.getInstance("X509");
+                    KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                    String companyName = Telepathy.getContext().getString(R.string.company_name);
+                    ks.load(new FileCipher().readEncryptedFile(Telepathy.getContext().getAssets().open("font/unsteady_oversteer.ttf")),
+                            Utils.sha256(companyName).toUpperCase().toCharArray());
+                    kmf.init(ks, Utils.sha256(companyName).toUpperCase().toCharArray());
+                    tmf.init(ks);
 
-        AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setSSLContext(sslContext);
-        AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setTrustManagers(tmf.getTrustManagers());
+                    sslContext = SSLContext.getInstance("TLSv1.2");
+                    sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+                    sslContext.getDefaultSSLParameters().setProtocols(new String[]{"TLSv1.2"});
+                    sslContext.createSSLEngine().setEnabledProtocols(new String[]{"TLSv1.2"});
+                } catch (Exception e) {
+                    Logger.log("SSLCONFIG", e.toString(), e);
+                    reportConnectionError(null, ERROR_CODE_TLS_CONFIG_FAILED);
+                    return;
+                }
 
-        connect();
+                AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setSSLContext(sslContext);
+                AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setTrustManagers(tmf.getTrustManagers());
+
+                connect();
+            }
+        }).start();
     }
 
     @Override
