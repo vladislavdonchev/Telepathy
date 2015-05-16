@@ -3,8 +3,6 @@ package net.hardcodes.telepathy.tools;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.preference.PreferenceManager;
 
 import com.google.android.gms.security.ProviderInstaller;
@@ -27,7 +25,6 @@ import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.model.User;
 
 import java.security.KeyStore;
-import java.security.Provider;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -53,7 +50,12 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
     private String serverAddress;
     private WebSocket webSocket;
 
-    private boolean userLogin = false;
+    private final static int USER_LOGIN_PREPARE = 0;
+    private final static int USER_LOGIN_REQUEST = 1;
+    private final static int USER_LOGIN_REQUEST_FAILED = -1; //TODO Why does this happen?
+    private final static int USER_LOGOUT_REQUEST = 2;
+
+    private int userLogin = USER_LOGIN_PREPARE;
     private boolean connectionDrop = false;
     private boolean connectedAndAuthenticated = false;
 
@@ -136,11 +138,11 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
             if (NetworkUtil.getConnectivityStatus(Telepathy.getContext()) == NetworkUtil.NO_CONNECTIVITY) {
                 Logger.log("WS", "INTERNET DIED");
                 reportConnectionError(null, ERROR_CODE_NO_INTERNET_CONNECTION);
-            } else if (userLogin) {
+            } else if (userLogin == USER_LOGIN_REQUEST) {
                 Logger.log("WS", "CONNECTION DROP");
                 connectionDrop = true;
                 connect();
-            } else {
+            } else if (userLogin != USER_LOGOUT_REQUEST) {
                 Logger.log("WS", "SERVER UNAVAILABLE");
                 reportConnectionError(null, ERROR_CODE_SERVER_UNAVAILABLE);
             }
@@ -184,10 +186,12 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
                 }
             } else if (s.startsWith(TelepathyAPI.MESSAGE_LOGOUT_SUCCESS)) {
                 setConnectedAndAuthenticated(false);
+                userLogin = USER_LOGIN_PREPARE;
                 if (Utils.isServiceRunning(RemoteControlService.class)) {
                     Utils.stopService();
                 }
                 if (webSocket != null && webSocket.isOpen()) {
+                    webSocket.setClosedCallback(null);
                     webSocket.close();
                 }
             }
@@ -336,7 +340,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
 
     public void login(Context context) {
         Logger.log("WS", "LOGIN ATTEMPT CAA: " + connectedAndAuthenticated + " UL: " + userLogin);
-        userLogin = true;
+        userLogin = USER_LOGIN_REQUEST;
         if (!connectedAndAuthenticated) {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
             String uid = preferences.getString(Constants.PREFERENCE_UID, "");
@@ -347,7 +351,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
 
     public void logout() {
         Logger.log("WS", "LOGOUT");
-        userLogin = false;
+        userLogin = USER_LOGOUT_REQUEST;
         sendTextMessage(TelepathyAPI.MESSAGE_LOGOUT);
     }
 
