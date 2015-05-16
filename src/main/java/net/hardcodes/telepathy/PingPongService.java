@@ -2,21 +2,24 @@ package net.hardcodes.telepathy;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
 
 import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.tools.ConnectionManager;
 import net.hardcodes.telepathy.tools.Logger;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 public class PingPongService extends Service {
 
     public final static String ACTION_START = "start";
     public final static String ACTION_STOP = "stop";
 
-    private HandlerThread pingPongThread;
-    private Handler pingPongHandler;
+    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private ScheduledFuture pingPongHandle;
     private Runnable pingPongRunnable;
 
     @Override
@@ -24,31 +27,23 @@ public class PingPongService extends Service {
 
         if (intent.getAction().equals(ACTION_START)) {
             Logger.log("WS", "START PING");
-            pingPongThread = new HandlerThread("PingPongThread");
-            pingPongThread.start();
-            pingPongHandler = new Handler(pingPongThread.getLooper());
             pingPongRunnable = new Runnable() {
                 @Override
                 public void run() {
                     try {
                         ConnectionManager.getInstance().ping(TelepathyAPI.MESSAGE_HEARTBEAT);
                         Logger.log("WS", "PING");
-                        pingPongHandler.postDelayed(this, 10 * 1000);
-                        Logger.log("WS", "POSTING NEXT PING");
                     } catch (Exception e) {
                         Logger.log("WS", e.toString(), e);
                     }
                 }
             };
-            pingPongHandler.post(pingPongRunnable);
+            pingPongHandle = scheduler.scheduleAtFixedRate(pingPongRunnable, 0, 10, TimeUnit.SECONDS);
         }
 
         if (intent.getAction().equals(ACTION_STOP)) {
             Logger.log("WS", "STOP PING");
-            pingPongHandler.removeCallbacks(pingPongRunnable);
-            pingPongHandler = null;
-            pingPongThread.quitSafely();
-            pingPongThread = null;
+            pingPongHandle.cancel(true);
         }
 
         return super.onStartCommand(intent, flags, startId);

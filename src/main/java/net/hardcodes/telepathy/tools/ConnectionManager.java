@@ -27,6 +27,7 @@ import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.model.User;
 
 import java.security.KeyStore;
+import java.security.Provider;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.net.ssl.KeyManagerFactory;
