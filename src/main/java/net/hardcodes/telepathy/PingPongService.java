@@ -15,18 +15,31 @@ import java.util.concurrent.TimeUnit;
 
 public class PingPongService extends Service {
 
-    public final static String ACTION_START = "start";
-    public final static String ACTION_STOP = "stop";
+    public final static String ACTION_START = "startPing";
+    public final static String ACTION_STOP = "stopPing";
 
-    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private ScheduledExecutorService scheduler;
     private ScheduledFuture pingPongHandle;
     private Runnable pingPongRunnable;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        if (intent.getAction().equals(ACTION_START)) {
+        if (ACTION_START.equals(intent.getAction())) {
+            startPing();
+        }
+
+        if (ACTION_STOP.equals(intent.getAction())) {
+            stopPing();
+        }
+
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    private void startPing() {
+        if (scheduler == null) {
             Logger.log("WS", "START PING");
+            scheduler = Executors.newScheduledThreadPool(1);
             pingPongRunnable = new Runnable() {
                 @Override
                 public void run() {
@@ -40,13 +53,26 @@ public class PingPongService extends Service {
             };
             pingPongHandle = scheduler.scheduleAtFixedRate(pingPongRunnable, 0, 10, TimeUnit.SECONDS);
         }
+    }
 
-        if (intent.getAction().equals(ACTION_STOP)) {
+    private void stopPing() {
+        if (scheduler != null) {
             Logger.log("WS", "STOP PING");
             pingPongHandle.cancel(true);
-        }
+            scheduler.shutdownNow();
 
-        return super.onStartCommand(intent, flags, startId);
+            scheduler = null;
+            pingPongHandle = null;
+            pingPongRunnable = null;
+
+            stopSelf();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        stopPing();
+        super.onDestroy();
     }
 
     @Override

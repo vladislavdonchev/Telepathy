@@ -147,7 +147,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
                 Logger.log("WS", "CONNECTION DROP");
                 connectionDrop = true;
                 connect();
-            } else if (userLogin != USER_LOGOUT_REQUEST) {
+            } else if (userLogin == USER_LOGIN_REQUEST) {
                 Logger.log("WS", "SERVER UNAVAILABLE");
                 reportConnectionError(null, ERROR_CODE_SERVER_UNAVAILABLE);
             }
@@ -198,7 +198,6 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
                     Utils.stopService();
                 }
                 if (webSocket != null && webSocket.isOpen()) {
-                    webSocket.setClosedCallback(null);
                     webSocket.close();
                 }
             }
@@ -422,6 +421,5 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
         Intent pingPongIntent = new Intent(context, PingPongService.class);
         pingPongIntent.setAction(PingPongService.ACTION_STOP);
         context.startService(pingPongIntent);
-        context.stopService(pingPongIntent);
     }
 }

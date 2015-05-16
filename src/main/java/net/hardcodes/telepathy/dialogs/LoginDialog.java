@@ -33,9 +33,18 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
     private RegisterDialog registerDialog;
     private boolean previousAuthenticationFailed;
 
+    private boolean processing = true;
+
     public LoginDialog(Context context) {
         super(context);
         init(context);
+    }
+
+    @Override
+    public void dismiss() {
+        if (!processing) {
+            super.dismiss();
+        }
     }
 
     private void init(Context context) {
@@ -92,8 +101,8 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
                 if (!TextUtils.isEmpty(pass)) {
                     prefs.edit().putString(Constants.PREFERENCE_UID, uid).commit();
                     prefs.edit().putString(Constants.PREFERENCE_PASS, pass).commit();
-                    setProcessingState(true);
                     ConnectionManager.getInstance().login(getContext());
+                    setProcessingState(true);
                     if (!passSaveCheckbox.isChecked()) {
                         prefs.edit().putString(Constants.PREFERENCE_PASS, "").commit();
                     }
@@ -108,6 +117,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
             }
         } else {
             ConnectionManager.getInstance().logout();
+            setProcessingState(true);
             prefs.edit().putString(Constants.PREFERENCE_PASS, "").commit();
         }
     }
@@ -126,6 +136,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
     }
 
     private void setProcessingState(final boolean inProgress) {
+        processing = inProgress;
         final boolean isConnectedAndAuthenticated = ConnectionManager.getInstance().isConnectedAndAuthenticated();
 
         Telepathy.runOnUIThread(new Runnable() {
@@ -153,7 +164,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
             boolean autoLogin = prefs.getBoolean(Constants.PREFERENCE_LOGIN_AUTO, false);
             if (autoLogin && !TextUtils.isEmpty(prefs.getString(Constants.PREFERENCE_PASS, ""))) {
                 ConnectionManager.getInstance().login(getContext());
-                dismiss();
+                setProcessingState(true);
             }
         }
     }
@@ -163,6 +174,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
         switch (errorCode) {
             case ConnectionManager.ERROR_CODE_SERVER_UNAVAILABLE:
             case ConnectionManager.ERROR_CODE_TLS_CONFIG_FAILED:
+                setProcessingState(false);
                 dismiss();
                 break;
         }
@@ -171,6 +183,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
     @Override
     public void onTextMessage(String message) {
         if (message.startsWith(TelepathyAPI.MESSAGE_LOGIN_SUCCESS) || message.startsWith(TelepathyAPI.MESSAGE_LOGOUT_SUCCESS)) {
+            setProcessingState(false);
             dismiss();
         }
     }
