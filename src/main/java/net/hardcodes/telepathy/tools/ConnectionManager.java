@@ -98,7 +98,11 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
                 webSocket.setDataCallback(dataCallback);
                 ConnectionManager.this.webSocket = webSocket;
 
-                startPingPong();
+                boolean pingInitiationEnabled = PreferenceManager.getDefaultSharedPreferences(Telepathy.getContext())
+                        .getBoolean(Constants.PREFERENCE_INITIATE_PING, false);
+                if (pingInitiationEnabled) {
+                    startPingPong();
+                }
 
                 if (connectionDrop) {
                     connectionDrop = false;
@@ -137,7 +141,12 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
             }
             Logger.log("WS", "SOCKET CLOSED");
 
-            stopPingPong();
+            boolean pingInitiationEnabled = PreferenceManager.getDefaultSharedPreferences(Telepathy.getContext())
+                    .getBoolean(Constants.PREFERENCE_INITIATE_PING, false);
+            if (pingInitiationEnabled) {
+                stopPingPong();
+            }
+
             setConnectedAndAuthenticated(false);
 
             if (NetworkUtil.getConnectivityStatus(Telepathy.getContext()) == NetworkUtil.NO_CONNECTIVITY) {

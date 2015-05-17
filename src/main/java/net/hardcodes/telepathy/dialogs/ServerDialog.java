@@ -14,6 +14,7 @@ public class ServerDialog extends BaseDialog {
     private EditText serverNameInput;
     private EditText serverAddressInput;
     private CheckBox serverEncryption;
+    private CheckBox pingInitiation;
     private final SharedPreferences prefs;
 
     public ServerDialog(Context context) {
@@ -30,6 +31,10 @@ public class ServerDialog extends BaseDialog {
         serverEncryption = (CheckBox) contentContainer.findViewById(R.id.view_server_tls_config);
         serverEncryption.setTypeface(title.getTypeface());
         serverEncryption.setChecked(prefs.getBoolean(Constants.PREFERENCE_USE_TLS, true));
+
+        pingInitiation = (CheckBox) contentContainer.findViewById(R.id.view_server_ping_config);
+        pingInitiation.setTypeface(title.getTypeface());
+        pingInitiation.setChecked(prefs.getBoolean(Constants.PREFERENCE_INITIATE_PING, false));
     }
 
     @Override
@@ -38,9 +43,11 @@ public class ServerDialog extends BaseDialog {
         String serverAddress = serverAddressInput.getText().toString();
 
         if (!serverNameInput.equals("") && !serverAddress.equals("")) {
-            prefs.edit().putString(Constants.PREFERENCE_SERVER_NAME, serverName).commit();
-            prefs.edit().putString(Constants.PREFERENCE_SERVER_ADDRESS, serverAddress).commit();
-            prefs.edit().putBoolean(Constants.PREFERENCE_USE_TLS, serverEncryption.isChecked()).commit();
+            prefs.edit()
+            .putString(Constants.PREFERENCE_SERVER_NAME, serverName)
+            .putString(Constants.PREFERENCE_SERVER_ADDRESS, serverAddress)
+            .putBoolean(Constants.PREFERENCE_USE_TLS, serverEncryption.isChecked())
+            .putBoolean(Constants.PREFERENCE_INITIATE_PING, pingInitiation.isChecked()).apply();
 
             super.onLeftButtonClick();
         }

@@ -15,6 +15,7 @@ public class Constants {
     public static String PREFERENCE_SERVER_NAME = "pref_server_name";
     public static String PREFERENCE_SERVER_ADDRESS = "pref_server_address";
     public static String PREFERENCE_USE_TLS = "pref_use_tls";
+    public static String PREFERENCE_INITIATE_PING = "pref_initiate_ping";
     public static String PREFERENCE_UID = "pref_uid";
     public static String PREFERENCE_PASS = "pref_pass";
     public static String PREFERENCE_DEBUG_LOG = "pref_debug_log";

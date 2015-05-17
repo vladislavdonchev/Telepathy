@@ -172,6 +172,7 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
     @Override
     public void onError(int errorCode) {
         switch (errorCode) {
+            case ConnectionManager.ERROR_CODE_NO_INTERNET_CONNECTION:
             case ConnectionManager.ERROR_CODE_SERVER_UNAVAILABLE:
             case ConnectionManager.ERROR_CODE_TLS_CONFIG_FAILED:
                 setProcessingState(false);
