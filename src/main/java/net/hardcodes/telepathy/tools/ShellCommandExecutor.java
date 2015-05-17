@@ -20,7 +20,7 @@ public class ShellCommandExecutor {
     public static final String KEY_COMMAND_RESULT = "commandOutput";
 
     public static ShellCommandExecutor instance;
-    private static Shell.Interactive rootSession;
+    private static Shell.Interactive session;
 
     private ShellCommandExecutor() {
     }
@@ -134,7 +134,7 @@ public class ShellCommandExecutor {
     }
 
     public void runCommand(final String[] command, int commandCode, Shell.OnCommandResultListener commandResultListener, final boolean discardOutput) {
-        if (rootSession == null) {
+        if (session == null) {
             openShell();
         }
 
@@ -151,23 +151,23 @@ public class ShellCommandExecutor {
             };
         }
 
-        if (rootSession != null) {
-            rootSession.addCommand(command, commandCode, commandResultListener);
+        if (session != null) {
+            session.addCommand(command, commandCode, commandResultListener);
         }
     }
 
     private void openShell() {
-        rootSession = new Shell.Builder().
-                useSU().
+        session = new Shell.Builder().
+                useSH().
                 setWantSTDERR(false).
                 setWatchdogTimeout(20).
                 setMinimalLogging(false).open();
     }
 
     public void closeShell() {
-        if (rootSession != null) {
-            rootSession.close();
-            rootSession = null;
+        if (session != null) {
+            session.close();
+            session = null;
         }
     }
 

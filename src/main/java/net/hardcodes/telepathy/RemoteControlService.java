@@ -1,5 +1,6 @@
 package net.hardcodes.telepathy;
 
+import android.app.Activity;
 import android.app.KeyguardManager;
 import android.app.Service;
 import android.content.Context;
@@ -11,6 +12,9 @@ import android.hardware.display.VirtualDisplay;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.media.projection.MediaProjection;
+import android.media.projection.MediaProjectionManager;
+import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
@@ -42,6 +46,11 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     public static final String ACTION_START = "START";
     public static final String ACTION_STOP = "STOP";
 
+    public static final String EXTRA_ACTIVITY_RESULT = "activity_result";
+    public static final String EXTRA_ACTIVITY_RESULT_INTENT = "activity_result_intent";
+
+    private int activityResult;
+    private Intent activityResultIntent;
     private static final String VIRTUAL_DISPLAY_TAG = "ScreenRecorder";
     private static final String TAG = "StreamingServer";
     private KeyguardManager myKM;
@@ -119,6 +128,11 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
         if (intent != null) {
             if (intent.getAction().equals(ACTION_START)) {
+                if (Build.VERSION.SDK_INT >= 21) {
+                    activityResult = intent.getIntExtra(EXTRA_ACTIVITY_RESULT, Activity.RESULT_CANCELED);
+                    activityResultIntent = intent.getParcelableExtra(EXTRA_ACTIVITY_RESULT_INTENT);
+                }
+
                 Telepathy.showShortToast("Remote control service started.");
                 ConnectionManager.getInstance().acquireConnection(this, this);
             }
@@ -140,9 +154,17 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         } catch (IOException e) {
             Logger.log("ENCODER", e.toString(), e);
         }
-        virtualDisplay = displayManager.createVirtualDisplay(VIRTUAL_DISPLAY_TAG, resolution.x, resolution.y, 50,
-                encoderInputSurface, DisplayManager.VIRTUAL_DISPLAY_FLAG_SECURE | DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION
-                    | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC);
+
+        if (Build.VERSION.SDK_INT >= 21) {
+            MediaProjectionManager mediaProjectionManager = ((MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE));
+            MediaProjection mediaProjection = mediaProjectionManager.getMediaProjection(activityResult, activityResultIntent);
+            virtualDisplay = mediaProjection.createVirtualDisplay(VIRTUAL_DISPLAY_TAG, resolution.x, resolution.y, 50,
+                    DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC, encoderInputSurface, null, null);
+        } else {
+            virtualDisplay = displayManager.createVirtualDisplay(VIRTUAL_DISPLAY_TAG, resolution.x, resolution.y, 50,
+                    encoderInputSurface, DisplayManager.VIRTUAL_DISPLAY_FLAG_SECURE | DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION
+                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC);
+        }
 
         encoderThread = new Thread(new EncoderWorker(), "Encoder Thread");
         encoderThread.setPriority(Thread.MAX_PRIORITY);

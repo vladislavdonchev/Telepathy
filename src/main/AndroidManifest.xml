@@ -84,6 +84,11 @@
             android:enabled="true"
             android:exported="true" >
         </service>
+
+        <activity
+            android:name=".activities.ScreenCaptureRequestActivity"
+            android:label="@string/title_activity_screen_capture_request" >
+        </activity>
     </application>
 
 </manifest>

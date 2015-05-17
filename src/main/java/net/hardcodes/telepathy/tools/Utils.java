@@ -1,5 +1,6 @@
 package net.hardcodes.telepathy.tools;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +15,7 @@ import com.splunk.mint.Mint;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.RemoteControlService;
 import net.hardcodes.telepathy.Telepathy;
+import net.hardcodes.telepathy.activities.ScreenCaptureRequestActivity;
 import net.hardcodes.telepathy.dialogs.InstallUninstallDialog;
 
 import java.io.BufferedReader;
@@ -108,6 +110,22 @@ public class Utils {
         if (configFile != null && configFile.exists()) {
             configFile.delete();
         }
+    }
+
+    public static void startActivity() {
+        Context context = Telepathy.getContext();
+        Intent activityIntent = new Intent(context, ScreenCaptureRequestActivity.class);
+        activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(activityIntent);
+    }
+
+    public static void startService(int resultCode, Intent resultIntent) {
+        Context context = Telepathy.getContext();
+        Intent serverIntent = new Intent(context, RemoteControlService.class);
+        serverIntent.setAction(RemoteControlService.ACTION_START);
+        serverIntent.putExtra(RemoteControlService.EXTRA_ACTIVITY_RESULT, resultCode);
+        serverIntent.putExtra(RemoteControlService.EXTRA_ACTIVITY_RESULT_INTENT, resultIntent);
+        context.startService(serverIntent);
     }
 
     public static void startService() {

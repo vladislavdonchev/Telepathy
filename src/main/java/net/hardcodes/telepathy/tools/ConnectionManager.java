@@ -3,6 +3,7 @@ package net.hardcodes.telepathy.tools;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 
@@ -198,7 +199,11 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
                 setConnectedAndAuthenticated(true);
                 userLogin = USER_LOGIN_REQUEST_PROCESSED_BY_SERVER;
                 if (!Utils.isServiceRunning(RemoteControlService.class)) {
-                    Utils.startService();
+                    if (Build.VERSION.SDK_INT >= 21) {
+                        Utils.startActivity();
+                    } else {
+                        Utils.startService();
+                    }
                 }
             } else if (s.startsWith(TelepathyAPI.MESSAGE_LOGOUT_SUCCESS)) {
                 setConnectedAndAuthenticated(false);
