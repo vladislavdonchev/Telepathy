@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.hardcodes.telepathy"
     android:permission="android.permission.RECEIVE_BOOT_COMPLETED"
-    android:versionCode="012"
+    android:versionCode="1903"
     android:versionName="@string/app_version" >
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -45,7 +45,6 @@
             android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -58,12 +57,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.HomeScreenActivity" />
         </activity>
-
-        <service
-            android:name=".RemoteControlService"
-            android:exported="true"
-            android:label="@string/title_activity_server" />
-
         <activity
             android:name=".activities.SettingsActivity"
             android:label="Settings"
@@ -74,21 +67,29 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.HomeScreenActivity" />
         </activity>
+        <activity
+            android:name=".activities.ScreenCaptureRequestActivity"
+            android:label="Settings"
+            android:launchMode="singleInstance"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.ScreenCaptureRequestActivity" />
+        </activity>
 
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
         <service
+            android:name=".RemoteControlService"
+            android:exported="true"
+            android:label="@string/title_activity_server" />
+        <service
             android:name=".PingPongService"
             android:enabled="true"
             android:exported="true" >
         </service>
-
-        <activity
-            android:name=".activities.ScreenCaptureRequestActivity"
-            android:label="@string/title_activity_screen_capture_request" >
-        </activity>
     </application>
 
 </manifest>

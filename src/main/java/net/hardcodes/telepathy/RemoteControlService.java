@@ -56,9 +56,12 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     private KeyguardManager myKM;
     private KeyguardManager.KeyguardLock kl;
     private SharedPreferences preferences;
+
+    private MediaProjection mediaProjection;
     private DisplayManager displayManager;
     private Surface encoderInputSurface = null;
     private VirtualDisplay virtualDisplay = null;
+
     private MediaCodec encoder = null;
     private Thread encoderThread = null;
 
@@ -157,7 +160,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
         if (Build.VERSION.SDK_INT >= 21) {
             MediaProjectionManager mediaProjectionManager = ((MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE));
-            MediaProjection mediaProjection = mediaProjectionManager.getMediaProjection(activityResult, activityResultIntent);
+            mediaProjection = mediaProjectionManager.getMediaProjection(activityResult, activityResultIntent);
             virtualDisplay = mediaProjection.createVirtualDisplay(VIRTUAL_DISPLAY_TAG, resolution.x, resolution.y, 50,
                     DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC, encoderInputSurface, null, null);
         } else {
@@ -226,6 +229,12 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         try {
             if (encoder != null) {
                 encoder.signalEndOfInputStream();
+            }
+
+            if (Build.VERSION.SDK_INT >= 21) {
+                if (mediaProjection != null) {
+                    mediaProjection.stop();
+                }
             }
 
             if (virtualDisplay != null) {

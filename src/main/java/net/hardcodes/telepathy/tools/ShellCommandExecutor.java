@@ -158,7 +158,7 @@ public class ShellCommandExecutor {
 
     private void openShell() {
         session = new Shell.Builder().
-                useSH().
+                useSU().
                 setWantSTDERR(false).
                 setWatchdogTimeout(20).
                 setMinimalLogging(false).open();

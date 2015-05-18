@@ -29,8 +29,10 @@ import net.hardcodes.telepathy.model.User;
 import java.security.KeyStore;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManagerFactory;
 
 /**
@@ -99,11 +101,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
                 webSocket.setDataCallback(dataCallback);
                 ConnectionManager.this.webSocket = webSocket;
 
-                boolean pingInitiationEnabled = PreferenceManager.getDefaultSharedPreferences(Telepathy.getContext())
-                        .getBoolean(Constants.PREFERENCE_INITIATE_PING, false);
-                if (pingInitiationEnabled) {
-                    startPingPong();
-                }
+                startPingPong();
 
                 if (connectionDrop) {
                     connectionDrop = false;
@@ -204,6 +202,12 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
                     } else {
                         Utils.startService();
                     }
+                }
+
+                boolean pingInitiationEnabled = PreferenceManager.getDefaultSharedPreferences(Telepathy.getContext())
+                        .getBoolean(Constants.PREFERENCE_INITIATE_PING, false);
+                if (!pingInitiationEnabled) {
+                    stopPingPong();
                 }
             } else if (s.startsWith(TelepathyAPI.MESSAGE_LOGOUT_SUCCESS)) {
                 setConnectedAndAuthenticated(false);
@@ -340,6 +344,12 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
 
                 AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setSSLContext(sslContext);
                 AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setTrustManagers(tmf.getTrustManagers());
+//                AsyncHttpClient.getDefaultInstance().getSSLSocketMiddleware().setHostnameVerifier(new HostnameVerifier() {
+//                    @Override
+//                    public boolean verify(String hostname, SSLSession session) {
+//                        return true;
+//                    }
+//                });
 
                 connect();
             }
