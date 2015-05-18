@@ -17,16 +17,7 @@ import java.util.Date;
 public class Logger {
 
     public static final boolean DEBUG = true;
-    private static final SharedPreferences prefs;
-
-    static {
-        if (!DEBUG) {
-            Debug.stopMethodTracing();
-        } else {
-            Debug.startMethodTracing();
-        }
-        prefs = PreferenceManager.getDefaultSharedPreferences(Telepathy.getContext());
-    }
+    private static final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Telepathy.getContext());
 
     public static void log(String tag, String message, Exception e) {
         if (DEBUG) {
