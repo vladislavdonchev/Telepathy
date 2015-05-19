@@ -10,6 +10,7 @@
     <string name="action_generic_dialog_title">Dialog</string>
     <string name="title_activity_client">Remote Control Client</string>
     <string name="title_activity_server">Remote Control Service</string>
+    <string name="server_fingerprint">Banded Depth Swim</string>
     <!-- Buttons -->
     <string name="arrow_left_button">&#x3C;</string>
     <string name="create_account"><u>create account</u></string>

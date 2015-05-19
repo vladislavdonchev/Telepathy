@@ -16,7 +16,7 @@ import java.util.Date;
  */
 public class Logger {
 
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
     private static final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Telepathy.getContext());
 
     public static void log(String tag, String message, Exception e) {

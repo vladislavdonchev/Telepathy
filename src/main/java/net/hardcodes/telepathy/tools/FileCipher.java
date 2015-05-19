@@ -53,22 +53,30 @@ public class FileCipher {
         System.arraycopy(saltAndKeyBytes, 8, encryptedKeyBytes, 0, keySize);
 
         PBEKeySpec keySpec = new PBEKeySpec(password);
-        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(Affine.getSecretKeyFactoryAlgorithm());
+        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(
+                new StringEncrypter(Utils.sha256(Telepathy.getContext().getString(R.string.api_version)).toUpperCase())
+                        .getSecretKeyFactoryAlgorithm());
         SecretKey passwordKey = keyFactory.generateSecret(keySpec);
         PBEParameterSpec parameterSpec = new PBEParameterSpec(salt, 1000);
 
-        Cipher cipher = Cipher.getInstance(Affine.getSecretKeyFactoryAlgorithm());
+        Cipher cipher = Cipher.getInstance(
+                new StringEncrypter(Utils.sha256(Telepathy.getContext().getString(R.string.api_version)).toUpperCase())
+                        .getSecretKeyFactoryAlgorithm());
         cipher.init(Cipher.DECRYPT_MODE, passwordKey, parameterSpec);
 
         byte[] decryptedKeyBytes = cipher.doFinal(encryptedKeyBytes);
 
-        SecretKey secretKey = new SecretKeySpec(decryptedKeyBytes, Affine.SecretKeySpecAlgorithm());
+        SecretKey secretKey = new SecretKeySpec(decryptedKeyBytes,
+                new StringEncrypter(Utils.sha256(Telepathy.getContext().getString(R.string.api_version)).toUpperCase())
+                        .SecretKeySpecAlgorithm());
 
         return secretKey;
     }
 
     public final InputStream readEncryptedFile(InputStream file) throws Exception {
-        Cipher cipher = Cipher.getInstance(Affine.getCipherAlgorithm());
+        Cipher cipher = Cipher.getInstance(
+                new StringEncrypter(Utils.sha256(Telepathy.getContext().getString(R.string.api_version)).toUpperCase())
+                    .getCipherAlgorithm());
         cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(getMagicBytes()));
 
         CipherInputStream cipherInFile = new CipherInputStream(file, cipher);
