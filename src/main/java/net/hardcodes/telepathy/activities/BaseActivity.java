@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -55,7 +56,12 @@ public class BaseActivity extends Activity {
                 buildDeploymentDialog(deploymentState, installedVersion);
             }
         } else {
-            Toast.makeText(this, "SU not available. This device can only be used as a client.", Toast.LENGTH_LONG).show();
+            String message = "ROOT access is not available. This device can only be used as a client.";
+            if (Build.VERSION.SDK_INT >= 21) {
+                message = "ROOT access is not available. Screen sharing can only be used without remote control.";
+            }
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Head to our INDIEGOGO page to help us get a system license, so that ROOT access will no longer be required!", Toast.LENGTH_LONG).show();
         }
     }
 

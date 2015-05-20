@@ -40,8 +40,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="onCheckboxClicked"
-            android:text="start service on boot"
+            android:text="connect automatically"
             android:textColor="@android:color/white" />
+
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/connect_automatically_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:ellipsize="marquee"
+            android:layout_marginBottom="8dp"
+            android:text="The application will connect automatically if there is a connection drop, or when the device is restarted."
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
 
         <CheckBox
             android:id="@+id/checkbox_login_auto"
@@ -51,6 +63,18 @@
             android:onClick="onCheckboxClicked"
             android:text="login automatically"
             android:textColor="@android:color/white" />
+
+        <net.hardcodes.telepathy.views.FontTextView
+            android:id="@+id/login_automatically_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:singleLine="true"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:ellipsize="marquee"
+            android:text="If the 'remember password' option is enabled, the application will authenticate your user immediately when connected."
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
 
         <net.hardcodes.telepathy.views.FontTextView
             android:layout_width="wrap_content"
@@ -75,7 +99,7 @@
             android:id="@+id/textview_version"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="10dp"
             android:gravity="center"
             android:text="@string/app_version"
             android:textColor="@android:color/white"

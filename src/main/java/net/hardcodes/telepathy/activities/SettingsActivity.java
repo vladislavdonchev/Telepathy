@@ -20,6 +20,8 @@ import net.hardcodes.telepathy.tools.Logger;
 import net.hardcodes.telepathy.tools.Utils;
 import net.hardcodes.telepathy.views.FontTextView;
 
+import java.util.Arrays;
+
 public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheckedChangeListener {
     private static final String[] bitrateOptions = {"Low (256 Kbps)", "Medium (512 Kbps)", "High (1 Mbps)", "Very High (2 Mbps)"};
     private static final String[] bitrateValues = {"0.25", "0.5", "1", "2"};
@@ -156,6 +158,7 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
                 }
                 bitrateWiFiSelected.setText(bitrateOptions[selectedBitRateWiFi]);
                 Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_BITRATE_WIFI, bitrateValues[selectedBitRateWiFi]);
+                setBitrateSelectorsColor();
             }
         });
         arrowWiFiRight.setOnClickListener(new View.OnClickListener() {
@@ -166,6 +169,7 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
                 }
                 bitrateWiFiSelected.setText(bitrateOptions[selectedBitRateWiFi]);
                 Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_BITRATE_WIFI, bitrateValues[selectedBitRateWiFi]);
+                setBitrateSelectorsColor();
             }
         });
         arrowMobileLeft.setOnClickListener(new View.OnClickListener() {
@@ -176,6 +180,7 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
                 }
                 bitrateMobileSelected.setText(bitrateOptions[selectedBitRateMobile]);
                 Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_BITRATE_MOBILE, bitrateValues[selectedBitRateMobile]);
+                setBitrateSelectorsColor();
             }
         });
         arrowMobileRight.setOnClickListener(new View.OnClickListener() {
@@ -186,6 +191,7 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
                 }
                 bitrateMobileSelected.setText(bitrateOptions[selectedBitRateMobile]);
                 Utils.setStringPref(SettingsActivity.this, Constants.PREFERENCE_BITRATE_MOBILE, bitrateValues[selectedBitRateMobile]);
+                setBitrateSelectorsColor();
             }
         });
 
@@ -204,6 +210,51 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
                 systemServiceStatus.setText("up-to-date (click to uninstall)");
                 break;
         }
+
+        initRadioGroups();
+        initBitrateSelectors();
+    }
+
+    private void initBitrateSelectors() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        selectedBitRateWiFi = Arrays.asList(bitrateValues).indexOf(prefs.getString(Constants.PREFERENCE_BITRATE_WIFI, bitrateValues[selectedBitRateWiFi]));
+        bitrateWiFiSelected.setText(bitrateOptions[selectedBitRateWiFi]);
+
+        selectedBitRateMobile = Arrays.asList(bitrateValues).indexOf(prefs.getString(Constants.PREFERENCE_BITRATE_MOBILE, bitrateValues[selectedBitRateMobile]));
+        bitrateMobileSelected.setText(bitrateOptions[selectedBitRateMobile]);
+
+        setBitrateSelectorsColor();
+    }
+
+    private void setBitrateSelectorsColor() {
+        int color = android.R.color.holo_red_light;
+        switch (selectedBitRateWiFi) {
+            case 1:
+                color = android.R.color.holo_orange_dark;
+                break;
+            case 2:
+                color = android.R.color.holo_orange_light;
+                break;
+            case 3:
+                color = android.R.color.holo_green_light;
+                break;
+        }
+        bitrateWiFiSelected.setTextColor(getResources().getColor(color));
+
+        color = android.R.color.holo_red_light;
+        switch (selectedBitRateMobile) {
+            case 1:
+                color = android.R.color.holo_orange_dark;
+                break;
+            case 2:
+                color = android.R.color.holo_orange_light;
+                break;
+            case 3:
+                color = android.R.color.holo_green_light;
+                break;
+        }
+        bitrateMobileSelected.setTextColor(getResources().getColor(color));
     }
 
     public void onCheckboxClicked(View v) {
@@ -226,6 +277,43 @@ public class SettingsActivity extends BaseActivity implements RadioGroup.OnCheck
     @Override
     public void onPause() {
         super.onPause();
+    }
+
+    private void initRadioGroups() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        switch (prefs.getString(Constants.PREFERENCE_CONNECTION_RQ, Constants.CONSTANT_STRING_PROMPT)) {
+            case Constants.CONSTANT_STRING_PROMPT:
+                radioGroupConnection.check(R.id.radio_prompt_connection);
+                break;
+            case Constants.CONSTANT_STRING_ALLOW:
+                radioGroupConnection.check(R.id.radio_allow_connection);
+                break;
+            case Constants.CONSTANT_STRING_DENY:
+                radioGroupConnection.check(R.id.radio_deny_connection);
+                break;
+        }
+        switch (prefs.getString(Constants.PREFERENCE_REMOTE_CONTROL_RQ, Constants.CONSTANT_STRING_PROMPT)) {
+            case Constants.CONSTANT_STRING_PROMPT:
+                radioGroupRemoteControl.check(R.id.radio_prompt_remote_control);
+                break;
+            case Constants.CONSTANT_STRING_ALLOW:
+                radioGroupRemoteControl.check(R.id.radio_allow_remote_control);
+                break;
+            case Constants.CONSTANT_STRING_DENY:
+                radioGroupRemoteControl.check(R.id.radio_deny_remote_control);
+                break;
+        }
+        switch (prefs.getString(Constants.PREFERENCE_SCREEN_LOCK_UNLOCK, Constants.CONSTANT_STRING_PROMPT)) {
+            case Constants.CONSTANT_STRING_PROMPT:
+                radioGroupScreen.check(R.id.radio_prompt_screen);
+                break;
+            case Constants.CONSTANT_STRING_ALLOW:
+                radioGroupScreen.check(R.id.radio_allow_screen);
+                break;
+            case Constants.CONSTANT_STRING_DENY:
+                radioGroupScreen.check(R.id.radio_deny_screen);
+                break;
+        }
     }
 
     @Override
