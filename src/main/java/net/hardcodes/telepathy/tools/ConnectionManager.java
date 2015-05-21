@@ -292,7 +292,7 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         boolean secureConnection = preferences.getBoolean(Constants.PREFERENCE_USE_TLS, true);
-        String address = preferences.getString(Constants.PREFERENCE_SERVER_ADDRESS, "telepathy.hardcodes.net:8021/tp");
+        String address = preferences.getString(Constants.PREFERENCE_SERVER_ADDRESS, "telepathy.hardcodes.net:443/tp");
         String protocol = "ws://";
 
         if (secureConnection) {
@@ -366,6 +366,9 @@ public class ConnectionManager implements ProviderInstaller.ProviderInstallListe
     private void connect() {
         Logger.log("WS", "CONNECTING TO: " + serverAddress);
         if (webSocket != null && webSocket.isOpen()) {
+            webSocket.setClosedCallback(null);
+            webSocket.setStringCallback(null);
+            webSocket.setDataCallback(null);
             webSocket.close();
             webSocket = null;
         }
