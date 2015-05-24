@@ -59,16 +59,17 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     private MediaProjection mediaProjection;
     private DisplayManager displayManager;
-    private Surface encoderInputSurface = null;
-    private VirtualDisplay virtualDisplay = null;
+    private Surface encoderInputSurface;
+    private VirtualDisplay virtualDisplay;
 
-    private MediaCodec encoder = null;
-    private Thread encoderThread = null;
+    private MediaCodec encoder;
+    private Thread encoderThread;
 
     private float bitrateRatio;
     private int deviceWidth;
     private int deviceHeight;
     private Point resolution = new Point();
+    private String remoteUID;
 
     @Override
     public void onConnectionAcquired() {
@@ -93,12 +94,13 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         Logger.log("API", message);
 
         if (message.startsWith(TelepathyAPI.MESSAGE_BIND)) {
-            String remoteUID = message.split(TelepathyAPI.MESSAGE_UID_DELIMITER)[1];
+            remoteUID = message.split(TelepathyAPI.MESSAGE_UID_DELIMITER)[1];
             ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_BIND_ACCEPTED + remoteUID);
             Telepathy.showShortToast("User " + remoteUID + " has connected.");
             startEncodingVirtualDisplay();
 
         } else if (message.startsWith(TelepathyAPI.MESSAGE_DISBAND)) {
+            Telepathy.showShortToast("User " + remoteUID + " has disconnected.");
             stopEncodingVirtualDisplay();
 
         } else if (message.startsWith(TelepathyAPI.MESSAGE_INPUT)) {
@@ -151,12 +153,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     public void startEncodingVirtualDisplay() {
         initDisplayParameters();
-
-        try {
-            encoderInputSurface = createDisplaySurface();
-        } catch (IOException e) {
-            Logger.log("ENCODER", e.toString(), e);
-        }
+        createDisplaySurface();
 
         if (Build.VERSION.SDK_INT >= 21) {
             MediaProjectionManager mediaProjectionManager = ((MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE));
@@ -169,37 +166,40 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                             | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC);
         }
 
-        encoderThread = new Thread(new EncoderWorker(), "Encoder Thread");
-        encoderThread.setPriority(Thread.MAX_PRIORITY);
+        encoderThread = new Thread(encoderWorker, "Encoder Thread");
         encoderThread.start();
     }
 
-    private Surface createDisplaySurface() throws IOException {
-        MediaFormat mediaFormat = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE, resolution.x, resolution.y);
+    private void createDisplaySurface() {
+        try {
+            MediaFormat mediaFormat = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE, resolution.x, resolution.y);
 
-        if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_2G)) {
-            bitrateRatio = 0.03125f;
-            Telepathy.showLongToast("2G connection detected - reducing video stream quality.");
-        } else if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_3G)) {
-            bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_MOBILE, ".5"));
-        } else {
-            bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_WIFI, "1"));
+            if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_2G)) {
+                bitrateRatio = 0.03125f;
+                Telepathy.showLongToast("2G connection detected - reducing video stream quality.");
+            } else if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_3G)) {
+                bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_MOBILE, ".5"));
+            } else {
+                bitrateRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_WIFI, "1"));
+            }
+
+            mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, (int) (1024 * 1024 * bitrateRatio));
+            mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 25);
+            mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+            mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+            mediaFormat.setInteger(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER, 40000);
+
+            Log.i(TAG, "Starting encoder");
+
+            encoder = MediaCodec.createEncoderByType(CodecUtils.MIME_TYPE);
+            encoder.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+
+            encoderInputSurface = encoder.createInputSurface();
+
+            encoder.start();
+        } catch (IOException e) {
+            Logger.log("ENCODER", e.toString(), e);
         }
-
-        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, (int) (1024 * 1024 * bitrateRatio));
-        mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 25);
-        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-        mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-        mediaFormat.setInteger(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER, 40000);
-
-        Log.i(TAG, "Starting encoder");
-        encoder = MediaCodec.createEncoderByType(CodecUtils.MIME_TYPE);
-        encoder.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-
-        Surface surface = encoder.createInputSurface();
-
-        encoder.start();
-        return surface;
     }
 
     private void initDisplayParameters() {
@@ -229,22 +229,6 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         try {
             if (encoder != null) {
                 encoder.signalEndOfInputStream();
-            }
-
-            if (Build.VERSION.SDK_INT >= 21) {
-                if (mediaProjection != null) {
-                    mediaProjection.stop();
-                }
-            }
-
-            if (virtualDisplay != null) {
-                virtualDisplay.release();
-                virtualDisplay = null;
-            }
-
-            if (encoderInputSurface != null) {
-                encoderInputSurface.release();
-                encoderInputSurface = null;
             }
         } catch (Exception e) {
             Log.e("SERVICE", e.toString(), e);
@@ -333,8 +317,8 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     }
 
     private void disconnect() {
-        ConnectionManager.getInstance().releaseConnection(this);
         stopEncodingVirtualDisplay();
+        ConnectionManager.getInstance().releaseConnection(this);
     }
 
     @Override
@@ -342,15 +326,16 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         return null;
     }
 
-    private class EncoderWorker implements Runnable {
+    private Runnable encoderWorker = new Runnable() {
 
         @Override
         public void run() {
 
             boolean encoderDone = false;
-            while (encoder != null && !encoderDone) {
+            MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+
+            while (!encoderDone) {
                 try {
-                    MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
                     int encoderStatus = encoder.dequeueOutputBuffer(info, CodecUtils.TIMEOUT_USEC);
 
                     if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
@@ -388,15 +373,22 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                     encoderDone = (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
 
                     if (encoderDone) {
+                        Logger.log("ENCODER", "END OF STREAM");
+                        if (Build.VERSION.SDK_INT >= 21) {
+                            mediaProjection.stop();
+                        }
+                        virtualDisplay.release();
+                        virtualDisplay = null;
+                        encoderInputSurface.release();
+                        encoderInputSurface = null;
                         encoder.stop();
                         encoder.release();
                         encoder = null;
-                        break;
                     }
                 } catch (Exception e) {
                     Logger.log("ENCODER", e.toString(), e);
                 }
             }
         }
-    }
+    };
 }

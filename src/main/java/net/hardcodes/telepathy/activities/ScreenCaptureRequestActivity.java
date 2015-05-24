@@ -8,10 +8,13 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.koushikdutta.async.ByteBufferList;
+
 import net.hardcodes.telepathy.R;
+import net.hardcodes.telepathy.tools.ConnectionManager;
 import net.hardcodes.telepathy.tools.Utils;
 
-public class ScreenCaptureRequestActivity extends Activity {
+public class ScreenCaptureRequestActivity extends Activity implements ConnectionManager.WebSocketConnectionListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +25,14 @@ public class ScreenCaptureRequestActivity extends Activity {
             MediaProjectionManager mediaProjectionManager = ((MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE));
             startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(), 3000);
         }
+
+        ConnectionManager.getInstance().acquireConnection(this, this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        ConnectionManager.getInstance().releaseConnection(this);
+        super.onDestroy();
     }
 
     @Override
@@ -31,5 +42,21 @@ public class ScreenCaptureRequestActivity extends Activity {
             finish();
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onConnectionAcquired() {
+    }
+
+    @Override
+    public void onError(int errorCode) {
+    }
+
+    @Override
+    public void onTextMessage(String message) {
+    }
+
+    @Override
+    public void onBinaryMessage(ByteBufferList byteBufferList) {
     }
 }

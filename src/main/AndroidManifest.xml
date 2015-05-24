@@ -51,7 +51,6 @@
         <activity
             android:name=".activities.RemoteControlActivity"
             android:label="@string/title_activity_client"
-            android:launchMode="singleInstance"
             android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

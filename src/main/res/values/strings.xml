@@ -17,6 +17,4 @@
     <string name="need_help"><u>login options</u></string>
     <string name="title_activity_screen_capture_request">ScreenCaptureRequestActivity</string>
 
-    <string name="hello_world">Hello world!</string>
-
 </resources>

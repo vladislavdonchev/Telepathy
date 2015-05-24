@@ -40,9 +40,9 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     private static final String TAG = "DECODER";
 
     private SurfaceView surfaceView;
+    private boolean surfaceViewReady;
 
     private MediaCodec decoder;
-    private boolean decoderConfigured = false;
     private ByteBuffer[] decoderInputBuffers = null;
     private MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
 
@@ -61,8 +61,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     private GestureDetector mDetector;
     private CountDownTimer hideControlsTimer;
 
-    private boolean bound = false;
-
     @Override
     public void onConnectionAcquired() {
         ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_BIND + remoteUID);
@@ -70,7 +68,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public void onError(int errorCode) {
-        bound = false;
         finish();
     }
 
@@ -79,7 +76,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         Logger.log("API", message);
 
         if (message.startsWith(TelepathyAPI.MESSAGE_BIND_ACCEPTED)) {
-            bound = true;
             showToast("Remote controlling user " + remoteUID);
         }
     }
@@ -107,6 +103,10 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public void onBinaryMessage(ByteBufferList byteArray) {
+        if (!surfaceViewReady) {
+            return;
+        }
+
         ByteBuffer b = byteArray.getAll();
 
         byte[] metadataBytes = new byte[CodecUtils.VIDEO_META_MAX_LEN];
@@ -121,14 +121,9 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
             return;
         }
 
-        if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-            MediaFormat format = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
-                            videoResolution.x, videoResolution.y);
-            format.setByteBuffer("csd-0", b);
-            decoder.configure(format, surfaceView.getHolder().getSurface(), null, info.flags);
-            decoder.start();
-            decoderInputBuffers = decoder.getInputBuffers();
-            decoderConfigured = true;
+        boolean isInitialConfigurationPending = (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0;
+        if (isInitialConfigurationPending) {
+            configureDecoder(b);
             return;
         }
 
@@ -183,6 +178,15 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         }
     }
 
+    private void configureDecoder(ByteBuffer b) {
+        MediaFormat format = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
+                videoResolution.x, videoResolution.y);
+        format.setByteBuffer("csd-0", b);
+        decoder.configure(format, surfaceView.getHolder().getSurface(), null, info.flags);
+        decoder.start();
+        decoderInputBuffers = decoder.getInputBuffers();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -216,6 +220,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
             public void onFinish() {
                 hideButtonsContainer();
             }
+
             @Override
             public void onTick(long millisUntilFinished) {
             }
@@ -233,19 +238,6 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         getWindowManager().getDefaultDisplay().getMetrics(dm);
         deviceWidth = dm.widthPixels;
         deviceHeight = dm.heightPixels;
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (bound) {
-            ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_DISBAND);
-        }
-        ConnectionManager.getInstance().releaseConnection(this);
-        if (decoder != null) {
-            decoder.stop();
-            decoder.release();
-        }
-        super.onDestroy();
     }
 
     private void hideSystemUI() {
@@ -272,20 +264,37 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
+        Logger.log("DECODER", "surfaceCreated");
+        surfaceViewReady = true;
+
         try {
             decoder = MediaCodec.createDecoderByType(CodecUtils.MIME_TYPE);
-            ConnectionManager.getInstance().acquireConnection(this, this);
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.log("DECODER", e.getMessage(), e);
         }
+
+        ConnectionManager.getInstance().acquireConnection(this, this);
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i2, int i3) {
+        Logger.log("DECODER", "surfaceChanged");
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+        Logger.log("DECODER", "surfaceDestroyed");
+        surfaceViewReady = false;
+
+        ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_DISBAND);
+
+        if (decoder != null) {
+            decoder.stop();
+            decoder.release();
+        }
+        surfaceViewReady = false;
+
+        ConnectionManager.getInstance().releaseConnection(this);
     }
 
     @Override
