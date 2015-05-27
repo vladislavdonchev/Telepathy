@@ -63,7 +63,7 @@
                 android:layout_alignParentBottom="true"
                 android:layout_marginRight="3dp"
                 android:layout_weight="1"
-                android:background="@color/custom_green"
+                android:background="@drawable/bg_button"
                 android:text="ok"
                 android:textColor="@android:color/white"
                 android:textSize="28sp" />
@@ -75,7 +75,7 @@
                 android:layout_height="match_parent"
                 android:layout_alignParentBottom="true"
                 android:layout_weight="1"
-                android:background="@color/custom_green"
+                android:background="@drawable/bg_button"
                 android:text="cancel"
                 android:textColor="@android:color/white"
                 android:textSize="28sp" />

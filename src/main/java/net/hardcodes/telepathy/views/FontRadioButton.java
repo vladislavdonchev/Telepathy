@@ -32,6 +32,7 @@ public class FontRadioButton extends RadioButton {
         Typeface tf = Typeface.createFromAsset(getContext().getAssets(), "font/forced_square.ttf");
         setTypeface(tf);
         setShadowLayer(8, 8, 8, R.color.text_shade_color);
+        setButtonDrawable(getResources().getDrawable(R.drawable.bg_telepathy_radiobutton));
     }
     /**
      * Fix for putting the drawable in the center
