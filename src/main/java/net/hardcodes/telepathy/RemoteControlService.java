@@ -17,7 +17,6 @@ import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
@@ -66,9 +65,9 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     private Thread encoderThread;
 
     private float bitrateRatio;
-    private int deviceWidth;
-    private int deviceHeight;
-    private Point resolution = new Point();
+    private Point screenResolution = new Point();
+    private Point streamResolution = new Point();
+
     private String remoteUID;
 
     @Override
@@ -158,10 +157,10 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         if (Build.VERSION.SDK_INT >= 21) {
             MediaProjectionManager mediaProjectionManager = ((MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE));
             mediaProjection = mediaProjectionManager.getMediaProjection(activityResult, activityResultIntent);
-            virtualDisplay = mediaProjection.createVirtualDisplay(VIRTUAL_DISPLAY_TAG, resolution.x, resolution.y, 50,
+            virtualDisplay = mediaProjection.createVirtualDisplay(VIRTUAL_DISPLAY_TAG, streamResolution.x, streamResolution.y, 50,
                     DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC, encoderInputSurface, null, null);
         } else {
-            virtualDisplay = displayManager.createVirtualDisplay(VIRTUAL_DISPLAY_TAG, resolution.x, resolution.y, 50,
+            virtualDisplay = displayManager.createVirtualDisplay(VIRTUAL_DISPLAY_TAG, streamResolution.x, streamResolution.y, 50,
                     encoderInputSurface, DisplayManager.VIRTUAL_DISPLAY_FLAG_SECURE | DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION
                             | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC);
         }
@@ -172,7 +171,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     private void createDisplaySurface() {
         try {
-            MediaFormat mediaFormat = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE, resolution.x, resolution.y);
+            MediaFormat mediaFormat = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE, streamResolution.x, streamResolution.y);
 
             if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_2G)) {
                 bitrateRatio = 0.03125f;
@@ -203,11 +202,8 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     }
 
     private void initDisplayParameters() {
-        DisplayMetrics dm = new DisplayMetrics();
         Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        display.getMetrics(dm);
-        deviceWidth = dm.widthPixels;
-        deviceHeight = dm.heightPixels;
+
         float resolutionRatio;
         if (NetworkUtil.getNetworkState(this).equals(Constants.CONSTANT_NETWORK_WFI)) {
             resolutionRatio = Float.parseFloat(preferences.getString(Constants.PREFERENCE_BITRATE_WIFI, "1"));
@@ -220,9 +216,11 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             resolutionRatio = 1;
         }
 
-        display.getRealSize(resolution);
-        resolution.x = (int) (resolution.x * resolutionRatio);
-        resolution.y = (int) (resolution.y * resolutionRatio);
+        display.getRealSize(streamResolution);
+        display.getSize(screenResolution);
+        Logger.log("RES_S", screenResolution.x + " " + screenResolution.y);
+        streamResolution.x = (int) (streamResolution.x * resolutionRatio);
+        streamResolution.y = (int) (streamResolution.y * resolutionRatio);
     }
 
     private void stopEncodingVirtualDisplay() {
@@ -278,8 +276,8 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                 break;
             case InputEvent.IMPUT_EVENT_TYPE_TOUCH:
                 try {
-                    float x = event.getToucEventX() * deviceWidth;
-                    float y = event.getTouchEventY() * deviceHeight;
+                    float x = event.getTouchEventX() * screenResolution.x;
+                    float y = event.getTouchEventY() * screenResolution.y;
                     ShellCommandExecutor.getInstance().runCommand("input tap " + x + " " + y);
                 } catch (Exception e) {
                     Logger.log("ENCODER", e.toString(), e);
@@ -287,8 +285,8 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                 break;
             case InputEvent.IMPUT_EVENT_TYPE_LONG_PRESS:
                 try {
-                    float x = event.getToucEventX() * deviceWidth;
-                    float y = event.getTouchEventY() * deviceHeight;
+                    float x = event.getTouchEventX() * screenResolution.x;
+                    float y = event.getTouchEventY() * screenResolution.y;
                     ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x + " " + y + " " + InputEvent.IMPUT_EVENT_LONG_PRESS_DURATION);
                 } catch (Exception e) {
                     Logger.log("ENCODER", e.toString(), e);
@@ -296,10 +294,10 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                 break;
             case InputEvent.IMPUT_EVENT_TYPE_SWIPE:
                 try {
-                    float x = event.getToucEventX() * deviceWidth;
-                    float y = event.getTouchEventY() * deviceHeight;
-                    float x1 = event.getToucEventX1() * deviceWidth;
-                    float y1 = event.getTouchEventY1() * deviceHeight;
+                    float x = event.getTouchEventX() * screenResolution.x;
+                    float y = event.getTouchEventY() * screenResolution.y;
+                    float x1 = event.getToucEventX1() * screenResolution.x;
+                    float y1 = event.getTouchEventY1() * screenResolution.y;
                     ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x1 + " " + y1 + " " + InputEvent.IMPUT_EVENT_FLING_DURATION);
                 } catch (Exception e) {
                     Logger.log("ENCODER", e.toString(), e);
@@ -349,7 +347,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                         String metadata = "";
                         if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
                             metadata = TelepathyAPI.MESSAGE_VIDEO_METADATA + info.offset + "," + info.size + "," +
-                                    info.presentationTimeUs + "," + info.flags + "," + resolution.x + "," + resolution.y + ";";
+                                    info.presentationTimeUs + "," + info.flags + "," + streamResolution.x + "," + streamResolution.y + ";";
                         } else {
                             metadata = TelepathyAPI.MESSAGE_VIDEO_METADATA + info.offset + "," + info.size + "," +
                                     info.presentationTimeUs + "," + info.flags + ";";

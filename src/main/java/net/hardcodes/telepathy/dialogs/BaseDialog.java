@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,7 @@ import android.widget.RelativeLayout;
 
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.views.FontButton;
+import net.hardcodes.telepathy.views.FontEditText;
 import net.hardcodes.telepathy.views.FontTextView;
 
 /**
@@ -31,6 +33,24 @@ public class BaseDialog extends Dialog {
     protected FontButton leftButton;
     protected FontButton rightButton;
     protected LinearLayout contentContainer;
+
+    protected FontEditText.KeyboardEventListener keyboardEventListener = new FontEditText.KeyboardEventListener() {
+        @Override
+        public void onClose(FontEditText fontEditText) {
+            setGravity(Gravity.CENTER_VERTICAL);
+        }
+
+        @Override
+        public void onOpen(FontEditText FontEditText) {
+            setGravity(Gravity.TOP);
+        }
+    };
+
+    public void setGravity(int gravity) {
+        WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
+        layoutParams.gravity = gravity;
+        getWindow().setAttributes(layoutParams);
+    }
 
     private View.OnClickListener onButtonClickListener = new View.OnClickListener() {
         @Override
@@ -116,6 +136,18 @@ public class BaseDialog extends Dialog {
         leftButton.setVisibility(visible ? View.VISIBLE : View.GONE);
         rightButton.setVisibility(visible ? View.VISIBLE : View.GONE);
         title.setVisibility(visible ? View.VISIBLE : View.GONE);
+
+        WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
+        layoutParams.gravity = Gravity.CENTER_VERTICAL;
+        getWindow().setAttributes(layoutParams);
+    }
+
+    @Override
+    public void show() {
+        WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
+        layoutParams.gravity = Gravity.CENTER_VERTICAL;
+        getWindow().setAttributes(layoutParams);
+        super.show();
     }
 
     protected void onLeftButtonClick() {

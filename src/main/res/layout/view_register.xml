@@ -53,7 +53,7 @@
             android:textColor="#FFFFFF"
             android:textSize="20sp" />
 
-        <EditText
+        <net.hardcodes.telepathy.views.FontEditText
             android:id="@+id/view_uid_input"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -81,7 +81,7 @@
             android:textColor="#FFFFFF"
             android:textSize="20sp" />
 
-        <EditText
+        <net.hardcodes.telepathy.views.FontEditText
             android:id="@+id/view_pass_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -108,7 +108,7 @@
             android:textColor="#FFFFFF"
             android:textSize="20sp" />
 
-        <EditText
+        <net.hardcodes.telepathy.views.FontEditText
             android:id="@+id/view_pass_confirm_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -135,7 +135,7 @@
             android:textColor="#FFFFFF"
             android:textSize="20sp" />
 
-        <EditText
+        <net.hardcodes.telepathy.views.FontEditText
             android:id="@+id/view_email_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -159,7 +159,10 @@
             android:layout_marginBottom="10dp"
             android:layout_marginTop="16dp"
             android:gravity="center"
-            android:text="Providing an e-mail is not mandatory, but required for restoring lost usernames and passwords.\nYou can always add an e-mail address later on from the 'login options' menu."
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:text="Providing an e-mail is not mandatory, but required for restoring lost user names and passwords.\nYou can always add an e-mail address later on from the 'login options' menu."
             android:textColor="#FFFFFF"
             android:textSize="16sp" />
     </RelativeLayout>

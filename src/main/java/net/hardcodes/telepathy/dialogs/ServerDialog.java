@@ -4,15 +4,15 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.widget.CheckBox;
-import android.widget.EditText;
+import net.hardcodes.telepathy.views.FontEditText;
 
 import net.hardcodes.telepathy.Constants;
 import net.hardcodes.telepathy.R;
 
 public class ServerDialog extends BaseDialog {
 
-    private EditText serverNameInput;
-    private EditText serverAddressInput;
+    private FontEditText serverNameInput;
+    private FontEditText serverAddressInput;
     private CheckBox serverEncryption;
     private CheckBox pingInitiation;
     private final SharedPreferences prefs;
@@ -21,10 +21,10 @@ public class ServerDialog extends BaseDialog {
         super(context);
         prefs = PreferenceManager.getDefaultSharedPreferences(context);
         setup("Server Configuration:", R.layout.view_server_config, "save", "cancel");
-        serverNameInput = (EditText) contentContainer.findViewById(R.id.view_server_name_input);
+        serverNameInput = (FontEditText) contentContainer.findViewById(R.id.view_server_name_input);
         serverNameInput.setTypeface(title.getTypeface());
         serverNameInput.setText(prefs.getString(Constants.PREFERENCE_SERVER_NAME, "US-WEST-0"));
-        serverAddressInput = (EditText) contentContainer.findViewById(R.id.view_server_address_input);
+        serverAddressInput = (FontEditText) contentContainer.findViewById(R.id.view_server_address_input);
         serverAddressInput.setTypeface(title.getTypeface());
         serverAddressInput.setText(prefs.getString(Constants.PREFERENCE_SERVER_ADDRESS, "telepathy.hardcodes.net:443/tp"));
 

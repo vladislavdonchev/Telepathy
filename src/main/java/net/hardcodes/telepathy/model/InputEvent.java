@@ -31,7 +31,7 @@ public class InputEvent {
         this.imputType = imputType;
     }
 
-    public float getToucEventX() {
+    public float getTouchEventX() {
         return toucEventX;
     }
 

@@ -7,7 +7,7 @@ import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.CheckBox;
-import android.widget.EditText;
+import net.hardcodes.telepathy.views.FontEditText;
 
 import com.koushikdutta.async.ByteBufferList;
 
@@ -23,8 +23,8 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
     private View connectionProgress;
     private View loginForm;
 
-    private EditText uidInput;
-    private EditText passInput;
+    private FontEditText uidInput;
+    private FontEditText passInput;
     private CheckBox passSaveCheckbox;
     private FontTextView registerAccount;
     private FontTextView loginOptions;
@@ -53,9 +53,9 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
         connectionProgress = findViewById(R.id.view_connection_progress);
         loginForm = findViewById(R.id.view_login_form);
 
-        uidInput = (EditText) contentContainer.findViewById(R.id.view_uid_input);
+        uidInput = (FontEditText) contentContainer.findViewById(R.id.view_uid_input);
         uidInput.setTypeface(title.getTypeface());
-        passInput = (EditText) contentContainer.findViewById(R.id.view_pass_input);
+        passInput = (FontEditText) contentContainer.findViewById(R.id.view_pass_input);
         passInput.setTypeface(title.getTypeface());
         passSaveCheckbox = (CheckBox) findViewById(R.id.view_login_save_password);
         passSaveCheckbox.setTypeface(title.getTypeface());
@@ -81,6 +81,9 @@ public class LoginDialog extends BaseDialog implements View.OnClickListener, Con
         passInput.setText(prefs.getString(Constants.PREFERENCE_PASS, ""));
         passSaveCheckbox.setChecked(prefs.getBoolean(Constants.PREFERENCE_SAVE_PASSWORD, false));
         findViewById(R.id.view_authentication_error).setVisibility(previousAuthenticationFailed ? View.VISIBLE : View.GONE);
+
+        uidInput.setBackPressedListener(keyboardEventListener);
+        passInput.setBackPressedListener(keyboardEventListener);
 
         if (ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
             setTitle("User details:");

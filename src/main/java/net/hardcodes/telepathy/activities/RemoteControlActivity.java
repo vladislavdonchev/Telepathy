@@ -1,6 +1,7 @@
 package net.hardcodes.telepathy.activities;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.graphics.Point;
 import android.media.MediaCodec;
@@ -8,7 +9,7 @@ import android.media.MediaFormat;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -48,9 +49,8 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     private String remoteUID;
 
-    private int deviceWidth;
-    private int deviceHeight;
-    private Point videoResolution = new Point();
+    private Point screenResolution = new Point();
+    private Point streamResolution = new Point();
 
     private ImageButton buttonShowHideButtons;
     private LinearLayout buttonsContainer;
@@ -58,7 +58,8 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     private ImageButton buttonBack;
     private ImageButton buttonLockUnlock;
     private ImageButton buttonRecentApps;
-    private GestureDetector mDetector;
+
+    private GestureDetector gestureDetector;
     private CountDownTimer hideControlsTimer;
 
     @Override
@@ -91,8 +92,8 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
                     Long.parseLong(parts[2]),
                     Integer.parseInt(parts[3]));
             if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-                videoResolution.x = Integer.parseInt(parts[4]);
-                videoResolution.y = Integer.parseInt(parts[5]);
+                streamResolution.x = Integer.parseInt(parts[4]);
+                streamResolution.y = Integer.parseInt(parts[5]);
             }
         } catch (NumberFormatException e) {
             Logger.log(TAG, e.toString(), e);
@@ -180,7 +181,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     private void configureDecoder(ByteBuffer b) {
         MediaFormat format = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
-                videoResolution.x, videoResolution.y);
+                streamResolution.x, streamResolution.y);
         format.setByteBuffer("csd-0", b);
         decoder.configure(format, surfaceView.getHolder().getSurface(), null, info.flags);
         decoder.start();
@@ -214,7 +215,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         buttonRecentApps = (ImageButton) findViewById(R.id.recent_apps_button);
         buttonRecentApps.setOnClickListener(this);
 
-        mDetector = new GestureDetector(this, this);
+        gestureDetector = new GestureDetector(this, this);
 
         hideControlsTimer = new CountDownTimer(3000, 100) {
             public void onFinish() {
@@ -234,10 +235,9 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     }
 
     private void initDisplayMetrics() {
-        DisplayMetrics dm = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
-        deviceWidth = dm.widthPixels;
-        deviceHeight = dm.heightPixels;
+        Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        display.getSize(screenResolution);
+        Logger.log("RES_A", screenResolution.x + " " + screenResolution.y);
     }
 
     private void hideSystemUI() {
@@ -334,7 +334,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        this.mDetector.onTouchEvent(event);
+        this.gestureDetector.onTouchEvent(event);
         return super.onTouchEvent(event);
     }
 
@@ -349,7 +349,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public boolean onSingleTapUp(MotionEvent e) {
-        sendInputAction(InputEvent.IMPUT_EVENT_TYPE_TOUCH, (e.getX() / deviceWidth), (e.getY() / deviceHeight), 0, 0);
+        sendInputAction(InputEvent.IMPUT_EVENT_TYPE_TOUCH, (e.getRawX() / screenResolution.x), (e.getRawY() / screenResolution.y), 0, 0);
         return false;
     }
 
@@ -360,12 +360,12 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public void onLongPress(MotionEvent e) {
-        sendInputAction(InputEvent.IMPUT_EVENT_TYPE_LONG_PRESS, (e.getX() / deviceWidth), (e.getY() / deviceHeight), 0, 0);
+        sendInputAction(InputEvent.IMPUT_EVENT_TYPE_LONG_PRESS, (e.getRawX() / screenResolution.x), (e.getRawY() / screenResolution.y), 0, 0);
     }
 
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        sendInputAction(InputEvent.IMPUT_EVENT_TYPE_SWIPE, (e1.getX() / deviceWidth), (e1.getY() / deviceHeight), (e2.getX() / deviceWidth), (e2.getY() / deviceHeight));
+        sendInputAction(InputEvent.IMPUT_EVENT_TYPE_SWIPE, (e1.getRawX() / screenResolution.x), (e1.getRawY() / screenResolution.y), (e2.getRawX() / screenResolution.x), (e2.getRawY() / screenResolution.y));
         return false;
     }
 }

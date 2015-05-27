@@ -5,71 +5,80 @@
     android:background="@android:color/transparent">
 
     <LinearLayout
-        android:id="@+id/view_dialog_base_header"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/custom_green"
-        android:orientation="vertical">
-
-        <net.hardcodes.telepathy.views.FontTextView
-            android:id="@+id/view_dialog_base_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:padding="10dp"
-            android:textColor="@android:color/white"
-            android:textSize="28sp" />
-
-        <net.hardcodes.telepathy.views.FontTextView
-            android:id="@+id/view_dialog_base_message"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/view_dialog_base_title"
-            android:gravity="center"
-            android:padding="10dp"
-            android:textColor="@android:color/white"
-            android:textSize="20sp"
-            android:visibility="gone" />
+        android:layout_height="312dp"
+        android:orientation="vertical"
+        android:gravity="bottom">
 
         <LinearLayout
-            android:id="@+id/view_dialog_base_content"
+            android:id="@+id/view_dialog_base_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/view_dialog_base_message"
-            android:layout_margin="16dp"
-            android:orientation="vertical" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_below="@id/view_dialog_base_header"
-        android:layout_marginTop="3dp"
-        android:background="@android:color/transparent">
-
-        <net.hardcodes.telepathy.views.FontButton
-            android:id="@+id/view_dialog_base_button_left"
-            style="@style/button"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_alignParentBottom="true"
-            android:layout_marginRight="3dp"
-            android:layout_weight="1"
             android:background="@color/custom_green"
-            android:text="ok"
-            android:textColor="@android:color/white"
-            android:textSize="28sp" />
+            android:orientation="vertical">
 
-        <net.hardcodes.telepathy.views.FontButton
-            android:id="@+id/view_dialog_base_button_right"
-            style="@style/button"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_alignParentBottom="true"
-            android:layout_weight="1"
-            android:background="@color/custom_green"
-            android:text="cancel"
-            android:textColor="@android:color/white"
-            android:textSize="28sp" />
+            <net.hardcodes.telepathy.views.FontTextView
+                android:id="@+id/view_dialog_base_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="10dp"
+                android:textColor="@android:color/white"
+                android:textSize="28sp" />
+
+            <net.hardcodes.telepathy.views.FontTextView
+                android:id="@+id/view_dialog_base_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/view_dialog_base_title"
+                android:gravity="center"
+                android:padding="10dp"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/view_dialog_base_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/view_dialog_base_message"
+                android:layout_margin="16dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/view_dialog_base_button_container"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="3dp"
+            android:background="@android:color/transparent">
+
+            <net.hardcodes.telepathy.views.FontButton
+                android:id="@+id/view_dialog_base_button_left"
+                style="@style/button"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentBottom="true"
+                android:layout_marginRight="3dp"
+                android:layout_weight="1"
+                android:background="@color/custom_green"
+                android:text="ok"
+                android:textColor="@android:color/white"
+                android:textSize="28sp" />
+
+            <net.hardcodes.telepathy.views.FontButton
+                android:id="@+id/view_dialog_base_button_right"
+                style="@style/button"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentBottom="true"
+                android:layout_weight="1"
+                android:background="@color/custom_green"
+                android:text="cancel"
+                android:textColor="@android:color/white"
+                android:textSize="28sp" />
+        </LinearLayout>
     </LinearLayout>
 </RelativeLayout>

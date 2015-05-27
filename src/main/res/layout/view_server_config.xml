@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <EditText
+    <net.hardcodes.telepathy.views.FontEditText
         android:id="@+id/view_server_name_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -17,7 +17,7 @@
         android:textColorHint="@android:color/white"
         android:textSize="26sp" />
 
-    <EditText
+    <net.hardcodes.telepathy.views.FontEditText
         android:id="@+id/view_server_address_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

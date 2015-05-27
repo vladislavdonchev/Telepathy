@@ -6,7 +6,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.View;
-import android.widget.EditText;
+import net.hardcodes.telepathy.views.FontEditText;
 import android.widget.Toast;
 
 import com.koushikdutta.async.ByteBufferList;
@@ -24,10 +24,10 @@ public class RegisterDialog extends BaseDialog implements ConnectionManager.WebS
     private View connectionProgress;
     private View registrationForm;
 
-    private EditText uidInput;
-    private EditText passInput;
-    private EditText passConfirmInput;
-    private EditText emailInput;
+    private FontEditText uidInput;
+    private FontEditText passInput;
+    private FontEditText passConfirmInput;
+    private FontEditText emailInput;
     private SharedPreferences prefs;
 
 
@@ -43,14 +43,21 @@ public class RegisterDialog extends BaseDialog implements ConnectionManager.WebS
         connectionProgress = findViewById(R.id.view_connection_progress);
         registrationForm = findViewById(R.id.view_registration_form);
 
-        uidInput = (EditText) contentContainer.findViewById(R.id.view_uid_input);
+        uidInput = (FontEditText) contentContainer.findViewById(R.id.view_uid_input);
         uidInput.setTypeface(title.getTypeface());
-        passInput = (EditText) contentContainer.findViewById(R.id.view_pass_input);
+        passInput = (FontEditText) contentContainer.findViewById(R.id.view_pass_input);
         passInput.setTypeface(title.getTypeface());
-        passConfirmInput = (EditText) contentContainer.findViewById(R.id.view_pass_confirm_input);
+        passConfirmInput = (FontEditText) contentContainer.findViewById(R.id.view_pass_confirm_input);
         passConfirmInput.setTypeface(title.getTypeface());
-        emailInput = (EditText) contentContainer.findViewById(R.id.view_email_input);
+        emailInput = (FontEditText) contentContainer.findViewById(R.id.view_email_input);
         emailInput.setTypeface(title.getTypeface());
+
+        uidInput.setBackPressedListener(keyboardEventListener);
+        passInput.setBackPressedListener(keyboardEventListener);
+        passConfirmInput.setBackPressedListener(keyboardEventListener);
+        emailInput.setBackPressedListener(keyboardEventListener);
+
+        findViewById(R.id.view_email_information).setSelected(true);
 
         toggleFrame(false);
         setOnDismissListener(this);
