@@ -77,7 +77,10 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         Logger.log("API", message);
 
         if (message.startsWith(TelepathyAPI.MESSAGE_BIND_ACCEPTED)) {
-            showToast("Remote controlling user " + remoteUID);
+            showToast("Remote controlling user " + remoteUID + ".");
+        } else if (message.startsWith(TelepathyAPI.MESSAGE_DISBAND)) {
+            showToast("Connection interrupted by user " + remoteUID + ".");
+            finish();
         }
     }
 

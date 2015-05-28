@@ -2,6 +2,9 @@ package net.hardcodes.telepathy;
 
 import android.app.Activity;
 import android.app.KeyguardManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -44,9 +47,11 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     public static final String ACTION_START = "START";
     public static final String ACTION_STOP = "STOP";
+    public static final String ACTION_DISBAND = "DISBAND";
 
     public static final String EXTRA_ACTIVITY_RESULT = "activity_result";
     public static final String EXTRA_ACTIVITY_RESULT_INTENT = "activity_result_intent";
+    public static final int NOTIFICATION_ID = 6000;
 
     private int activityResult;
     private Intent activityResultIntent;
@@ -98,8 +103,8 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             Telepathy.showShortToast("User " + remoteUID + " has connected.");
             startEncodingVirtualDisplay();
 
-        } else if (message.startsWith(TelepathyAPI.MESSAGE_DISBAND)) {
-            Telepathy.showShortToast("User " + remoteUID + " has disconnected.");
+        } else if (message.startsWith(TelepathyAPI.MESSAGE_DISBAND) && virtualDisplay != null) {
+            Telepathy.showShortToast("User " + remoteUID + " has been disconnected.");
             stopEncodingVirtualDisplay();
 
         } else if (message.startsWith(TelepathyAPI.MESSAGE_INPUT)) {
@@ -145,6 +150,12 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                 disconnect();
             }
 
+            if (intent.getAction().equals(ACTION_DISBAND)) {
+                ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_DISBAND);
+                Telepathy.showShortToast("User " + remoteUID + " has been disconnected.");
+                stopEncodingVirtualDisplay();
+            }
+
             sendBroadcast(new Intent(ACTION_SERVICE_STATE_CHANGED));
         }
         return START_NOT_STICKY;
@@ -167,6 +178,8 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
         encoderThread = new Thread(encoderWorker, "Encoder Thread");
         encoderThread.start();
+
+        updateNotification(true);
     }
 
     private void createDisplaySurface() {
@@ -228,6 +241,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             if (encoder != null) {
                 encoder.signalEndOfInputStream();
             }
+            updateNotification(false);
         } catch (Exception e) {
             Log.e("SERVICE", e.toString(), e);
         }
@@ -389,4 +403,23 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             }
         }
     };
+
+    private void updateNotification(boolean show) {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        if (show) {
+            Intent intent = new Intent(this, RemoteControlService.class);
+            intent.setAction(ACTION_DISBAND);
+            PendingIntent stopServiceIntent = PendingIntent.getService(this, 0, intent, 0);
+            Notification.Builder mBuilder = new Notification.Builder(this)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setOngoing(true)
+                    .addAction(R.drawable.ic_media_stop, "STOP SHARING SCREEN", stopServiceIntent)
+                    .setContentTitle("User " + remoteUID + " connected.")
+                    .setTicker("Screen sharing in progress...");
+            notificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+        } else {
+            notificationManager.cancel(NOTIFICATION_ID);
+        }
+    }
 }
