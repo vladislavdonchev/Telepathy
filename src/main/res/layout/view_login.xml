@@ -40,7 +40,7 @@
             android:shadowDx="2"
             android:shadowDy="2"
             android:shadowRadius="2"
-            android:text="user authentication failed.\nPlease try again."
+            android:text="User authentication failed.\nPlease try again."
             android:textColor="#FFAAAA"
             android:textSize="20sp"
             android:visibility="gone" />

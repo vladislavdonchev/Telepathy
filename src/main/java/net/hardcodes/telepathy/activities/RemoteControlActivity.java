@@ -24,6 +24,7 @@ import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
 
 import net.hardcodes.telepathy.R;
+import net.hardcodes.telepathy.dialogs.BaseDialog;
 import net.hardcodes.telepathy.dialogs.ConnectDialog;
 import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.model.TelepathyAPI;
@@ -36,7 +37,8 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 
 
-public class RemoteControlActivity extends Activity implements ConnectionManager.WebSocketConnectionListener, SurfaceHolder.Callback, GestureDetector.OnGestureListener, View.OnClickListener {
+public class RemoteControlActivity extends Activity implements ConnectionManager.WebSocketConnectionListener,
+        SurfaceHolder.Callback, GestureDetector.OnGestureListener, View.OnClickListener {
 
     private static final String TAG = "DECODER";
 
@@ -61,6 +63,8 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     private GestureDetector gestureDetector;
     private CountDownTimer hideControlsTimer;
+
+    private BaseDialog exitConfirmationDialog;
 
     @Override
     public void onConnectionAcquired() {
@@ -183,8 +187,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     }
 
     private void configureDecoder(ByteBuffer b) {
-        MediaFormat format = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE,
-                streamResolution.x, streamResolution.y);
+        MediaFormat format = MediaFormat.createVideoFormat(CodecUtils.MIME_TYPE, streamResolution.x, streamResolution.y);
         format.setByteBuffer("csd-0", b);
         decoder.configure(format, surfaceView.getHolder().getSurface(), null, info.flags);
         decoder.start();
@@ -229,12 +232,20 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
             public void onTick(long millisUntilFinished) {
             }
         };
+
+        exitConfirmationDialog = new BaseDialog(this);
+        exitConfirmationDialog.setup("Exit Confirmation", "Are you sure you want to end the session?", "yes", "no", this);
     }
 
     @Override
     protected void onResume() {
         hideSystemUI();
         super.onResume();
+    }
+
+    @Override
+    public void onBackPressed() {
+        exitConfirmationDialog.show();
     }
 
     private void initDisplayMetrics() {
@@ -313,6 +324,10 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
             sendInputAction(InputEvent.IMPUT_EVENT_TYPE_RECENT_BUTTON, 0, 0, 0, 0);
         } else if (v.getId() == R.id.lock_unlock_button) {
             sendInputAction(InputEvent.IMPUT_EVENT_TYPE_LOCK_UNLOCK_BUTTON, 0, 0, 0, 0);
+        } else if (v.getId() == R.id.view_dialog_base_button_left) {
+            super.onBackPressed();
+        } else if (v.getId() == R.id.view_dialog_base_button_right) {
+            exitConfirmationDialog.dismiss();
         }
 
         hideControlsTimer.start();

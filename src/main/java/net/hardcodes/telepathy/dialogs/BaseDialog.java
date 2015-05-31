@@ -66,7 +66,7 @@ public class BaseDialog extends Dialog {
         }
     };
 
-    protected BaseDialog(Context context) {
+    public BaseDialog(Context context) {
         super(context);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
@@ -85,6 +85,12 @@ public class BaseDialog extends Dialog {
         rightButton.setOnClickListener(onButtonClickListener);
 
         setContentView(dialogLayout);
+    }
+
+    public void setup(String titleText, String messageText, String leftButtonText, String rightButtonText, View.OnClickListener buttonClickListener) {
+        setup(titleText, messageText, leftButtonText, rightButtonText);
+        leftButton.setOnClickListener(buttonClickListener);
+        rightButton.setOnClickListener(buttonClickListener);
     }
 
     protected void setup(String titleText, int contentResource, String leftButtonText, String rightButtonText) {
