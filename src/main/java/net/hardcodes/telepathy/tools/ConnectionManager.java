@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.view.View;
 
 import com.google.android.gms.security.ProviderInstaller;
 import com.google.gson.Gson;
@@ -22,6 +23,7 @@ import net.hardcodes.telepathy.PingPongService;
 import net.hardcodes.telepathy.R;
 import net.hardcodes.telepathy.RemoteControlService;
 import net.hardcodes.telepathy.Telepathy;
+import net.hardcodes.telepathy.dialogs.BaseDialog;
 import net.hardcodes.telepathy.dialogs.ProgressDialog;
 import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.model.User;

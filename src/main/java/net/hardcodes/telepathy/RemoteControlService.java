@@ -23,11 +23,13 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
+import android.view.View;
 import android.view.WindowManager;
 
 import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
 
+import net.hardcodes.telepathy.dialogs.BaseDialog;
 import net.hardcodes.telepathy.model.InputEvent;
 import net.hardcodes.telepathy.model.TelepathyAPI;
 import net.hardcodes.telepathy.tools.CodecUtils;
@@ -41,7 +43,7 @@ import java.io.IOException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
-public class RemoteControlService extends Service implements ConnectionManager.WebSocketConnectionListener {
+public class RemoteControlService extends Service implements ConnectionManager.WebSocketConnectionListener, View.OnClickListener {
 
     public static final String ACTION_SERVICE_STATE_CHANGED = "stateChanged";
 
@@ -75,6 +77,16 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
     private String remoteUID;
 
+    private final static int PERMISSION_NOT_SET = -1;
+    private final static int PERMISSION_DENIED = 1;
+    private final static int PERMISSION_GRANTED = 0;
+
+    private BaseDialog permissionConfirmationDialog;
+    private String lastPermissionRequest;
+    private InputEvent lastScreenlockEvent;
+    private int allowRemoteControl = PERMISSION_NOT_SET;
+    private int allowScreernlockControl = PERMISSION_NOT_SET;
+
     @Override
     public void onConnectionAcquired() {
         if (!ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
@@ -99,19 +111,48 @@ public class RemoteControlService extends Service implements ConnectionManager.W
 
         if (message.startsWith(TelepathyAPI.MESSAGE_BIND)) {
             remoteUID = message.split(TelepathyAPI.MESSAGE_UID_DELIMITER)[1];
-            ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_BIND_ACCEPTED + remoteUID);
-            Telepathy.showShortToast("User " + remoteUID + " has connected.");
-            startEncodingVirtualDisplay();
+            switch (preferences.getString(Constants.PREFERENCE_CONNECTION_RQ, Constants.CONSTANT_STRING_PROMPT)) {
+                case Constants.CONSTANT_STRING_PROMPT:
+                    lastPermissionRequest = Constants.PREFERENCE_CONNECTION_RQ;
+                    permissionConfirmationDialog.setup("Connection Request", "Accept connection request from user " + remoteUID + "?", "yes", "no", this);
+                    permissionConfirmationDialog.show();
+                    break;
+                case Constants.CONSTANT_STRING_ALLOW:
+                    replyToConnectionRequest(true);
+                    break;
+                case Constants.CONSTANT_STRING_DENY:
+                    replyToConnectionRequest(false);
+                    break;
+            }
 
         } else if (message.startsWith(TelepathyAPI.MESSAGE_DISBAND) && virtualDisplay != null) {
             Telepathy.showShortToast("User " + remoteUID + " has been disconnected.");
             stopEncodingVirtualDisplay();
 
         } else if (message.startsWith(TelepathyAPI.MESSAGE_INPUT)) {
-            Gson gson = new Gson();
-            String messagePayload = message.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
-            InputEvent inputEventObject = gson.fromJson(messagePayload, InputEvent.class);
-            decodeInputEvent(inputEventObject);
+            switch (allowRemoteControl) {
+                case PERMISSION_GRANTED:
+                    Gson gson = new Gson();
+                    String messagePayload = message.split(TelepathyAPI.MESSAGE_PAYLOAD_DELIMITER)[1];
+                    InputEvent inputEventObject = gson.fromJson(messagePayload, InputEvent.class);
+                    decodeInputEvent(inputEventObject);
+                    break;
+                case PERMISSION_NOT_SET:
+                    switch (preferences.getString(Constants.PREFERENCE_REMOTE_CONTROL_RQ, Constants.CONSTANT_STRING_PROMPT)) {
+                        case Constants.CONSTANT_STRING_PROMPT:
+                            lastPermissionRequest = Constants.PREFERENCE_REMOTE_CONTROL_RQ;
+                            permissionConfirmationDialog.setup("Remote Control Request", "Accept remote control request from user " + remoteUID + "?", "yes", "no", this);
+                            permissionConfirmationDialog.show();
+                            break;
+                        case Constants.CONSTANT_STRING_ALLOW:
+                            allowRemoteControl = PERMISSION_GRANTED;
+                            break;
+                        case Constants.CONSTANT_STRING_DENY:
+                            allowRemoteControl = PERMISSION_DENIED;
+                            break;
+                    }
+                    break;
+            }
 
         }
     }
@@ -121,9 +162,55 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     }
 
     @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.view_dialog_base_button_left:
+                switch (lastPermissionRequest) {
+                    case Constants.PREFERENCE_CONNECTION_RQ:
+                        replyToConnectionRequest(true);
+                        break;
+                    case Constants.PREFERENCE_REMOTE_CONTROL_RQ:
+                        allowRemoteControl = PERMISSION_GRANTED;
+                        break;
+                    case Constants.PREFERENCE_SCREEN_LOCK_UNLOCK:
+                        allowScreernlockControl = PERMISSION_GRANTED;
+                        decodeInputEvent(lastScreenlockEvent);
+                        break;
+                }
+                break;
+            case R.id.view_dialog_base_button_right:
+                switch (lastPermissionRequest) {
+                    case Constants.PREFERENCE_CONNECTION_RQ:
+                        replyToConnectionRequest(false);
+                        break;
+                    case Constants.PREFERENCE_REMOTE_CONTROL_RQ:
+                        allowRemoteControl = PERMISSION_DENIED;
+                        break;
+                    case Constants.PREFERENCE_SCREEN_LOCK_UNLOCK:
+                        allowScreernlockControl = PERMISSION_DENIED;
+                        decodeInputEvent(lastScreenlockEvent);
+                        break;
+                }
+                break;
+        }
+        permissionConfirmationDialog.dismiss();
+    }
+
+    private void replyToConnectionRequest(boolean accept) {
+        if (accept) {
+            ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_BIND_ACCEPTED + remoteUID);
+            Telepathy.showShortToast("User " + remoteUID + " has connected.");
+            startEncodingVirtualDisplay();
+        } else {
+            ConnectionManager.getInstance().sendTextMessage(TelepathyAPI.MESSAGE_BIND_REJECTED + remoteUID);
+        }
+    }
+
+    @Override
     public void onCreate() {
         super.onCreate();
         Utils.splunk(this);
+        permissionConfirmationDialog = new BaseDialog(Telepathy.getContext());
     }
 
     @Override
@@ -245,78 +332,104 @@ public class RemoteControlService extends Service implements ConnectionManager.W
         } catch (Exception e) {
             Log.e("SERVICE", e.toString(), e);
         }
+
+        lastPermissionRequest = null;
+        lastScreenlockEvent = null;
+        allowRemoteControl = PERMISSION_NOT_SET;
+        allowScreernlockControl = PERMISSION_NOT_SET;
     }
 
     private void decodeInputEvent(InputEvent event) {
-        switch (event.getImputType()) {
-            case InputEvent.IMPUT_EVENT_TYPE_BACK_BUTTON:
-                try {
-                    ShellCommandExecutor.getInstance().runCommand("input keyevent 4");
-                } catch (Exception e) {
-                    Logger.log("ENCODER", e.toString(), e);
-                }
-                break;
-            case InputEvent.IMPUT_EVENT_TYPE_HOME_BUTTON:
-                try {
-                    ShellCommandExecutor.getInstance().runCommand("input keyevent 3");
-                } catch (Exception e) {
-                    Logger.log("ENCODER", e.toString(), e);
-                }
-                break;
-            case InputEvent.IMPUT_EVENT_TYPE_RECENT_BUTTON:
-                try {
-                    ShellCommandExecutor.getInstance().runCommand("input keyevent 187");
-                } catch (Exception e) {
-                    Logger.log("ENCODER", e.toString(), e);
-                }
-                break;
-            case InputEvent.IMPUT_EVENT_TYPE_LOCK_UNLOCK_BUTTON:
-                if (myKM.inKeyguardRestrictedInputMode()) {
-                    kl.disableKeyguard();
-                    myKM.exitKeyguardSecurely(null);
+        if (allowRemoteControl == PERMISSION_GRANTED && !permissionConfirmationDialog.isShowing()) {
+            switch (event.getImputType()) {
+                case InputEvent.IMPUT_EVENT_TYPE_BACK_BUTTON:
                     try {
-                        ShellCommandExecutor.getInstance().runCommand("input keyevent 26");
+                        ShellCommandExecutor.getInstance().runCommand("input keyevent 4");
                     } catch (Exception e) {
                         Logger.log("ENCODER", e.toString(), e);
                     }
-                } else {
-                    kl.reenableKeyguard();
+                    break;
+                case InputEvent.IMPUT_EVENT_TYPE_HOME_BUTTON:
                     try {
-                        ShellCommandExecutor.getInstance().runCommand("input keyevent 26");
+                        ShellCommandExecutor.getInstance().runCommand("input keyevent 3");
                     } catch (Exception e) {
                         Logger.log("ENCODER", e.toString(), e);
                     }
-                }
-                break;
-            case InputEvent.IMPUT_EVENT_TYPE_TOUCH:
-                try {
-                    float x = event.getTouchEventX() * screenResolution.x;
-                    float y = event.getTouchEventY() * screenResolution.y;
-                    ShellCommandExecutor.getInstance().runCommand("input tap " + x + " " + y);
-                } catch (Exception e) {
-                    Logger.log("ENCODER", e.toString(), e);
-                }
-                break;
-            case InputEvent.IMPUT_EVENT_TYPE_LONG_PRESS:
-                try {
-                    float x = event.getTouchEventX() * screenResolution.x;
-                    float y = event.getTouchEventY() * screenResolution.y;
-                    ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x + " " + y + " " + InputEvent.IMPUT_EVENT_LONG_PRESS_DURATION);
-                } catch (Exception e) {
-                    Logger.log("ENCODER", e.toString(), e);
-                }
-                break;
-            case InputEvent.IMPUT_EVENT_TYPE_SWIPE:
-                try {
-                    float x = event.getTouchEventX() * screenResolution.x;
-                    float y = event.getTouchEventY() * screenResolution.y;
-                    float x1 = event.getToucEventX1() * screenResolution.x;
-                    float y1 = event.getTouchEventY1() * screenResolution.y;
-                    ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x1 + " " + y1 + " " + InputEvent.IMPUT_EVENT_FLING_DURATION);
-                } catch (Exception e) {
-                    Logger.log("ENCODER", e.toString(), e);
-                }
-                break;
+                    break;
+                case InputEvent.IMPUT_EVENT_TYPE_RECENT_BUTTON:
+                    try {
+                        ShellCommandExecutor.getInstance().runCommand("input keyevent 187");
+                    } catch (Exception e) {
+                        Logger.log("ENCODER", e.toString(), e);
+                    }
+                    break;
+                case InputEvent.IMPUT_EVENT_TYPE_LOCK_UNLOCK_BUTTON:
+                    switch (allowScreernlockControl) {
+                        case PERMISSION_GRANTED:
+                            if (myKM.inKeyguardRestrictedInputMode()) {
+                                kl.disableKeyguard();
+                                myKM.exitKeyguardSecurely(null);
+                                try {
+                                    ShellCommandExecutor.getInstance().runCommand("input keyevent 26");
+                                } catch (Exception e) {
+                                    Logger.log("ENCODER", e.toString(), e);
+                                }
+                            } else {
+                                kl.reenableKeyguard();
+                                try {
+                                    ShellCommandExecutor.getInstance().runCommand("input keyevent 26");
+                                } catch (Exception e) {
+                                    Logger.log("ENCODER", e.toString(), e);
+                                }
+                            }
+                            break;
+                        case PERMISSION_NOT_SET:
+                            switch (preferences.getString(Constants.PREFERENCE_SCREEN_LOCK_UNLOCK, Constants.CONSTANT_STRING_PROMPT)) {
+                                case Constants.CONSTANT_STRING_PROMPT:
+                                    lastPermissionRequest = Constants.PREFERENCE_SCREEN_LOCK_UNLOCK;
+                                    lastScreenlockEvent = event;
+                                    permissionConfirmationDialog.setup("Screen Lock Control Request", "Allow user " + remoteUID + " to lock/unlock your device?", "yes", "no", this);
+                                    permissionConfirmationDialog.show();
+                                    break;
+                                case Constants.CONSTANT_STRING_ALLOW:
+                                    allowScreernlockControl = PERMISSION_GRANTED;
+                                    break;
+                                case Constants.CONSTANT_STRING_DENY:
+                                    allowScreernlockControl = PERMISSION_DENIED;
+                                    break;
+                            }
+                            break;
+                        case InputEvent.IMPUT_EVENT_TYPE_TOUCH:
+                            try {
+                                float x = event.getTouchEventX() * screenResolution.x;
+                                float y = event.getTouchEventY() * screenResolution.y;
+                                ShellCommandExecutor.getInstance().runCommand("input tap " + x + " " + y);
+                            } catch (Exception e) {
+                                Logger.log("ENCODER", e.toString(), e);
+                            }
+                            break;
+                        case InputEvent.IMPUT_EVENT_TYPE_LONG_PRESS:
+                            try {
+                                float x = event.getTouchEventX() * screenResolution.x;
+                                float y = event.getTouchEventY() * screenResolution.y;
+                                ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x + " " + y + " " + InputEvent.IMPUT_EVENT_LONG_PRESS_DURATION);
+                            } catch (Exception e) {
+                                Logger.log("ENCODER", e.toString(), e);
+                            }
+                            break;
+                        case InputEvent.IMPUT_EVENT_TYPE_SWIPE:
+                            try {
+                                float x = event.getTouchEventX() * screenResolution.x;
+                                float y = event.getTouchEventY() * screenResolution.y;
+                                float x1 = event.getToucEventX1() * screenResolution.x;
+                                float y1 = event.getTouchEventY1() * screenResolution.y;
+                                ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x1 + " " + y1 + " " + InputEvent.IMPUT_EVENT_FLING_DURATION);
+                            } catch (Exception e) {
+                                Logger.log("ENCODER", e.toString(), e);
+                            }
+                            break;
+                    }
+            }
         }
     }
 
