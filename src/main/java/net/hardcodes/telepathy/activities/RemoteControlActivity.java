@@ -1,5 +1,7 @@
 package net.hardcodes.telepathy.activities;
 
+import android.animation.AnimatorInflater;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
@@ -17,6 +19,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -24,6 +27,7 @@ import com.google.gson.Gson;
 import com.koushikdutta.async.ByteBufferList;
 
 import net.hardcodes.telepathy.R;
+import net.hardcodes.telepathy.Telepathy;
 import net.hardcodes.telepathy.dialogs.BaseDialog;
 import net.hardcodes.telepathy.dialogs.ConnectDialog;
 import net.hardcodes.telepathy.model.InputEvent;
@@ -43,6 +47,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
     private static final String TAG = "DECODER";
 
     private SurfaceView surfaceView;
+    private ImageView loadingView;
     private boolean surfaceViewReady;
 
     private MediaCodec decoder;
@@ -82,6 +87,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
         if (message.startsWith(TelepathyAPI.MESSAGE_BIND_ACCEPTED)) {
             showToast("Remote controlling user " + remoteUID + ".");
+            Telepathy.runOnUIThread(hideLoadingViewRunnable);
         } else if (message.startsWith(TelepathyAPI.MESSAGE_BIND_REJECTED)) {
             showToast("Connection request denied by user " + remoteUID + ".");
             finish();
@@ -90,6 +96,14 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
             finish();
         }
     }
+
+    private Runnable hideLoadingViewRunnable = new Runnable() {
+        @Override
+        public void run() {
+            loadingView.setVisibility(View.INVISIBLE);
+            buttonShowHideButtons.setVisibility(View.VISIBLE);
+        }
+    };
 
     private void handleVideoMetadata(String metadata) {
         Logger.log("VIDMETA", metadata);
@@ -238,6 +252,13 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
         exitConfirmationDialog = new BaseDialog(this);
         exitConfirmationDialog.setup("Exit Confirmation", "Are you sure you want to end the session?", "yes", "no", this);
+
+        loadingView = (ImageView) findViewById(R.id.main_loading_view);
+        ObjectAnimator anim = (ObjectAnimator) AnimatorInflater.loadAnimator(this, R.animator.flipper);
+        anim.setTarget(loadingView);
+        anim.setDuration(2000);
+        anim.setRepeatCount(ObjectAnimator.INFINITE);
+        anim.start();
     }
 
     @Override
@@ -310,6 +331,11 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
             decoder.release();
         }
         surfaceViewReady = false;
+
+        if (loadingView != null) {
+            loadingView.setVisibility(View.VISIBLE);
+            buttonShowHideButtons.setVisibility(View.INVISIBLE);
+        }
 
         ConnectionManager.getInstance().releaseConnection(this);
     }
