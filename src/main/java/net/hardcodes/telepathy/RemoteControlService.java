@@ -87,6 +87,30 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     private int allowRemoteControl = PERMISSION_NOT_SET;
     private int allowScreernlockControl = PERMISSION_NOT_SET;
 
+    private class SetupAndShowPermissionConfirmationDialogRunnable implements Runnable {
+
+        private String title;
+        private String message;
+
+        public SetupAndShowPermissionConfirmationDialogRunnable(String title, String message) {
+            this.title = title;
+            this.message = message;
+        }
+
+        @Override
+        public void run() {
+            permissionConfirmationDialog.setup(title, message, "yes", "no", RemoteControlService.this);
+            permissionConfirmationDialog.show();
+        }
+    }
+
+    private Runnable dismissPermissionConfirmationDialog = new Runnable() {
+        @Override
+        public void run() {
+            permissionConfirmationDialog.dismiss();
+        }
+    };
+
     @Override
     public void onConnectionAcquired() {
         if (!ConnectionManager.getInstance().isConnectedAndAuthenticated()) {
@@ -114,8 +138,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             switch (preferences.getString(Constants.PREFERENCE_CONNECTION_RQ, Constants.CONSTANT_STRING_PROMPT)) {
                 case Constants.CONSTANT_STRING_PROMPT:
                     lastPermissionRequest = Constants.PREFERENCE_CONNECTION_RQ;
-                    permissionConfirmationDialog.setup("Connection Request", "Accept connection request from user " + remoteUID + "?", "yes", "no", this);
-                    permissionConfirmationDialog.show();
+                    Telepathy.runOnUIThread(new SetupAndShowPermissionConfirmationDialogRunnable("Connection Request", "Accept connection request from user " + remoteUID + "?"));
                     break;
                 case Constants.CONSTANT_STRING_ALLOW:
                     replyToConnectionRequest(true);
@@ -141,8 +164,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                     switch (preferences.getString(Constants.PREFERENCE_REMOTE_CONTROL_RQ, Constants.CONSTANT_STRING_PROMPT)) {
                         case Constants.CONSTANT_STRING_PROMPT:
                             lastPermissionRequest = Constants.PREFERENCE_REMOTE_CONTROL_RQ;
-                            permissionConfirmationDialog.setup("Remote Control Request", "Accept remote control request from user " + remoteUID + "?", "yes", "no", this);
-                            permissionConfirmationDialog.show();
+                            Telepathy.runOnUIThread(new SetupAndShowPermissionConfirmationDialogRunnable("Remote Control Request", "Accept remote control request from user " + remoteUID + "?"));
                             break;
                         case Constants.CONSTANT_STRING_ALLOW:
                             allowRemoteControl = PERMISSION_GRANTED;
@@ -193,7 +215,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                 }
                 break;
         }
-        permissionConfirmationDialog.dismiss();
+        Telepathy.runOnUIThread(dismissPermissionConfirmationDialog);
     }
 
     private void replyToConnectionRequest(boolean accept) {
@@ -333,6 +355,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
             Log.e("SERVICE", e.toString(), e);
         }
 
+        Telepathy.runOnUIThread(dismissPermissionConfirmationDialog);
         lastPermissionRequest = null;
         lastScreenlockEvent = null;
         allowRemoteControl = PERMISSION_NOT_SET;
@@ -340,7 +363,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     }
 
     private void decodeInputEvent(InputEvent event) {
-        if (allowRemoteControl == PERMISSION_GRANTED && !permissionConfirmationDialog.isShowing()) {
+        if (allowRemoteControl == PERMISSION_GRANTED && !(lastPermissionRequest.equals(Constants.PREFERENCE_REMOTE_CONTROL_RQ) && permissionConfirmationDialog.isShowing())) {
             switch (event.getImputType()) {
                 case InputEvent.IMPUT_EVENT_TYPE_BACK_BUTTON:
                     try {
@@ -388,8 +411,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                                 case Constants.CONSTANT_STRING_PROMPT:
                                     lastPermissionRequest = Constants.PREFERENCE_SCREEN_LOCK_UNLOCK;
                                     lastScreenlockEvent = event;
-                                    permissionConfirmationDialog.setup("Screen Lock Control Request", "Allow user " + remoteUID + " to lock/unlock your device?", "yes", "no", this);
-                                    permissionConfirmationDialog.show();
+                                    Telepathy.runOnUIThread(new SetupAndShowPermissionConfirmationDialogRunnable("Screen Lock Control Request", "Allow user " + remoteUID + " to lock/unlock your device?"));
                                     break;
                                 case Constants.CONSTANT_STRING_ALLOW:
                                     allowScreernlockControl = PERMISSION_GRANTED;
