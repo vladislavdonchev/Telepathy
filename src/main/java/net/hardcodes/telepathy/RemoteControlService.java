@@ -82,7 +82,7 @@ public class RemoteControlService extends Service implements ConnectionManager.W
     private final static int PERMISSION_GRANTED = 0;
 
     private BaseDialog permissionConfirmationDialog;
-    private String lastPermissionRequest;
+    private String lastPermissionRequest = "";
     private InputEvent lastScreenlockEvent;
     private int allowRemoteControl = PERMISSION_NOT_SET;
     private int allowScreernlockControl = PERMISSION_NOT_SET;
@@ -210,7 +210,6 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                         break;
                     case Constants.PREFERENCE_SCREEN_LOCK_UNLOCK:
                         allowScreernlockControl = PERMISSION_DENIED;
-                        decodeInputEvent(lastScreenlockEvent);
                         break;
                 }
                 break;
@@ -369,21 +368,21 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                     try {
                         ShellCommandExecutor.getInstance().runCommand("input keyevent 4");
                     } catch (Exception e) {
-                        Logger.log("ENCODER", e.toString(), e);
+                        Logger.log("INPUTEVENT", e.toString(), e);
                     }
                     break;
                 case InputEvent.IMPUT_EVENT_TYPE_HOME_BUTTON:
                     try {
                         ShellCommandExecutor.getInstance().runCommand("input keyevent 3");
                     } catch (Exception e) {
-                        Logger.log("ENCODER", e.toString(), e);
+                        Logger.log("INPUTEVENT", e.toString(), e);
                     }
                     break;
                 case InputEvent.IMPUT_EVENT_TYPE_RECENT_BUTTON:
                     try {
                         ShellCommandExecutor.getInstance().runCommand("input keyevent 187");
                     } catch (Exception e) {
-                        Logger.log("ENCODER", e.toString(), e);
+                        Logger.log("INPUTEVENT", e.toString(), e);
                     }
                     break;
                 case InputEvent.IMPUT_EVENT_TYPE_LOCK_UNLOCK_BUTTON:
@@ -395,14 +394,14 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                                 try {
                                     ShellCommandExecutor.getInstance().runCommand("input keyevent 26");
                                 } catch (Exception e) {
-                                    Logger.log("ENCODER", e.toString(), e);
+                                    Logger.log("INPUTEVENT", e.toString(), e);
                                 }
                             } else {
                                 kl.reenableKeyguard();
                                 try {
                                     ShellCommandExecutor.getInstance().runCommand("input keyevent 26");
                                 } catch (Exception e) {
-                                    Logger.log("ENCODER", e.toString(), e);
+                                    Logger.log("INPUTEVENT", e.toString(), e);
                                 }
                             }
                             break;
@@ -421,36 +420,36 @@ public class RemoteControlService extends Service implements ConnectionManager.W
                                     break;
                             }
                             break;
-                        case InputEvent.IMPUT_EVENT_TYPE_TOUCH:
-                            try {
-                                float x = event.getTouchEventX() * screenResolution.x;
-                                float y = event.getTouchEventY() * screenResolution.y;
-                                ShellCommandExecutor.getInstance().runCommand("input tap " + x + " " + y);
-                            } catch (Exception e) {
-                                Logger.log("ENCODER", e.toString(), e);
-                            }
-                            break;
-                        case InputEvent.IMPUT_EVENT_TYPE_LONG_PRESS:
-                            try {
-                                float x = event.getTouchEventX() * screenResolution.x;
-                                float y = event.getTouchEventY() * screenResolution.y;
-                                ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x + " " + y + " " + InputEvent.IMPUT_EVENT_LONG_PRESS_DURATION);
-                            } catch (Exception e) {
-                                Logger.log("ENCODER", e.toString(), e);
-                            }
-                            break;
-                        case InputEvent.IMPUT_EVENT_TYPE_SWIPE:
-                            try {
-                                float x = event.getTouchEventX() * screenResolution.x;
-                                float y = event.getTouchEventY() * screenResolution.y;
-                                float x1 = event.getToucEventX1() * screenResolution.x;
-                                float y1 = event.getTouchEventY1() * screenResolution.y;
-                                ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x1 + " " + y1 + " " + InputEvent.IMPUT_EVENT_FLING_DURATION);
-                            } catch (Exception e) {
-                                Logger.log("ENCODER", e.toString(), e);
-                            }
-                            break;
                     }
+                case InputEvent.IMPUT_EVENT_TYPE_TOUCH:
+                    try {
+                        float x = event.getTouchEventX() * screenResolution.x;
+                        float y = event.getTouchEventY() * screenResolution.y;
+                        ShellCommandExecutor.getInstance().runCommand("input tap " + x + " " + y);
+                    } catch (Exception e) {
+                        Logger.log("INPUTEVENT", e.toString(), e);
+                    }
+                    break;
+                case InputEvent.IMPUT_EVENT_TYPE_LONG_PRESS:
+                    try {
+                        float x = event.getTouchEventX() * screenResolution.x;
+                        float y = event.getTouchEventY() * screenResolution.y;
+                        ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x + " " + y + " " + InputEvent.IMPUT_EVENT_LONG_PRESS_DURATION);
+                    } catch (Exception e) {
+                        Logger.log("INPUTEVENT", e.toString(), e);
+                    }
+                    break;
+                case InputEvent.IMPUT_EVENT_TYPE_SWIPE:
+                    try {
+                        float x = event.getTouchEventX() * screenResolution.x;
+                        float y = event.getTouchEventY() * screenResolution.y;
+                        float x1 = event.getToucEventX1() * screenResolution.x;
+                        float y1 = event.getTouchEventY1() * screenResolution.y;
+                        ShellCommandExecutor.getInstance().runCommand("input swipe " + x + " " + y + " " + x1 + " " + y1 + " " + InputEvent.IMPUT_EVENT_FLING_DURATION);
+                    } catch (Exception e) {
+                        Logger.log("INPUTEVENT", e.toString(), e);
+                    }
+                    break;
             }
         }
     }

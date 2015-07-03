@@ -259,6 +259,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         anim.setDuration(2000);
         anim.setRepeatCount(ObjectAnimator.INFINITE);
         anim.start();
+        hideSystemUI();
     }
 
     @Override
@@ -358,6 +359,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
         } else if (v.getId() == R.id.view_dialog_base_button_right) {
             exitConfirmationDialog.dismiss();
         }
+        hideSystemUI();
 
         hideControlsTimer.start();
     }
@@ -381,6 +383,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        hideSystemUI();
         this.gestureDetector.onTouchEvent(event);
         return super.onTouchEvent(event);
     }
@@ -396,6 +399,7 @@ public class RemoteControlActivity extends Activity implements ConnectionManager
 
     @Override
     public boolean onSingleTapUp(MotionEvent e) {
+        hideSystemUI();
         sendInputAction(InputEvent.IMPUT_EVENT_TYPE_TOUCH, (e.getRawX() / screenResolution.x), (e.getRawY() / screenResolution.y), 0, 0);
         return false;
     }
